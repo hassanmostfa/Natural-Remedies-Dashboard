@@ -1,0 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap");
+body {
+  font-family: "DM Sans", sans-serif;
+}
+
+option {
+  color: black;
+}
+
+/*Sidebars*/
+.css-892zhy , .css-8rydbv {
+  background-color: #38487c !important; /*#38487c*/
+}
+
+.css-1kp8h9s {
+  color: white !important;
+}
+
+.css-15lwasx:hover p , .css-15lwasx:hover svg{
+  color: white !important;  
+}
+
+.css-18swba:hover p , .css-18swba:hover svg  , .css-1ez5qc5{
+  color: white !important;
+}
+
+.css-v8rad5 {
+  background-color: white !important;
+}
+
+.css-89x3gd {
+  padding : 0px !important;
+}
+
+/* Login Page */
+.css-kyaamw {
+  background: url("../img/login-bg.jpg")  !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  border-radius: 0px !important;
+}
