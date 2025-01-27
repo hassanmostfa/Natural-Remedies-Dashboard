@@ -43,6 +43,9 @@ function Sidebar(props) {
     }));
   };
 
+  // Filter routes to only show those with showInSidebar: true
+  const filteredRoutes = routes.filter(route => route.showInSidebar);
+
   return (
     <Box display={{ sm: "none", xl: "block" }} w="100%" position="fixed" minH="100%">
       <Box
@@ -61,7 +64,7 @@ function Sidebar(props) {
           renderThumbVertical={renderThumb}
           renderView={renderView}
         >
-          <Content routes={routes} openDropdown={openDropdown} toggleDropdown={toggleDropdown} />
+          <Content routes={filteredRoutes} openDropdown={openDropdown} toggleDropdown={toggleDropdown} />
         </Scrollbars>
       </Box>
     </Box>
@@ -74,6 +77,9 @@ export function SidebarResponsive(props) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = React.useRef();
   const { routes } = props;
+
+  // Filter routes to only show those with showInSidebar: true
+  const filteredRoutes = routes.filter(route => route.showInSidebar);
 
   return (
     <Flex display={{ sm: "flex", xl: "none" }} alignItems="center">
@@ -109,7 +115,7 @@ export function SidebarResponsive(props) {
               renderThumbVertical={renderThumb}
               renderView={renderView}
             >
-              <Content routes={routes} />
+              <Content routes={filteredRoutes} />
             </Scrollbars>
           </DrawerBody>
         </DrawerContent>

@@ -6,6 +6,8 @@ import Navbar from "components/navbar/NavbarAdmin.js";
 import Sidebar from "components/sidebar/Sidebar.js";
 import { SidebarContext } from "contexts/SidebarContext";
 import routes from "routes.js";
+import SignInCentered from "views/auth/signIn/index";
+import Admins from "views/admin/admins/Admins";
 
 // Helper function to capitalize the first letter
 const capitalizeFirstLetter = (string) => {
@@ -73,7 +75,7 @@ const AdminLayout = (props) => {
           )),
         ];
       } else if (route.layout === "/admin") {
-        // Normal route
+        // Normal route for single component route handling
         return (
           <Route
             key={key}

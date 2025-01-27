@@ -31,9 +31,6 @@ import { LiaClinicMedicalSolid } from "react-icons/lia";
 import { IoNotificationsOutline } from "react-icons/io5";
 import { CiDiscount1 } from "react-icons/ci";
 
-
-
-
 // Admin Imports
 import MainDashboard from 'views/admin/default';
 import NFTMarketplace from 'views/admin/marketplace';
@@ -52,26 +49,38 @@ const routes = [
     path: '/dashboard',
     icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
     component: <MainDashboard />,
+    showInSidebar: true,
   },
   {
     name: "Admin Management",
     layout: "/admin",
     icon: <Icon as={MdAdminPanelSettings} width="20px" height="20px" color="#8f9bba" />,
     component: null,
+    showInSidebar: true,
     subRoutes: [
       {
         name: "Admins",
         path: "/admins",
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Admins />,
+        showInSidebar: true,
       },
       {
         name: "Rules",
         path: "/management/rules",
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Profile />,
+        showInSidebar: true,
       },
     ],
+  },
+  {
+    name: "Add Rule",
+    layout: "/admin",
+    path: "/add-rule",
+    icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+    component: <Profile />,
+    showInSidebar: false,
   },
   {
     name: 'Pharmacy Management',
@@ -79,6 +88,7 @@ const routes = [
     path: '/pharmacy',
     icon: <Icon as={MdLocalPharmacy} width="20px" height="20px" color="inherit" />,
     component: <Admins />,
+    showInSidebar: true,
   },
   {
     name: 'Doctor Management',
@@ -86,6 +96,7 @@ const routes = [
     path: '/doctors',
     icon: <Icon as={MdMedicalServices} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
+    showInSidebar: true,
   },
   {
     name: 'Clinic Management',
@@ -93,6 +104,7 @@ const routes = [
     path: '/clinic/management',
     icon: <Icon as={LiaClinicMedicalSolid} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
+    showInSidebar: true,
   },
   {
     name: 'User Management',
@@ -100,6 +112,7 @@ const routes = [
     path: '/users',
     icon: <Icon as={MdPeople} width="20px" height="20px" color="inherit" />,
     component: <Profile />,
+    showInSidebar: true,
   },
   {
     name: 'Categories',
@@ -107,6 +120,7 @@ const routes = [
     path: '/categories',
     icon: <Icon as={BiSolidCategoryAlt} width="20px" height="20px" color="inherit" />,
     component: <NFTMarketplace />,
+    showInSidebar: true,
   },
   {
     name: 'Products',
@@ -114,6 +128,7 @@ const routes = [
     path: '/products',
     icon: <Icon as={MdInventory} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
+    showInSidebar: true,
   },
   {
     name: 'Attributes',
@@ -121,6 +136,7 @@ const routes = [
     path: '/attributes',
     icon: <Icon as={MdList} width="20px" height="20px" color="inherit" />,
     component: <Profile />,
+    showInSidebar: true,
   },
   {
     name: 'Product Types',
@@ -128,6 +144,7 @@ const routes = [
     path: '/product-types',
     icon: <Icon as={MdCategory} width="20px" height="20px" color="inherit" />,
     component: <Profile />,
+    showInSidebar: true,
   },
   {
     name: 'Brands',
@@ -135,6 +152,7 @@ const routes = [
     path: '/brands',
     icon: <Icon as={TbBrandAdonisJs} width="20px" height="20px" color="inherit" />,
     component: <Profile />,
+    showInSidebar: true,
   },
   {
     name: 'Prescription',
@@ -142,6 +160,7 @@ const routes = [
     path: '/prescription',
     icon: <Icon as={MdAssignment} width="20px" height="20px" color="inherit" />,
     component: <Profile />,
+    showInSidebar: true,
   },
   {
     name: 'Medicine Reminder',
@@ -149,6 +168,7 @@ const routes = [
     path: '/medicine-reminder',
     icon: <Icon as={MdNotifications} width="20px" height="20px" color="inherit" />,
     component: <Profile />,
+    showInSidebar: true,
   },
   {
     name: 'Orders',
@@ -156,6 +176,7 @@ const routes = [
     path: '/orders',
     icon: <Icon as={MdOutlineShoppingCart} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
+    showInSidebar: true,
   },
   {
     name: 'Notifications',
@@ -163,6 +184,7 @@ const routes = [
     path: '/notifications',
     icon: <Icon as={IoNotificationsOutline} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
+    showInSidebar: true,
   },
   {
     name: 'Promo Codes',
@@ -170,6 +192,7 @@ const routes = [
     path: '/promo-codes',
     icon: <Icon as={CiDiscount1} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
+    showInSidebar: true,
   },
   {
     name: 'Reports',
@@ -177,6 +200,7 @@ const routes = [
     path: '/reports',
     icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
     component: <NFTMarketplace />,
+    showInSidebar: true,
   },
   {
     name: 'Appointments',
@@ -184,6 +208,7 @@ const routes = [
     path: '/appointments',
     icon: <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
+    showInSidebar: true,
   },
   {
     name: 'CMS',
@@ -191,36 +216,42 @@ const routes = [
     path: '/cms',
     icon: <Icon as={MdSettings} width="20px" height="20px" color="#8f9bba" />,
     component: <Box />,
+    showInSidebar: true,
     subRoutes: [
       {
         name: 'Banners',
         path: '/cms/banners',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Profile />,
+        showInSidebar: true,
       },
       {
         name: 'Ads',
         path: '/cms/ads',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <SignInCentered />,
+        showInSidebar: true,
       },
       {
         name: 'About Us',
         path: '/cms/about-us',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <SignInCentered />,
+        showInSidebar: true,
       },
       {
         name: 'Privacy & Policy',
         path: '/cms/privacy-and-policy',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <SignInCentered />,
+        showInSidebar: true,
       },
       {
         name: 'Returned',
         path: '/cms/returned',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <SignInCentered />,
+        showInSidebar: true,
       },
     ],
   },
