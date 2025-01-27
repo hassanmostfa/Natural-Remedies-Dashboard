@@ -212,25 +212,6 @@ function SignIn() {
               Sign In
             </Button>
           </FormControl>
-          <Flex
-            flexDirection='column'
-            justifyContent='center'
-            alignItems='start'
-            maxW='100%'
-            mt='0px'>
-            <Text color={textColorDetails} fontWeight='400' fontSize='14px'>
-              Not registered yet?
-              <NavLink to='/auth/sign-up'>
-                <Text
-                  color={textColorBrand}
-                  as='span'
-                  ms='5px'
-                  fontWeight='500'>
-                  Create an Account
-                </Text>
-              </NavLink>
-            </Text>
-          </Flex>
         </Flex>
       </Flex>
     </DefaultAuth>

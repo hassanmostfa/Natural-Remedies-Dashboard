@@ -22,6 +22,18 @@ import {
 } from 'react-icons/md';
 
 import { FiChevronsRight } from "react-icons/fi";
+import { TbBrandAdonisJs } from "react-icons/tb";
+import { MdAdminPanelSettings } from "react-icons/md";
+import { TiMinus } from "react-icons/ti";
+import { BiSolidCategoryAlt } from "react-icons/bi";
+import { FaRegCalendarDays } from "react-icons/fa6";
+import { LiaClinicMedicalSolid } from "react-icons/lia";
+import { IoNotificationsOutline } from "react-icons/io5";
+import { CiDiscount1 } from "react-icons/ci";
+
+
+
+
 // Admin Imports
 import MainDashboard from 'views/admin/default';
 import NFTMarketplace from 'views/admin/marketplace';
@@ -35,7 +47,7 @@ import SignInCentered from 'views/auth/signIn';
 
 const routes = [
   {
-    name: 'Main Dashboard',
+    name: 'Super Admin',
     layout: '/admin',
     path: '/dashboard',
     icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
@@ -44,19 +56,19 @@ const routes = [
   {
     name: "Admin Management",
     layout: "/admin",
-    icon: <Icon as={MdSettings} width="20px" height="20px" color="#8f9bba" />,
+    icon: <Icon as={MdAdminPanelSettings} width="20px" height="20px" color="#8f9bba" />,
     component: null,
     subRoutes: [
       {
         name: "Admins",
         path: "/admins",
-        icon: <Icon as={FiChevronsRight} width="20px" height="20px" color="inherit" />,
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Admins />,
       },
       {
         name: "Rules",
         path: "/management/rules",
-        icon: <Icon as={FiChevronsRight} width="20px" height="20px" color="inherit" />,
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Profile />,
       },
     ],
@@ -86,7 +98,7 @@ const routes = [
     name: 'Categories',
     layout: '/admin',
     path: '/categories',
-    icon: <Icon as={MdCategory} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={BiSolidCategoryAlt} width="20px" height="20px" color="inherit" />,
     component: <NFTMarketplace />,
   },
   {
@@ -114,7 +126,7 @@ const routes = [
     name: 'Brands',
     layout: '/admin',
     path: '/brands',
-    icon: <Icon as={MdOutlineShoppingCart} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={TbBrandAdonisJs} width="20px" height="20px" color="inherit" />,
     component: <Profile />,
   },
   {
@@ -149,7 +161,7 @@ const routes = [
     name: 'Appointments',
     layout: '/admin',
     path: '/appointments',
-    icon: <Icon as={MdMedicalServices} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
   },
   {
@@ -162,41 +174,55 @@ const routes = [
       {
         name: 'Banners',
         path: '/cms/banners',
-        icon: <Icon as={FiChevronsRight} width="20px" height="20px" color="inherit" />,
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Profile />,
       },
       {
         name: 'Ads',
         path: '/cms/ads',
-        icon: <Icon as={FiChevronsRight} width="20px" height="20px" color="inherit" />,
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <SignInCentered />,
       },
       {
         name: 'About Us',
         path: '/cms/about-us',
-        icon: <Icon as={FiChevronsRight} width="20px" height="20px" color="inherit" />,
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <SignInCentered />,
       },
       {
         name: 'Privacy & Policy',
         path: '/cms/privacy-and-policy',
-        icon: <Icon as={FiChevronsRight} width="20px" height="20px" color="inherit" />,
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <SignInCentered />,
       },
       {
         name: 'Returned',
         path: '/cms/returned',
-        icon: <Icon as={FiChevronsRight} width="20px" height="20px" color="inherit" />,
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <SignInCentered />,
       },
     ],
   },
   {
-    name: 'Sign In',
-    layout: '/auth',
-    path: '/sign-in',
-    icon: <Icon as={MdLock} width="20px" height="20px" color="inherit" />,
-    component: <SignInCentered />,
+    name: 'Clinic Management',
+    layout: '/admin',
+    path: '/clinic/management',
+    icon: <Icon as={LiaClinicMedicalSolid} width="20px" height="20px" color="inherit" />,
+    component: <DataTables />,
+  },
+  {
+    name: 'Notifications',
+    layout: '/admin',
+    path: '/notifications',
+    icon: <Icon as={IoNotificationsOutline} width="20px" height="20px" color="inherit" />,
+    component: <DataTables />,
+  },
+  {
+    name: 'Promo Codes',
+    layout: '/admin',
+    path: '/promo-codes',
+    icon: <Icon as={CiDiscount1} width="20px" height="20px" color="inherit" />,
+    component: <DataTables />,
   },
 ];
 
