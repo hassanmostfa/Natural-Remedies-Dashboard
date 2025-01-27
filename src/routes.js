@@ -88,6 +88,13 @@ const routes = [
     component: <DataTables />,
   },
   {
+    name: 'Clinic Management',
+    layout: '/admin',
+    path: '/clinic/management',
+    icon: <Icon as={LiaClinicMedicalSolid} width="20px" height="20px" color="inherit" />,
+    component: <DataTables />,
+  },
+  {
     name: 'User Management',
     layout: '/admin',
     path: '/users',
@@ -151,6 +158,20 @@ const routes = [
     component: <DataTables />,
   },
   {
+    name: 'Notifications',
+    layout: '/admin',
+    path: '/notifications',
+    icon: <Icon as={IoNotificationsOutline} width="20px" height="20px" color="inherit" />,
+    component: <DataTables />,
+  },
+  {
+    name: 'Promo Codes',
+    layout: '/admin',
+    path: '/promo-codes',
+    icon: <Icon as={CiDiscount1} width="20px" height="20px" color="inherit" />,
+    component: <DataTables />,
+  },
+  {
     name: 'Reports',
     layout: '/admin',
     path: '/reports',
@@ -202,27 +223,6 @@ const routes = [
         component: <SignInCentered />,
       },
     ],
-  },
-  {
-    name: 'Clinic Management',
-    layout: '/admin',
-    path: '/clinic/management',
-    icon: <Icon as={LiaClinicMedicalSolid} width="20px" height="20px" color="inherit" />,
-    component: <DataTables />,
-  },
-  {
-    name: 'Notifications',
-    layout: '/admin',
-    path: '/notifications',
-    icon: <Icon as={IoNotificationsOutline} width="20px" height="20px" color="inherit" />,
-    component: <DataTables />,
-  },
-  {
-    name: 'Promo Codes',
-    layout: '/admin',
-    path: '/promo-codes',
-    icon: <Icon as={CiDiscount1} width="20px" height="20px" color="inherit" />,
-    component: <DataTables />,
   },
 ];
 
