@@ -42,6 +42,7 @@ import RTL from 'views/admin/rtl';
 
 // Auth Imports
 import SignInCentered from 'views/auth/signIn';
+import AddRole from 'views/admin/roles/AddRole';
 
 const routes = [
   {
@@ -261,7 +262,7 @@ const routes = [
     layout: '/admin',
     path: '/add-role',
     icon: <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />,
-    component: <DataTables />,
+    component: <AddRole />,
     showInSidebar: false,
   },
 ];
