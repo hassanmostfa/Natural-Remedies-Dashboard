@@ -37,6 +37,7 @@ import NFTMarketplace from 'views/admin/marketplace';
 import Profile from 'views/admin/profile';
 import DataTables from 'views/admin/dataTables';
 import Admins from 'views/admin/admins/Admins';
+import Roles from 'views/admin/roles/Roles';
 import RTL from 'views/admin/rtl';
 
 // Auth Imports
@@ -69,7 +70,7 @@ const routes = [
         name: "Rules",
         path: "/management/rules",
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
-        component: <Profile />,
+        component: <Roles />,
         showInSidebar: true,
       },
     ],
@@ -254,6 +255,14 @@ const routes = [
         showInSidebar: true,
       },
     ],
+  },
+  {
+    name: 'Add Role',
+    layout: '/admin',
+    path: '/add-role',
+    icon: <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />,
+    component: <DataTables />,
+    showInSidebar: false,
   },
 ];
 
