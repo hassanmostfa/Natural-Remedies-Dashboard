@@ -260,7 +260,7 @@ const routes = [
   {
     name: 'Add Role',
     layout: '/admin',
-    path: '/add-role',
+    path: '/add-New-Rule',
     icon: <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />,
     component: <AddRole />,
     showInSidebar: false,

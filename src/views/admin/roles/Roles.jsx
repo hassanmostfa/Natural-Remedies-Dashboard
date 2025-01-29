@@ -179,7 +179,7 @@ const Roles = () => {
           >
             Rules
           </Text>
-          <Button variant="brand" onClick={() => navigate('/admin/add-role')} size="sm" me="24px" padding="5px 20px">
+          <Button variant="brand" onClick={() => navigate('/admin/add-New-Rule')} size="sm" me="24px" padding="5px 20px">
             <PlusSquareIcon me="10px" />
             Create New Rule
           </Button>

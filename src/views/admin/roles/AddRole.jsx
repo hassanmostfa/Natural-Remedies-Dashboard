@@ -177,6 +177,7 @@ import { IoMdArrowBack } from 'react-icons/io';
                     name="roleName"
                     placeholder="Enter role name"
                     size="sm"
+                    width={'50%'}
                     required
                     />
                 </Box>
@@ -185,7 +186,7 @@ import { IoMdArrowBack } from 'react-icons/io';
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing="20px">
                     {categories.map((category) => (
                     <Card key={category.id} p="16px"  >
-                        <Text fontSize="lg" fontWeight="700" mb="16px" backdropBlur={'10px'} >
+                        <Text fontSize="lg" borderBottom={'1px solid #ddd'} paddingBottom={'5px'} fontWeight="700" mb="16px" backdropBlur={'10px'} >
                         {category.name}
                         </Text>
         
@@ -255,7 +256,7 @@ import { IoMdArrowBack } from 'react-icons/io';
                 
                     
                     <Button type="submit" colorScheme="brand" size="sm" mt="20px">
-                        Save Rule 
+                        Submit 
                     </Button>
                 
                 </form>
