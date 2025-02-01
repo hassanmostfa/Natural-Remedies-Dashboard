@@ -28,6 +28,12 @@ import { columnsDataCheck, columnsDataComplex } from "views/admin/default/variab
 import tableDataCheck from "views/admin/default/variables/tableDataCheck.json";
 import tableDataComplex from "views/admin/default/variables/tableDataComplex.json";
 
+import { AiOutlineProduct } from "react-icons/ai";
+import { LuShoppingBasket } from "react-icons/lu";
+import { LuLayers3 } from "react-icons/lu";
+import { MdFamilyRestroom } from "react-icons/md";
+
+
 export default function UserReports() {
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
@@ -41,6 +47,10 @@ export default function UserReports() {
     { name: "Total Appointments", value: "2,345", icon: MdOutlineEventNote },
     { name: "Total Users", value: "10,000", icon: MdOutlinePerson },
     { name: "Total Brands", value: "320", icon: MdOutlineBrandingWatermark },
+    { name: "Total Products", value: "1,000", icon: LuShoppingBasket },
+    { name: "Total Product Types", value: "5", icon: AiOutlineProduct },
+    { name: "Total Categories", value: "100", icon: LuLayers3 },
+    { name: "Total Family Accounts", value: "5", icon: MdFamilyRestroom },
   ];
 
   return (

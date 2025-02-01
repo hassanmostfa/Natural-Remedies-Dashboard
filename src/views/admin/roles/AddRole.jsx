@@ -185,7 +185,7 @@ import { IoMdArrowBack } from 'react-icons/io';
                 {/* Categories and Subcategories */}
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing="20px">
                     {categories.map((category) => (
-                    <Card key={category.id} p="16px"  >
+                    <Card key={category.id} p="16px" >
                         <Text fontSize="lg" borderBottom={'1px solid #ddd'} paddingBottom={'5px'} fontWeight="700" mb="16px" backdropBlur={'10px'} >
                         {category.name}
                         </Text>

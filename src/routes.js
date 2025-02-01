@@ -213,13 +213,19 @@ const routes = [
     showInSidebar: true,
   },
   {
-    name: 'CMS',
-    layout: '/admin',
-    path: '/cms',
+    name: "CMS",
+    layout: "/admin",
     icon: <Icon as={MdSettings} width="20px" height="20px" color="#8f9bba" />,
-    component: <Box />,
+    component: null,
     showInSidebar: true,
     subRoutes: [
+      {
+        name: 'Blogs',
+        path: '/blogs',
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+        component: <DataTables />,
+        showInSidebar: true,
+      },
       {
         name: 'Banners',
         path: '/cms/banners',
