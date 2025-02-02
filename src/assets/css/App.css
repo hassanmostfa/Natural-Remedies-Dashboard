@@ -7,6 +7,9 @@ option {
   color: black;
 }
 
+p{
+  margin-bottom: 0px !important;
+}
 /*Sidebars*/
 .css-892zhy , .css-8rydbv {
   background-color: #38487c !important; /*#38487c*/
@@ -32,6 +35,10 @@ option {
   padding : 0px !important;
 }
 
+.css-1d2ugx5 {
+  padding-top: 0 !important;
+}
+
 /* Login Page */
 .css-kyaamw {
   background: url("../img/login-bg.jpg")  !important;
@@ -39,4 +46,16 @@ option {
   background-position: center !important;
   background-repeat: no-repeat !important;
   border-radius: 0px !important;
+}
+
+.custom-table{
+  margin-top: 90px;
+}
+
+.add-container{
+  margin-top: 90px;
+}
+
+.add-card{
+  border-radius: 15px;
 }

@@ -37,7 +37,10 @@ import NFTMarketplace from 'views/admin/marketplace';
 import Profile from 'views/admin/profile';
 import DataTables from 'views/admin/dataTables';
 import Admins from 'views/admin/admins/Admins';
+import AddAdmin from 'views/admin/admins/AddAdmin';
 import Roles from 'views/admin/roles/Roles';
+import Users from 'views/admin/users/Users';
+import FamilyAccounts from 'views/admin/users/FamilyAccounts';
 import RTL from 'views/admin/rtl';
 
 // Auth Imports
@@ -113,7 +116,7 @@ const routes = [
     layout: '/admin',
     path: '/users',
     icon: <Icon as={MdPeople} width="20px" height="20px" color="inherit" />,
-    component: <Profile />,
+    component: <Users />,
     showInSidebar: true,
   },
   {
@@ -269,6 +272,20 @@ const routes = [
     path: '/add-New-Rule',
     icon: <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />,
     component: <AddRole />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Add Admin',
+    layout: '/admin',
+    path: '/add-New-Admin',
+    component: <AddAdmin />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Family Accounts',
+    layout: '/admin',
+    path: '/family-Accounts',
+    component: <FamilyAccounts />,
     showInSidebar: false,
   },
 ];

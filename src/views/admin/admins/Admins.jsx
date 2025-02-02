@@ -25,33 +25,38 @@ import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
 import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
 import { FaEye, FaTrash } from 'react-icons/fa6';
-
+import { useNavigate } from 'react-router-dom';
 const columnHelper = createColumnHelper();
 
 const Admins = () => {
   const [data, setData] = React.useState([
     {
-      name: 'John Doe',
+      first_name: 'John',
+      last_name: 'Doe',
       email: 'john@example.com',
+      password: 'password123',
       role: 'Super Admin',
       status: 'Active',
     },
     {
-      name: 'Jane Doe',
+      first_name: 'Jane',
+      last_name: 'Doe',
       email: 'jane@example.com',
+      password: 'password123',
       role: 'Admin',
       status: 'Inactive',
     },
   ]);
 
+  const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
   const columns = [
-    columnHelper.accessor('name', {
-      id: 'name',
+    columnHelper.accessor('first_name', {
+      id: 'first_name',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -59,12 +64,32 @@ const Admins = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          NAME
+          First Name
         </Text>
       ),
       cell: (info) => (
         <Flex align="center">
-          <Text color={textColor} fontSize="sm" fontWeight="700">
+          <Text color={textColor}>
+            {info.getValue()}
+          </Text>
+        </Flex>
+      ),
+    }),
+    columnHelper.accessor('last_name', {
+      id: 'last_name',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Last Name
+        </Text>
+      ),
+      cell: (info) => (
+        <Flex align="center">
+          <Text color={textColor}>
             {info.getValue()}
           </Text>
         </Flex>
@@ -83,7 +108,25 @@ const Admins = () => {
         </Text>
       ),
       cell: (info) => (
-        <Text color={textColor} fontSize="sm" fontWeight="700">
+        <Text color={textColor} >
+          {info.getValue()}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor('password', {
+      id: 'password',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Password
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor}>
           {info.getValue()}
         </Text>
       ),
@@ -101,7 +144,7 @@ const Admins = () => {
         </Text>
       ),
       cell: (info) => (
-        <Text color={textColor} fontSize="sm" fontWeight="700">
+        <Text color={textColor}>
           {info.getValue()}
         </Text>
       ),
@@ -182,7 +225,9 @@ const Admins = () => {
             variant="brand"
             size="sm"
             me="24px"
+            width={'200px'}
             padding="5px 20px"
+            onClick={() => navigate('/admin/add-New-Admin')}
           >
             <PlusSquareIcon me="10px" />
             Create New Admin
