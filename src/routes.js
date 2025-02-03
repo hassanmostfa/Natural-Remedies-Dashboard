@@ -46,6 +46,14 @@ import RTL from 'views/admin/rtl';
 // Auth Imports
 import SignInCentered from 'views/auth/signIn';
 import AddRole from 'views/admin/roles/AddRole';
+import AllNotification from 'views/admin/notification/AllNotification';
+import AddNotification from 'views/admin/notification/AddNotification';
+import AllTypes from 'views/admin/productType/AllTypes';
+import AddType from 'views/admin/productType/AddType';
+import AllBrands from 'views/admin/brand/AllBrands';
+import AddBrand from 'views/admin/brand/AddBrand';
+import AllCategories from 'views/admin/category/AllCategories';
+import AddCategory from 'views/admin/category/AddCategory';
 
 const routes = [
   {
@@ -124,8 +132,16 @@ const routes = [
     layout: '/admin',
     path: '/categories',
     icon: <Icon as={BiSolidCategoryAlt} width="20px" height="20px" color="inherit" />,
-    component: <NFTMarketplace />,
+    component: <AllCategories />,
     showInSidebar: true,
+  },
+  {
+    name: 'Add Category',
+    layout: '/admin',
+    path: '/add-category',
+    icon: <Icon as={BiSolidCategoryAlt} width="20px" height="20px" color="inherit" />,
+    component: <AddCategory />,
+    showInSidebar: false,
   },
   {
     name: 'Products',
@@ -148,16 +164,32 @@ const routes = [
     layout: '/admin',
     path: '/product-types',
     icon: <Icon as={MdCategory} width="20px" height="20px" color="inherit" />,
-    component: <Profile />,
+    component: <AllTypes />,
     showInSidebar: true,
+  },
+  {
+    name: 'Product Types',
+    layout: '/admin',
+    path: '/add-product-types',
+    icon: <Icon as={MdCategory} width="20px" height="20px" color="inherit" />,
+    component: <AddType />,
+    showInSidebar: false,
   },
   {
     name: 'Brands',
     layout: '/admin',
     path: '/brands',
     icon: <Icon as={TbBrandAdonisJs} width="20px" height="20px" color="inherit" />,
-    component: <Profile />,
+    component: <AllBrands />,
     showInSidebar: true,
+  },
+  {
+    name: 'Add Brand',
+    layout: '/admin',
+    path: '/add-brand',
+    icon: <Icon as={TbBrandAdonisJs} width="20px" height="20px" color="inherit" />,
+    component: <AddBrand />,
+    showInSidebar: false,
   },
   {
     name: 'Prescription',
@@ -188,8 +220,16 @@ const routes = [
     layout: '/admin',
     path: '/notifications',
     icon: <Icon as={IoNotificationsOutline} width="20px" height="20px" color="inherit" />,
-    component: <DataTables />,
+    component: <AllNotification />,
     showInSidebar: true,
+  },
+  {
+    name: 'Add Notifications',
+    layout: '/admin',
+    path: '/add-notifications',
+    icon: <Icon as={IoNotificationsOutline} width="20px" height="20px" color="inherit" />,
+    component: <AddNotification />,
+    showInSidebar: false,
   },
   {
     name: 'Promo Codes',
