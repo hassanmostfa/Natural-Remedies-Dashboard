@@ -179,7 +179,18 @@ const Roles = () => {
           >
             Rules
           </Text>
-          <Button variant="brand" onClick={() => navigate('/admin/add-New-Rule')} size="sm" me="24px" width={"200px"} padding="5px 20px">
+          <Button
+            variant='darkBrand'
+            color='white'
+            fontSize='sm'
+            fontWeight='500'
+            borderRadius='70px'
+            px='24px'
+            py='5px'
+            onClick={() => navigate('/admin/add-New-Rule')}
+            width={'200px'}
+            >
+              
             <PlusSquareIcon me="10px" />
             Create New Rule
           </Button>

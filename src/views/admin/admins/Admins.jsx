@@ -222,13 +222,17 @@ const Admins = () => {
             Admins
           </Text>
           <Button
-            variant="brand"
-            size="sm"
-            me="24px"
-            width={'200px'}
-            padding="5px 20px"
+            variant='darkBrand'
+            color='white'
+            fontSize='sm'
+            fontWeight='500'
+            borderRadius='70px'
+            px='24px'
+            py='5px'
             onClick={() => navigate('/admin/add-New-Admin')}
-          >
+            width={'200px'}
+            >
+              
             <PlusSquareIcon me="10px" />
             Create New Admin
           </Button>

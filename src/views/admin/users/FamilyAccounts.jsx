@@ -11,8 +11,11 @@ import {
   Thead,
   Tr,
   useColorModeValue,
+  Button,
   Switch,
 } from "@chakra-ui/react";
+import { IoMdArrowBack } from 'react-icons/io';
+
 import {
   createColumnHelper,
   flexRender,
@@ -23,10 +26,11 @@ import {
 import { FaEye, FaTrash } from "react-icons/fa6";
 import { EditIcon } from "@chakra-ui/icons";
 import Card from "components/card/Card";
-
+import { useNavigate } from "react-router-dom";
 const columnHelper = createColumnHelper();
 
 const FamilyAccounts = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState([
     {
       name: "John Doe",
@@ -102,6 +106,16 @@ const FamilyAccounts = () => {
       <Card flexDirection="column" w="100%" px="0px" overflowX="auto">
         <Flex px="25px" mb="8px" justifyContent="space-between" align="center">
           <Text color={textColor} fontSize="22px" fontWeight="700">Family Accounts</Text>
+          <Button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    colorScheme="teal"
+                    size="sm"
+                    // mt="20px"
+                    leftIcon={<IoMdArrowBack />}
+                >
+                    Back
+                </Button>
         </Flex>
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">

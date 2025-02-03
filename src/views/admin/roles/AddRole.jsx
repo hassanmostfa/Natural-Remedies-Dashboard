@@ -255,10 +255,20 @@ import { IoMdArrowBack } from 'react-icons/io';
                 {/* Submit Button */}
                 
                     
-                    <Button type="submit" colorScheme="brand" size="sm" mt="20px">
-                        Submit 
-                    </Button>
-                
+                        <Button
+                          variant='darkBrand'
+                          color='white'
+                          fontSize='sm'
+                          fontWeight='500'
+                          borderRadius='70px'
+                          px='24px'
+                          py='5px'
+                          type="submit"
+                          mt="20px"
+                          >
+                            
+                          Submit
+                        </Button>
                 </form>
             </Card>
         </div>
