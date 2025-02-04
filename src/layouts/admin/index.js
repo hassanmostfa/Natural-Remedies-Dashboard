@@ -6,83 +6,68 @@ import Navbar from "components/navbar/NavbarAdmin.js";
 import Sidebar from "components/sidebar/Sidebar.js";
 import { SidebarContext } from "contexts/SidebarContext";
 import routes from "routes.js";
-import SignInCentered from "views/auth/signIn/index";
-import Admins from "views/admin/admins/Admins";
 
-// Helper function to capitalize the first letter
+// Helper function to capitalize the first letter of each word
 const capitalizeFirstLetter = (string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-const getLastPathSegment = (pathname) => {
+// Function to find the route name and parent route
+const getBreadcrumbPath = (pathname, routes) => {
   const segments = pathname.split("/").filter(Boolean);
-  return segments.length > 0 ? segments[segments.length - 1] : "/";
+  const adminIndex = segments.indexOf("admin");
+
+  if (adminIndex === -1) return "";
+
+  const pathSegments = segments.slice(adminIndex + 1); // Get everything after "/admin/"
+  const cleanedSegments = pathSegments.filter(segment => segment.toLowerCase() !== "undefined"); // Remove "undefined"
+  
+  let breadcrumb = [];
+  let currentPath = "/admin";
+
+  cleanedSegments.forEach(segment => {
+    currentPath += `/${segment}`;
+    
+    // Find the matching route name
+    const matchedRoute = routes.find(route => `${route.layout}${route.path}` === currentPath);
+    
+    if (matchedRoute) {
+      breadcrumb.push(capitalizeFirstLetter(matchedRoute.name));
+    } else {
+      breadcrumb.push(capitalizeFirstLetter(segment)); // Fallback to segment name
+    }
+  });
+
+  return breadcrumb.join(" > ");
 };
 
 const AdminLayout = (props) => {
   const { ...rest } = props;
   const [toggleSidebar, setToggleSidebar] = useState(false);
-  const [activeRoute, setActiveRoute] = useState("Default Brand Text");
+  const [activeRoute, setActiveRoute] = useState("Dashboard");
   const location = useLocation();
   const { onOpen } = useDisclosure();
 
-  // Helper to get the active route name
-  const getActiveRoute = (routes) => {
-    for (let i = 0; i < routes.length; i++) {
-      if (routes[i].subRoutes) {
-        const subRouteActive = getActiveRoute(routes[i].subRoutes);
-        if (subRouteActive) {
-          return subRouteActive;
-        }
-      } else {
-        const fullPath = `${routes[i].layout}${routes[i].path}`;
-        if (location.pathname === fullPath) {
-          return routes[i].name;
-        }
-      }
-    }
-    return getLastPathSegment(location.pathname);
-  };
-
   // Update active route whenever location changes
   useEffect(() => {
-    const newActiveRoute = getActiveRoute(routes);
-    const capitalizedRoute = capitalizeFirstLetter(newActiveRoute); // Capitalize first letter
-    setActiveRoute(capitalizedRoute); // Set the capitalized route name
+    const breadcrumbPath = getBreadcrumbPath(location.pathname, routes);
+    setActiveRoute(breadcrumbPath);
   }, [location]);
 
   // Render routes for the app, including subroutes
   const getRoutes = (routes) => {
     return routes.flatMap((route, key) => {
       if (route.subRoutes) {
-        // Handle subroutes by recursively mapping them
         return [
-          // Parent route (optional, if it has a component)
           route.component && (
-            <Route
-              key={`parent-${key}`}
-              path={`${route.path}`}
-              element={route.component}
-            />
+            <Route key={`parent-${key}`} path={`${route.path}`} element={route.component} />
           ),
-          // Sub-routes
           ...route.subRoutes.map((subRoute, subKey) => (
-            <Route
-              key={`${key}-${subKey}`}
-              path={`${route.path}${subRoute.path}`}
-              element={subRoute.component}
-            />
+            <Route key={`${key}-${subKey}`} path={`${route.path}${subRoute.path}`} element={subRoute.component} />
           )),
         ];
       } else if (route.layout === "/admin") {
-        // Normal route for single component route handling
-        return (
-          <Route
-            key={key}
-            path={`${route.path}`}
-            element={route.component}
-          />
-        );
+        return <Route key={key} path={`${route.path}`} element={route.component} />;
       }
       return null;
     });
@@ -121,7 +106,7 @@ const AdminLayout = (props) => {
               <Navbar
                 onOpen={onOpen}
                 logoText={"Horizon UI Dashboard PRO"}
-                brandText={activeRoute} // Dynamically updated brand text
+                brandText={activeRoute} // Dynamically updated breadcrumb
                 secondary={false}
                 message={""}
                 fixed={false}
@@ -130,19 +115,10 @@ const AdminLayout = (props) => {
             </Box>
           </Portal>
           {getRoute() ? (
-            <Box
-              mx="auto"
-              p={{ base: "20px", md: "30px" }}
-              pe="20px"
-              minH="100vh"
-              pt="50px"
-            >
+            <Box mx="auto" p={{ base: "20px", md: "30px" }} pe="20px" minH="100vh" pt="50px">
               <Routes>
                 {getRoutes(routes)} {/* Dynamic route rendering */}
-                <Route
-                  path="/"
-                  element={<Navigate to="/admin/dashboard" replace />}
-                />
+                <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
               </Routes>
             </Box>
           ) : null}

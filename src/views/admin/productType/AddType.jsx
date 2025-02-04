@@ -62,12 +62,28 @@ const navigate = useNavigate();
           <div className="row col-md-12">
             <div className="mb-3 col-md-12">
               <label htmlFor="type" className="form-label">
-                Product Type <span className="text-danger">*</span>
+                Product En-Type <span className="text-danger">*</span>
               </label>
               <Input
                 type="text"
                 id="type"
-                placeholder="Enter Product Type"
+                placeholder="Enter Product En-Type"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="row col-md-12">
+            <div className="mb-3 col-md-12">
+              <label htmlFor="type" className="form-label">
+                Product Ar-Type <span className="text-danger">*</span>
+              </label>
+              <Input
+                type="text"
+                id="type"
+                placeholder="Enter Product Ar-Type"
                 value={type}
                 onChange={(e) => setType(e.target.value)}
                 required
@@ -77,7 +93,7 @@ const navigate = useNavigate();
           {/* Action Buttons */}
           <Flex justify="start" mt={4}>
             <Button variant='darkBrand' color='white' fontSize='sm' fontWeight='500' borderRadius='70px' px='24px' py='5px' onClick={handleSend}>
-              Send
+              Save
             </Button>
           </Flex>
         </form>

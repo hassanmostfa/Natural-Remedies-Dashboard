@@ -34,17 +34,20 @@ import {
       {
         id: 1,
         image:'https://th.bing.com/th/id/OIP.4NebaoMBQ1I-_Sk9KLW0DQHaFz?w=220&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-        name:'brand 1'
+        en_name:'brand 1',
+        ar_name:'العلامة التجارية 1'
       },
       {
         id: 2,
         image:'https://th.bing.com/th/id/OIP.4NebaoMBQ1I-_Sk9KLW0DQHaFz?w=220&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-        name : 'brand 2'
+        en_name : 'brand 2',
+        ar_name:'العلامة التجارية 2'
       },
       {
         id: 3,
         image:'https://th.bing.com/th/id/OIP.4NebaoMBQ1I-_Sk9KLW0DQHaFz?w=220&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-        name : 'brand 3'
+        en_name : 'brand 3',
+        ar_name:'العلامة التجارية 3'
       },
     ]);
   
@@ -75,8 +78,8 @@ import {
           </Flex>
         ),
       }),
-      columnHelper.accessor('name', {
-        id: 'name',
+      columnHelper.accessor('en_name', {
+        id: 'en_name',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -84,7 +87,25 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-           Name
+           En-Name
+          </Text>
+        ),
+        cell: (info) => (
+          <Text color={textColor}>
+            {info.getValue()}
+          </Text>
+        ),
+      }),
+      columnHelper.accessor('ar_name', {
+        id: 'ar_name',
+        header: () => (
+          <Text
+            justifyContent="space-between"
+            align="center"
+            fontSize={{ sm: '10px', lg: '12px' }}
+            color="gray.400"
+          >
+           Ar-Name
           </Text>
         ),
         cell: (info) => (

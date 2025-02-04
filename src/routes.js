@@ -41,8 +41,8 @@ import AddAdmin from 'views/admin/admins/AddAdmin';
 import Roles from 'views/admin/roles/Roles';
 import Users from 'views/admin/users/Users';
 import FamilyAccounts from 'views/admin/users/FamilyAccounts';
-import RTL from 'views/admin/rtl';
-
+import PromoCodes from 'views/admin/promoCodes/PromoCodes';
+import AddPromoCode from 'views/admin/promoCodes/AddPromoCode';
 // Auth Imports
 import SignInCentered from 'views/auth/signIn';
 import AddRole from 'views/admin/roles/AddRole';
@@ -80,7 +80,7 @@ const routes = [
       },
       {
         name: "Rules",
-        path: "/management/rules",
+        path: "/rules",
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Roles />,
         showInSidebar: true,
@@ -114,7 +114,7 @@ const routes = [
   {
     name: 'Clinic Management',
     layout: '/admin',
-    path: '/clinic/management',
+    path: '/clinics',
     icon: <Icon as={LiaClinicMedicalSolid} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
     showInSidebar: true,
@@ -136,7 +136,7 @@ const routes = [
     showInSidebar: true,
   },
   {
-    name: 'Add Category',
+    name: 'Categories',
     layout: '/admin',
     path: '/add-category',
     icon: <Icon as={BiSolidCategoryAlt} width="20px" height="20px" color="inherit" />,
@@ -184,7 +184,7 @@ const routes = [
     showInSidebar: true,
   },
   {
-    name: 'Add Brand',
+    name: 'Brands',
     layout: '/admin',
     path: '/add-brand',
     icon: <Icon as={TbBrandAdonisJs} width="20px" height="20px" color="inherit" />,
@@ -224,7 +224,7 @@ const routes = [
     showInSidebar: true,
   },
   {
-    name: 'Add Notifications',
+    name: 'Notifications',
     layout: '/admin',
     path: '/add-notifications',
     icon: <Icon as={IoNotificationsOutline} width="20px" height="20px" color="inherit" />,
@@ -236,8 +236,15 @@ const routes = [
     layout: '/admin',
     path: '/promo-codes',
     icon: <Icon as={CiDiscount1} width="20px" height="20px" color="inherit" />,
-    component: <DataTables />,
+    component: <PromoCodes />,
     showInSidebar: true,
+  },
+  {
+    name: 'Promo Codes',
+    layout: '/admin',
+    path: '/add-promo-code',
+    component: <AddPromoCode />,
+    showInSidebar: false,
   },
   {
     name: 'Reports',
@@ -307,7 +314,7 @@ const routes = [
     ],
   },
   {
-    name: 'Add Role',
+    name: 'Admin Management',
     layout: '/admin',
     path: '/add-New-Rule',
     icon: <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />,
@@ -315,9 +322,9 @@ const routes = [
     showInSidebar: false,
   },
   {
-    name: 'Add Admin',
+    name: 'Admin Management',
     layout: '/admin',
-    path: '/add-New-Admin',
+    path: '/add-admin',
     component: <AddAdmin />,
     showInSidebar: false,
   },

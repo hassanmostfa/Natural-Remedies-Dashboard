@@ -93,12 +93,26 @@ const AddBrand = () => {
           {/* Name Field */}
           <div className="mb-3">
             <label htmlFor="name" className="form-label">
-              Brand Name <span className="text-danger">*</span>
+              Brand En-Name <span className="text-danger">*</span>
             </label>
             <Input
               type="text"
-              id="name"
-              placeholder="Enter Brand Name"
+              id="en_name"
+              placeholder="Enter Brand En-Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label htmlFor="name" className="form-label">
+              Brand Ar-Name <span className="text-danger">*</span>
+            </label>
+            <Input
+              type="text"
+              id="ar_name"
+              placeholder="Enter Brand Ar-Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -161,7 +175,7 @@ const AddBrand = () => {
               py='5px'
               onClick={handleSend}
             >
-              Send
+              Save
             </Button>
           </Flex>
         </form>

@@ -93,12 +93,27 @@ const AddCategory = () => {
           {/* Name Field */}
           <div className="mb-3">
             <label htmlFor="name" className="form-label">
-            Category Name <span className="text-danger">*</span>
+            Category En-Name <span className="text-danger">*</span>
             </label>
             <Input
               type="text"
-              id="name"
-              placeholder="Enter Category Name"
+              id="en_name"
+              placeholder="Enter Category En-Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Name Field */}
+          <div className="mb-3">
+            <label htmlFor="name" className="form-label">
+            Category Ar-Name <span className="text-danger">*</span>
+            </label>
+            <Input
+              type="text"
+              id="ar_name"
+              placeholder="Enter Category Ar-Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -161,7 +176,7 @@ const AddCategory = () => {
               py='5px'
               onClick={handleSend}
             >
-              Send
+              Save
             </Button>
           </Flex>
         </form>

@@ -34,15 +34,18 @@ const AllTypes = () => {
      const [data, setData] = React.useState([
          {
            id: 1,
-            product_type:'Type 1',
+            product_en_type:'Type 1',
+            product_ar_type:'النوع 1',
          },
          {
            id: 2,
-           product_type:'Type 2',
+           product_en_type:'Type 2',
+           product_ar_type:'النوع 2',
          },
          {
            id: 3,
-           product_type:'Type 3',
+           product_en_type:'Type 3',
+           product_ar_type:'النوع 3',
          },
        ]);
        const [sorting, setSorting] = React.useState([]);
@@ -71,8 +74,8 @@ const AllTypes = () => {
              </Flex>
            ),
          }),
-         columnHelper.accessor('product_type', {
-           id: 'product_type',
+         columnHelper.accessor('product_en_type', {
+           id: 'product_en_type',
            header: () => (
              <Text
                justifyContent="space-between"
@@ -80,7 +83,27 @@ const AllTypes = () => {
                fontSize={{ sm: '10px', lg: '12px' }}
                color="gray.400"
              >
-               Product Type
+               Product En-Type
+             </Text>
+           ),
+           cell: (info) => (
+             <Flex align="center">
+               <Text color={textColor}>
+                 {info.getValue()}
+               </Text>
+             </Flex>
+           ),
+         }),
+         columnHelper.accessor('product_ar_type', {
+           id: 'product_ar_type',
+           header: () => (
+             <Text
+               justifyContent="space-between"
+               align="center"
+               fontSize={{ sm: '10px', lg: '12px' }}
+               color="gray.400"
+             >
+               Product Ar-Type
              </Text>
            ),
            cell: (info) => (

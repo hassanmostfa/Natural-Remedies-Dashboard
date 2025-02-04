@@ -229,7 +229,7 @@ const Admins = () => {
             borderRadius='70px'
             px='24px'
             py='5px'
-            onClick={() => navigate('/admin/add-New-Admin')}
+            onClick={() => navigate('/admin/add-admin')}
             width={'200px'}
             >
               

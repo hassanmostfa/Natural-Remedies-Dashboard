@@ -24,7 +24,8 @@ import {
   import Card from 'components/card/Card';
   import Menu from 'components/menu/MainMenu';
   import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
-  import { FaEye, FaTrash } from 'react-icons/fa6';
+  import { FaEye, FaTrash  } from 'react-icons/fa6';
+  import { IoIosSend } from "react-icons/io";
   import { useNavigate } from 'react-router-dom';
   
   const columnHelper = createColumnHelper();
@@ -162,26 +163,6 @@ import {
           </Text>
         ),
       }),
-
-      columnHelper.accessor('status', {
-        id: 'status',
-        header: () => (
-          <Text
-            justifyContent="space-between"
-            align="center"
-            fontSize={{ sm: '10px', lg: '12px' }}
-            color="gray.400"
-          >
-            Status
-          </Text>
-        ),
-        cell: (info) => (
-          <Text fontWeight={'bold'} color={info.getValue() === 'Unread' ? 'red.500' : 'green.500'}>
-            {info.getValue() === 'Unread' ? 'Unread' : 'Read'}
-          </Text>
-        ),
-      }),
-
       columnHelper.accessor('actions', {
         id: 'actions',
         header: () => (
@@ -217,8 +198,9 @@ import {
               h="18px"
               me="10px"
               color="blue.500"
-              as={FaEye}
+              as={IoIosSend}
               cursor="pointer"
+              title = "Send Notification"
             />
           </Flex>
         ),
@@ -266,7 +248,7 @@ import {
               width={'200px'}
             >
               <PlusSquareIcon me="10px" />
-              Create New Notification
+              Add Notification
             </Button>
           </Flex>
           <Box>
