@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Box } from '@chakra-ui/react';
+import { Icon, Box, layout } from '@chakra-ui/react';
 import {
   MdBarChart,
   MdPerson,
@@ -21,15 +21,15 @@ import {
   MdAssignmentReturn,
 } from 'react-icons/md';
 
-import { FiChevronsRight } from "react-icons/fi";
-import { TbBrandAdonisJs } from "react-icons/tb";
-import { MdAdminPanelSettings } from "react-icons/md";
-import { TiMinus } from "react-icons/ti";
-import { BiSolidCategoryAlt } from "react-icons/bi";
-import { FaRegCalendarDays } from "react-icons/fa6";
-import { LiaClinicMedicalSolid } from "react-icons/lia";
-import { IoNotificationsOutline } from "react-icons/io5";
-import { CiDiscount1 } from "react-icons/ci";
+import { FiChevronsRight } from 'react-icons/fi';
+import { TbBrandAdonisJs } from 'react-icons/tb';
+import { MdAdminPanelSettings } from 'react-icons/md';
+import { TiMinus } from 'react-icons/ti';
+import { BiSolidCategoryAlt } from 'react-icons/bi';
+import { FaRegCalendarDays } from 'react-icons/fa6';
+import { LiaClinicMedicalSolid } from 'react-icons/lia';
+import { IoNotificationsOutline } from 'react-icons/io5';
+import { CiDiscount1 } from 'react-icons/ci';
 
 // Admin Imports
 import MainDashboard from 'views/admin/default';
@@ -54,6 +54,15 @@ import AllBrands from 'views/admin/brand/AllBrands';
 import AddBrand from 'views/admin/brand/AddBrand';
 import AllCategories from 'views/admin/category/AllCategories';
 import AddCategory from 'views/admin/category/AddCategory';
+import Blogs from 'views/admin/blog/Blogs';
+import AddBlog from 'views/admin/blog/AddBlog';
+import Ads from 'views/admin/ads/Ads';
+import AddAd from 'views/admin/ads/AddAd';
+import Banner from 'views/admin/banner/Banner';
+import AddBanner from 'views/admin/banner/AddBanner';
+import About from 'views/admin/about-us/About';
+import AddAbout from 'views/admin/about-us/AddAbout';
+
 
 const routes = [
   {
@@ -65,22 +74,29 @@ const routes = [
     showInSidebar: true,
   },
   {
-    name: "Admin Management",
-    layout: "/admin",
-    icon: <Icon as={MdAdminPanelSettings} width="20px" height="20px" color="#8f9bba" />,
+    name: 'Admin Management',
+    layout: '/admin',
+    icon: (
+      <Icon
+        as={MdAdminPanelSettings}
+        width="20px"
+        height="20px"
+        color="#8f9bba"
+      />
+    ),
     component: null,
     showInSidebar: true,
     subRoutes: [
       {
-        name: "Admins",
-        path: "/admins",
+        name: 'Admins',
+        path: '/admins',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Admins />,
         showInSidebar: true,
       },
       {
-        name: "Rules",
-        path: "/rules",
+        name: 'Rules',
+        path: '/rules',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Roles />,
         showInSidebar: true,
@@ -88,9 +104,9 @@ const routes = [
     ],
   },
   {
-    name: "Add Rule",
-    layout: "/admin",
-    path: "/add-rule",
+    name: 'Add Rule',
+    layout: '/admin',
+    path: '/add-rule',
     icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
     component: <Profile />,
     showInSidebar: false,
@@ -99,7 +115,9 @@ const routes = [
     name: 'Pharmacy Management',
     layout: '/admin',
     path: '/pharmacy',
-    icon: <Icon as={MdLocalPharmacy} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon as={MdLocalPharmacy} width="20px" height="20px" color="inherit" />
+    ),
     component: <Admins />,
     showInSidebar: true,
   },
@@ -107,7 +125,9 @@ const routes = [
     name: 'Doctor Management',
     layout: '/admin',
     path: '/doctors',
-    icon: <Icon as={MdMedicalServices} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon as={MdMedicalServices} width="20px" height="20px" color="inherit" />
+    ),
     component: <DataTables />,
     showInSidebar: true,
   },
@@ -115,7 +135,14 @@ const routes = [
     name: 'Clinic Management',
     layout: '/admin',
     path: '/clinics',
-    icon: <Icon as={LiaClinicMedicalSolid} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon
+        as={LiaClinicMedicalSolid}
+        width="20px"
+        height="20px"
+        color="inherit"
+      />
+    ),
     component: <DataTables />,
     showInSidebar: true,
   },
@@ -131,7 +158,14 @@ const routes = [
     name: 'Categories',
     layout: '/admin',
     path: '/categories',
-    icon: <Icon as={BiSolidCategoryAlt} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon
+        as={BiSolidCategoryAlt}
+        width="20px"
+        height="20px"
+        color="inherit"
+      />
+    ),
     component: <AllCategories />,
     showInSidebar: true,
   },
@@ -139,7 +173,14 @@ const routes = [
     name: 'Categories',
     layout: '/admin',
     path: '/add-category',
-    icon: <Icon as={BiSolidCategoryAlt} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon
+        as={BiSolidCategoryAlt}
+        width="20px"
+        height="20px"
+        color="inherit"
+      />
+    ),
     component: <AddCategory />,
     showInSidebar: false,
   },
@@ -179,7 +220,9 @@ const routes = [
     name: 'Brands',
     layout: '/admin',
     path: '/brands',
-    icon: <Icon as={TbBrandAdonisJs} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon as={TbBrandAdonisJs} width="20px" height="20px" color="inherit" />
+    ),
     component: <AllBrands />,
     showInSidebar: true,
   },
@@ -187,7 +230,9 @@ const routes = [
     name: 'Brands',
     layout: '/admin',
     path: '/add-brand',
-    icon: <Icon as={TbBrandAdonisJs} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon as={TbBrandAdonisJs} width="20px" height="20px" color="inherit" />
+    ),
     component: <AddBrand />,
     showInSidebar: false,
   },
@@ -203,7 +248,9 @@ const routes = [
     name: 'Medicine Reminder',
     layout: '/admin',
     path: '/medicine-reminder',
-    icon: <Icon as={MdNotifications} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon as={MdNotifications} width="20px" height="20px" color="inherit" />
+    ),
     component: <Profile />,
     showInSidebar: true,
   },
@@ -211,7 +258,14 @@ const routes = [
     name: 'Orders',
     layout: '/admin',
     path: '/orders',
-    icon: <Icon as={MdOutlineShoppingCart} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon
+        as={MdOutlineShoppingCart}
+        width="20px"
+        height="20px"
+        color="inherit"
+      />
+    ),
     component: <DataTables />,
     showInSidebar: true,
   },
@@ -219,7 +273,14 @@ const routes = [
     name: 'Notifications',
     layout: '/admin',
     path: '/notifications',
-    icon: <Icon as={IoNotificationsOutline} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon
+        as={IoNotificationsOutline}
+        width="20px"
+        height="20px"
+        color="inherit"
+      />
+    ),
     component: <AllNotification />,
     showInSidebar: true,
   },
@@ -227,7 +288,14 @@ const routes = [
     name: 'Notifications',
     layout: '/admin',
     path: '/add-notifications',
-    icon: <Icon as={IoNotificationsOutline} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon
+        as={IoNotificationsOutline}
+        width="20px"
+        height="20px"
+        color="inherit"
+      />
+    ),
     component: <AddNotification />,
     showInSidebar: false,
   },
@@ -258,13 +326,15 @@ const routes = [
     name: 'Appointments',
     layout: '/admin',
     path: '/appointments',
-    icon: <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
+    ),
     component: <DataTables />,
     showInSidebar: true,
   },
   {
-    name: "CMS",
-    layout: "/admin",
+    name: 'CMS',
+    layout: '/admin',
     icon: <Icon as={MdSettings} width="20px" height="20px" color="#8f9bba" />,
     component: null,
     showInSidebar: true,
@@ -273,28 +343,29 @@ const routes = [
         name: 'Blogs',
         path: '/blogs',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
-        component: <DataTables />,
+        component: <Blogs />,
         showInSidebar: true,
       },
+
       {
         name: 'Banners',
         path: '/cms/banners',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
-        component: <Profile />,
+        component: <Banner />,
         showInSidebar: true,
       },
       {
         name: 'Ads',
         path: '/cms/ads',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
-        component: <SignInCentered />,
+        component: <Ads />,
         showInSidebar: true,
       },
       {
         name: 'About Us',
         path: '/cms/about-us',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
-        component: <SignInCentered />,
+        component: <About />,
         showInSidebar: true,
       },
       {
@@ -314,10 +385,45 @@ const routes = [
     ],
   },
   {
+    name: 'Add blog',
+    layout: '/admin',
+    path: '/add-blogs',
+    icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+    component: <AddBlog />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Add ads',
+    layout: '/admin', 
+    path: '/cms/add-ads',
+    icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+    component: <AddAd />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Add Banner',
+    layout: '/admin', 
+    path: '/cms/add-banner',
+    icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+    component: <AddBanner />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Add About',
+    layout: '/admin', 
+    path: '/cms/add-about',
+    icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+    component: <AddAbout />,
+    showInSidebar: false,
+  },
+
+  {
     name: 'Admin Management',
     layout: '/admin',
     path: '/add-New-Rule',
-    icon: <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />,
+    icon: (
+      <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
+    ),
     component: <AddRole />,
     showInSidebar: false,
   },
