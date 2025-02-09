@@ -85,7 +85,7 @@ const navigate = useNavigate();
             mb="20px !important"
             lineHeight="100%"
             >
-            Add New Notification
+            Add New Blog
             </Text>
             <Button
             type="button"

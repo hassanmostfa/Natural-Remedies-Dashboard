@@ -113,7 +113,7 @@ const AddBanner = () => {
             <Input
               type="text"
               id="outside_link"
-              placeholder="Enter Outside Link"
+              placeholder="Enter External Link"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -122,13 +122,13 @@ const AddBanner = () => {
           </div>
           <div className="mb-3">
             <Text color={textColor} fontSize="sm" fontWeight="700">
-              Enternal Link
+              Internal Link
               <span className="text-danger mx-1">*</span>
             </Text> 
             <Input
               type="text"
               id="inside_link"
-              placeholder="Enter Inside Link"
+              placeholder="Enter Internal Link"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
