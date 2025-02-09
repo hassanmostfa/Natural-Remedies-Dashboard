@@ -1,18 +1,13 @@
 import React, { useState } from "react";
 import {
-  Box,
   Button,
   Flex,
-  Grid,
   Input,
-  Textarea,
   Text,
   useColorModeValue,
-  Icon,
 
 } from "@chakra-ui/react";
 import "./about.css";
-import { FaUpload } from "react-icons/fa6";
 import { IoMdArrowBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 
@@ -20,42 +15,9 @@ const AddAbout = () => {
 
   const [name, setName] = useState("");
   const [image, setImage] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
   const textColor = useColorModeValue("secondaryGray.900", "white");
-  const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
   const navigate = useNavigate();
 
-  const handleImageUpload = (files) => {
-    if (files && files.length > 0) {
-      setImage(files[0]);
-    }
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = e.dataTransfer.files;
-    handleImageUpload(files);
-  };
-
-  const handleFileInputChange = (e) => {
-    const files = e.target.files;
-    handleImageUpload(files);
-  };
-
-  const handleCancel = () => {
-    setName("");
-    setImage(null);
-  };
 
   const handleSend = () => {
     const brandData = {
@@ -92,9 +54,10 @@ const AddAbout = () => {
         <form>
           {/* Name Field */}
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-              Phone <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Phone
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Input
               type="text"
               id="phone"
@@ -102,13 +65,15 @@ const AddAbout = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt="8px"
             />
           </div>
 
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-             Location <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Location
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Input
               type="text"
               id="location"
@@ -116,12 +81,14 @@ const AddAbout = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt="8px"
             />
           </div>
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-             Map Url <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Map URL
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Input
               type="text"
               id="map_url"
@@ -129,12 +96,13 @@ const AddAbout = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt="8px"
             />
           </div>
 
          
           {/* Action Buttons */}
-          <Flex justify="center" mt={4}>
+          <Flex justify="flex-start" mt={4}>
           
             <Button
               variant='darkBrand'
@@ -145,6 +113,7 @@ const AddAbout = () => {
               px='24px'
               py='5px'
               onClick={handleSend}
+              mt='30px'
             >
               Save
             </Button>

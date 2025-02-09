@@ -5,28 +5,40 @@ import {
   Flex,
   Grid,
   Input,
+  Textarea,
   Text,
   useColorModeValue,
   Icon,
 
 } from "@chakra-ui/react";
-import "./AllTypes.css";
-import { FaUpload } from "react-icons/fa6";
 import { IoMdArrowBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 
-const AddType = () => {
-  const [type, setType] = useState("");
-
-
+const AddPrivcy = () => {
+  const [englishTitle, setEnglishTitle] = useState("");
+  const [arabicTitle, setArabicTitle] = useState("");
+  const [englishDescription, setEnglishDescription] = useState("");
+  const [arabicDescription, setArabicDescription] = useState("");
+  const [image, setImage] = useState(null);
   const textColor = useColorModeValue("secondaryGray.900", "white");
 
-  const navigate = useNavigate();
+const navigate = useNavigate();
+
+  const handleCancel = () => {
+    setEnglishTitle("");
+    setArabicTitle("");
+    setEnglishDescription("");
+    setArabicDescription("");
+    setImage(null);
+  };
 
   const handleSend = () => {
     const notificationData = {
-      type,
-
+      englishTitle,
+      arabicTitle,
+      englishDescription,
+      arabicDescription,
+      image,
     };
     console.log("Notification Data:", notificationData);
     // You can send this data to an API or perform other actions
@@ -43,7 +55,7 @@ const AddType = () => {
             mb="20px !important"
             lineHeight="100%"
             >
-            Add New Product Type
+            Add New Privacy & Policy
             </Text>
             <Button
             type="button"
@@ -57,46 +69,48 @@ const AddType = () => {
             </Button>
         </div>
         <form>
-          {/* English Title and Arabic Title Fields */}
+          {/* English Description and Arabic Description Fields */}
           <div className="row col-md-12">
-            <div className="mb-3 col-md-12">
+            <div className="mb-3 col-md-6">
               <Text color={textColor} fontSize="sm" fontWeight="700">
-                Product En-Type
+                English Privacy Content
                 <span className="text-danger mx-1">*</span>
               </Text> 
-              <Input
-                type="text"
-                id="type"
-                placeholder="Enter Product En-Type"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
+              <Textarea
+                rows = {10}
+                id="englishDescription"
+                placeholder="Enter English Privacy Content Here ..."
+                value={englishDescription}
+                onChange={(e) => setEnglishDescription(e.target.value)}
+                required
+                mt={"8px"}
+              />
+            </div>
+            <div className="mb-3 col-md-6 pr-0">
+              <Text color={textColor} fontSize="sm" fontWeight="700">
+                Arabic Privacy Content
+                <span className="text-danger mx-1">*</span>
+              </Text> 
+              <Textarea
+                rows = {10}
+                id="arabicDescription"
+                placeholder="اكتب المحتو هنا ..."
+                value={arabicDescription}
+                onChange={(e) => setArabicDescription(e.target.value)}
+                dir="rtl"
                 required
                 mt={"8px"}
               />
             </div>
           </div>
 
-          <div className="row col-md-12">
-            <div className="mb-3 col-md-12">
-              <Text color={textColor} fontSize="sm" fontWeight="700">
-                Product Ar-Type
-                <span className="text-danger mx-1">*</span>
-              </Text> 
-              <Input
-                type="text"
-                id="type"
-                placeholder="Enter Product Ar-Type"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                required
-                mt={"8px"}
-              />
-            </div>
-          </div>
           {/* Action Buttons */}
-          <Flex justify="start" mt={4}>
+          <Flex justify="center" mt={4}>
+            <Button variant="outline" colorScheme="red" onClick={handleCancel} mr={2}>
+              Cancel
+            </Button>
             <Button variant='darkBrand' color='white' fontSize='sm' fontWeight='500' borderRadius='70px' px='24px' py='5px' onClick={handleSend}>
-              Save
+              Send
             </Button>
           </Flex>
         </form>
@@ -105,5 +119,4 @@ const AddType = () => {
   );
 };
 
-export default AddType;
-
+export default AddPrivcy;

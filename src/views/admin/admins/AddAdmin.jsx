@@ -4,7 +4,7 @@ import { ChevronDownIcon } from '@chakra-ui/icons';
 import './admins.css';
 
 const AddAdmin = () => {
-  const textColor = useColorModeValue('secondaryGray.900', 'white');
+  const textColor = useColorModeValue('secondaryGray.900', 'white');  
   const [selectedRole, setSelectedRole] = useState('Select a role');
 
   const handleSelect = (role) => {
@@ -26,40 +26,46 @@ const AddAdmin = () => {
           {/* First Name and Last Name Fields */}
           <div className="row col-md-12">
             <div className="mb-3 col-md-6">
-              <label htmlFor="firstName" className="form-label">
-                First Name <span className="text-danger">*</span>
-              </label>
-              <input type="text" className="form-control" id="firstName" placeholder="Enter first name" required />
+                  <Text color={textColor} fontSize="sm" fontWeight="700">
+                    First Name
+                    <span className="text-danger mx-1">*</span>
+                  </Text> 
+              <input type="text" className="form-control mt-2" id="firstName" placeholder="Enter first name" required />
             </div>
             <div className="mb-3 col-md-6">
-              <label htmlFor="lastName" className="form-label">
-                Last Name <span className="text-danger">*</span>
-              </label>
-              <input type="text" className="form-control" id="lastName" placeholder="Enter last name" required />
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Last Name
+              <span className="text-danger mx-1">*</span>
+            </Text> 
+              <input type="text" className="form-control mt-2" id="lastName" placeholder="Enter last name" required />
             </div>
           </div>
 
           {/* Email Field */}
           <div className="mb-3">
-            <label htmlFor="email" className="form-label">
-              Email <span className="text-danger">*</span>
-            </label>
-            <input type="email" className="form-control" id="email" placeholder="Enter email" required />
+          <Text color={textColor} fontSize="sm" fontWeight="700">
+              Email
+              <span className="text-danger mx-1">*</span>
+            </Text> 
+            <input type="email" className="form-control mt-2" id="email" placeholder="Enter email" required />
           </div>
 
           {/* Password Field */}
           <div className="mb-3">
-            <label htmlFor="password" className="form-label">
-              Password <span className="text-danger">*</span>
-            </label>
-            <input type="password" className="form-control" id="password" placeholder="Enter password" required />
+          <Text color={textColor} fontSize="sm" fontWeight="700">
+              Password
+              <span className="text-danger mx-1">*</span>
+            </Text> 
+            <input type="password" className="form-control mt-2" id="password" placeholder="Enter password" required />
           </div>
 
           {/* Role Dropdown - Chakra UI Menu */}
           <div className="mb-3">
-            <label htmlFor="role" className="form-label">
-              Role <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Role
+              <span className="text-danger mx-1">*</span>
+            </Text> 
+
             <Menu>
             <MenuButton 
             as={Button} 

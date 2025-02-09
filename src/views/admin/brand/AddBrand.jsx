@@ -92,9 +92,10 @@ const AddBrand = () => {
         <form>
           {/* Name Field */}
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-              Brand En-Name <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Brand En-Name
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Input
               type="text"
               id="en_name"
@@ -102,13 +103,15 @@ const AddBrand = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt={"8px"}
             />
           </div>
 
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-              Brand Ar-Name <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Product Ar-Type
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Input
               type="text"
               id="ar_name"
@@ -116,6 +119,7 @@ const AddBrand = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt={"8px"}
             />
           </div>
 

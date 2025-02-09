@@ -1,10 +1,8 @@
 import React from 'react';
-import { Icon, Box, layout } from '@chakra-ui/react';
+import { Icon } from '@chakra-ui/react';
 import {
   MdBarChart,
-  MdPerson,
   MdHome,
-  MdLock,
   MdOutlineShoppingCart,
   MdSettings,
   MdLocalPharmacy,
@@ -15,13 +13,8 @@ import {
   MdAssignment,
   MdNotifications,
   MdList,
-  MdDescription,
-  MdAdsClick,
-  MdPrivacyTip,
-  MdAssignmentReturn,
 } from 'react-icons/md';
 
-import { FiChevronsRight } from 'react-icons/fi';
 import { TbBrandAdonisJs } from 'react-icons/tb';
 import { MdAdminPanelSettings } from 'react-icons/md';
 import { TiMinus } from 'react-icons/ti';
@@ -62,6 +55,10 @@ import Banner from 'views/admin/banner/Banner';
 import AddBanner from 'views/admin/banner/AddBanner';
 import About from 'views/admin/about-us/About';
 import AddAbout from 'views/admin/about-us/AddAbout';
+import PrivcyAndPolicy from 'views/admin/privcyAndPolicy/PrivcyAndPolicy';
+import AddPrivcy from 'views/admin/privcyAndPolicy/AddPrivcy';
+import Returns from 'views/admin/return/Returns';
+import AddReturn from 'views/admin/return/AddReturn';
 
 
 const routes = [
@@ -372,14 +369,14 @@ const routes = [
         name: 'Privacy & Policy',
         path: '/cms/privacy-and-policy',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
-        component: <SignInCentered />,
+        component: <PrivcyAndPolicy />,
         showInSidebar: true,
       },
       {
-        name: 'Returned',
+        name: 'Return',
         path: '/cms/returned',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
-        component: <SignInCentered />,
+        component: <Returns />,
         showInSidebar: true,
       },
     ],
@@ -414,6 +411,20 @@ const routes = [
     path: '/cms/add-about',
     icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
     component: <AddAbout />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Add Privacy & Policy',
+    layout: '/admin', 
+    path: '/cms/add-privcy',
+    component: <AddPrivcy />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Add Return',
+    layout: '/admin', 
+    path: '/cms/add-return',
+    component: <AddReturn />,
     showInSidebar: false,
   },
 

@@ -3,9 +3,7 @@ import {
   Box,
   Button,
   Flex,
-  Grid,
   Input,
-  Textarea,
   Text,
   useColorModeValue,
   Icon,
@@ -92,9 +90,10 @@ const AddAd = () => {
         <form>
           {/* Name Field */}
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-              Title <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Title
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Input
               type="text"
               id="title"
@@ -102,33 +101,38 @@ const AddAd = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt="8px"
             />
           </div>
 
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-             Outside Link <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              External Link
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Input
               type="text"
               id="outside_link"
-              placeholder="Enter Outside Link"
+              placeholder="Enter External Link"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt="8px"
             />
           </div>
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-             Inside Link <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Internal Link
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Input
               type="text"
               id="inside_link"
-              placeholder="Enter Inside Link"
+              placeholder="Enter Internal Link"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt="8px"
             />
           </div>
 

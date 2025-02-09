@@ -27,9 +27,9 @@ import {
   import { useNavigate } from 'react-router-dom';
   
   const columnHelper = createColumnHelper();
-  
-  const AllNotification = () => {
-    const [data, setData] = React.useState([
+
+const PrivcyAndPolicy = () => {
+const [data, setData] = React.useState([
       {
         id: 1,
         image:'https://www.google.com/url?sa=i&url=https%3A%2F%2Funsplash.com%2Fs%2Fphotos%2Fnotification&psig=AOvVaw0QAHPv4Zb3oMgEgVjvpcKm&ust=1738692903658000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJCHtPmNqIsDFQAAAAAdAAAAABAE',
@@ -89,24 +89,6 @@ import {
           </Flex>
         ),
       }),
-      columnHelper.accessor('en_title', {
-        id: 'en_title',
-        header: () => (
-          <Text
-            justifyContent="space-between"
-            align="center"
-            fontSize={{ sm: '10px', lg: '12px' }}
-            color="gray.400"
-          >
-            EN Title
-          </Text>
-        ),
-        cell: (info) => (
-          <Text color={textColor}>
-            {info.getValue()}
-          </Text>
-        ),
-      }),
       columnHelper.accessor('en_description', {
         id: 'en_description',
         header: () => (
@@ -116,30 +98,12 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-            EN Description
+            EN Privcy Content
           </Text>
         ),
         cell: (info) => (
           <Text color={textColor}>
             {info.getValue().slice(0, 20) + '...'}
-          </Text>
-        ),
-      }),
-      columnHelper.accessor('ar_title', {
-        id: 'ar_title',
-        header: () => (
-          <Text
-            justifyContent="space-between"
-            align="center"
-            fontSize={{ sm: '10px', lg: '12px' }}
-            color="gray.400"
-          >
-            AR Title
-          </Text>
-        ),
-        cell: (info) => (
-          <Text color={textColor}>
-            {info.getValue()}
           </Text>
         ),
       }),
@@ -152,7 +116,7 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-            AR Description
+            AR Privcy Content
           </Text>
         ),
         cell: (info) => (
@@ -196,7 +160,7 @@ import {
               h="18px"
               me="10px"
               color="blue.500"
-              as={IoIosSend}
+              as={FaEye}
               cursor="pointer"
               title = "Send Notification"
             />
@@ -232,7 +196,7 @@ import {
               fontWeight="700"
               lineHeight="100%"
             >
-              Notifications
+              Privacies & Policies
             </Text>
             <Button
               variant='darkBrand'
@@ -242,11 +206,11 @@ import {
               borderRadius='70px'
               px='24px'
               py='5px'
-              onClick={() => navigate('/admin/add-notifications')}
+              onClick={() => navigate('/admin/cms/add-privcy')}
               width={'200px'}
             >
               <PlusSquareIcon me="10px" />
-              Add Notification
+              Add New Field
             </Button>
           </Flex>
           <Box>
@@ -317,5 +281,5 @@ import {
       </div>
     );
   };
-  
-  export default AllNotification;
+
+export default PrivcyAndPolicy
