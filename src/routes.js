@@ -59,6 +59,14 @@ import PrivcyAndPolicy from 'views/admin/privcyAndPolicy/PrivcyAndPolicy';
 import AddPrivcy from 'views/admin/privcyAndPolicy/AddPrivcy';
 import Returns from 'views/admin/return/Returns';
 import AddReturn from 'views/admin/return/AddReturn';
+import Pharmacy from 'views/admin/pharmacy/Pharmacy';
+import AddPharmacy from 'views/admin/pharmacy/AddPharmacy';
+import Branches from 'views/admin/pharmacy/Branches';
+import AddBranch from 'views/admin/pharmacy/AddBranch';
+import Variants from 'views/admin/variants/Variants';
+import AddVariant from 'views/admin/variants/AddVariant';
+import Attributes from 'views/admin/variants/Attributes';
+import AddAttribute from 'views/admin/variants/AddAttribute';
 
 
 const routes = [
@@ -115,8 +123,29 @@ const routes = [
     icon: (
       <Icon as={MdLocalPharmacy} width="20px" height="20px" color="inherit" />
     ),
-    component: <Admins />,
+    component: <Pharmacy />,
     showInSidebar: true,
+  },
+  {
+    name: 'Pharmacy Management',
+    layout: '/admin',
+    path: '/add-pharmacy',
+    component: <AddPharmacy />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Pharmacy Management',
+    layout: '/admin',
+    path: '/pharmacy-branches',
+    component: <Branches />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Pharmacy Management',
+    layout: '/admin',
+    path: '/add-branch',
+    component: <AddBranch />,
+    showInSidebar: false,
   },
   {
     name: 'Doctor Management',
@@ -190,12 +219,33 @@ const routes = [
     showInSidebar: true,
   },
   {
-    name: 'Attributes',
+    name: 'Variants',
     layout: '/admin',
-    path: '/attributes',
+    path: '/variants',
     icon: <Icon as={MdList} width="20px" height="20px" color="inherit" />,
-    component: <Profile />,
+    component: <Variants />,
     showInSidebar: true,
+  },
+  {
+    name: 'Variants',
+    layout: '/admin',
+    path: '/add-variant',
+    component: <AddVariant />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Variants',
+    layout: '/admin',
+    path: '/variant-attributes',
+    component: <Attributes />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Variants',
+    layout: '/admin',
+    path: '/add-attribute',
+    component: <AddAttribute />,
+    showInSidebar: false,
   },
   {
     name: 'Product Types',
@@ -238,16 +288,6 @@ const routes = [
     layout: '/admin',
     path: '/prescription',
     icon: <Icon as={MdAssignment} width="20px" height="20px" color="inherit" />,
-    component: <Profile />,
-    showInSidebar: true,
-  },
-  {
-    name: 'Medicine Reminder',
-    layout: '/admin',
-    path: '/medicine-reminder',
-    icon: (
-      <Icon as={MdNotifications} width="20px" height="20px" color="inherit" />
-    ),
     component: <Profile />,
     showInSidebar: true,
   },
@@ -312,14 +352,6 @@ const routes = [
     showInSidebar: false,
   },
   {
-    name: 'Reports',
-    layout: '/admin',
-    path: '/reports',
-    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
-    component: <NFTMarketplace />,
-    showInSidebar: true,
-  },
-  {
     name: 'Appointments',
     layout: '/admin',
     path: '/appointments',
@@ -327,6 +359,14 @@ const routes = [
       <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
     ),
     component: <DataTables />,
+    showInSidebar: true,
+  },
+  {
+    name: 'Reports',
+    layout: '/admin',
+    path: '/reports',
+    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
+    component: <NFTMarketplace />,
     showInSidebar: true,
   },
   {
