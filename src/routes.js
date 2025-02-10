@@ -67,6 +67,10 @@ import Variants from 'views/admin/variants/Variants';
 import AddVariant from 'views/admin/variants/AddVariant';
 import Attributes from 'views/admin/variants/Attributes';
 import AddAttribute from 'views/admin/variants/AddAttribute';
+import Tags from 'views/admin/tags/Tags';
+import AddTag from 'views/admin/tags/AddTag';
+import Presecibtions from 'views/admin/presecibtions/Presecibtions';
+import AddPresecibtions from 'views/admin/presecibtions/AddPresecibtions';
 
 
 const routes = [
@@ -288,8 +292,16 @@ const routes = [
     layout: '/admin',
     path: '/prescription',
     icon: <Icon as={MdAssignment} width="20px" height="20px" color="inherit" />,
-    component: <Profile />,
+    component: <Presecibtions />,
     showInSidebar: true,
+  },
+  {
+    name: 'Prescription',
+    layout: '/admin',
+    path: '/add-prescription',
+    icon: <Icon as={MdAssignment} width="20px" height="20px" color="inherit" />,
+    component: <AddPresecibtions />,
+    showInSidebar: false,
   },
   {
     name: 'Orders',
@@ -377,13 +389,20 @@ const routes = [
     showInSidebar: true,
     subRoutes: [
       {
+        name: 'Tags',
+        path: '/tags',
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+        component: <Tags />,
+        showInSidebar: true,
+      },
+      {
         name: 'Blogs',
         path: '/blogs',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Blogs />,
         showInSidebar: true,
       },
-
+      
       {
         name: 'Banners',
         path: '/cms/banners',
@@ -420,6 +439,14 @@ const routes = [
         showInSidebar: true,
       },
     ],
+  },
+  {
+    name: 'Add tag',
+    layout: '/admin',
+    path: '/add-tag',
+    icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+    component: <AddTag />,
+    showInSidebar: false,
   },
   {
     name: 'Add blog',
