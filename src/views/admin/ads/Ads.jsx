@@ -20,9 +20,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import * as React from 'react';
-import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
 import Card from 'components/card/Card';
-import Menu from 'components/menu/MainMenu';
 import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
 import { FaEye, FaTrash } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
@@ -105,7 +103,7 @@ const Ads = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Out Link
+          External Link
         </Text>
       ),
       cell: (info) => <Text color={textColor}>{info.getValue()}</Text>,
@@ -119,7 +117,7 @@ const Ads = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Inside Link
+          Internal Link
         </Text>
       ),
       cell: (info) => <Text color={textColor}>{info.getValue()}</Text>,

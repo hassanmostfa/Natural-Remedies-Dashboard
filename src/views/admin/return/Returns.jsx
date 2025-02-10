@@ -22,43 +22,30 @@ import {
   import * as React from 'react';
   import Card from 'components/card/Card';
   import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
-  import { FaEye, FaTrash  } from 'react-icons/fa6';
-  import { IoIosSend } from "react-icons/io";
+  import { FaEye, FaTrash } from 'react-icons/fa6';
   import { useNavigate } from 'react-router-dom';
   
   const columnHelper = createColumnHelper();
   
-  const AllNotification = () => {
+  const Returns = () => {
     const [data, setData] = React.useState([
       {
         id: 1,
-        image:'https://www.google.com/url?sa=i&url=https%3A%2F%2Funsplash.com%2Fs%2Fphotos%2Fnotification&psig=AOvVaw0QAHPv4Zb3oMgEgVjvpcKm&ust=1738692903658000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJCHtPmNqIsDFQAAAAAdAAAAABAE',
-        ar_title:' مرحبا مستخدم جديد',
-        en_title: 'New user registered',
-        ar_description: 'مرحبا مستخدم جديد',
-        en_description: 'New user registered',
-        date: '2023-10-01',
-        status: 'Unread',
+        image:'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
+        en_name:'brand 1',
+        ar_name:'العلامة التجارية 1'
       },
       {
         id: 2,
-        image:'https://www.google.com/url?sa=i&url=https%3A%2F%2Funsplash.com%2Fs%2Fphotos%2Fnotification&psig=AOvVaw0QAHPv4Zb3oMgEgVjvpcKm&ust=1738692903658000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJCHtPmNqIsDFQAAAAAdAAAAABAE',
-        ar_title:' مرحبا مستخدم جديد',
-        en_title: 'New user registered',
-        ar_description: 'مرحبا مستخدم جديد',
-        en_description: 'New user registered',
-        date: '2023-10-01',
-        status: 'reed',
+        image:'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
+        en_name:'brand 2',
+        ar_name:'العلامة التجارية 2'
       },
       {
         id: 3,
-        image:'https://www.google.com/url?sa=i&url=https%3A%2F%2Funsplash.com%2Fs%2Fphotos%2Fnotification&psig=AOvVaw0QAHPv4Zb3oMgEgVjvpcKm&ust=1738692903658000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJCHtPmNqIsDFQAAAAAdAAAAABAE',
-        ar_title:' مرحبا مستخدم جديد',
-        en_title: 'New user registered',
-        ar_description: 'مرحبا مستخدم جديد',
-        en_description: 'New user registered',
-        date: '2023-10-01',
-        status: 'Unread',
+        image:'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
+        en_name:'brand 3',
+        ar_name:'العلامة التجارية 3'
       },
     ]);
   
@@ -89,8 +76,8 @@ import {
           </Flex>
         ),
       }),
-      columnHelper.accessor('en_title', {
-        id: 'en_title',
+      columnHelper.accessor('en_name', {
+        id: 'en_name',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -98,7 +85,7 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-            EN Title
+           En-Content
           </Text>
         ),
         cell: (info) => (
@@ -107,8 +94,8 @@ import {
           </Text>
         ),
       }),
-      columnHelper.accessor('en_description', {
-        id: 'en_description',
+      columnHelper.accessor('ar_name', {
+        id: 'ar_name',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -116,25 +103,7 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-            EN Description
-          </Text>
-        ),
-        cell: (info) => (
-          <Text color={textColor}>
-            {info.getValue().slice(0, 20) + '...'}
-          </Text>
-        ),
-      }),
-      columnHelper.accessor('ar_title', {
-        id: 'ar_title',
-        header: () => (
-          <Text
-            justifyContent="space-between"
-            align="center"
-            fontSize={{ sm: '10px', lg: '12px' }}
-            color="gray.400"
-          >
-            AR Title
+           Ar-Content
           </Text>
         ),
         cell: (info) => (
@@ -143,8 +112,8 @@ import {
           </Text>
         ),
       }),
-      columnHelper.accessor('ar_description', {
-        id: 'ar_description',
+      columnHelper.accessor('image', {
+        id: 'image',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -152,13 +121,11 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-            AR Description
+            Icon
           </Text>
         ),
         cell: (info) => (
-          <Text color={textColor}>
-            {info.getValue().slice(0, 15) + '...'}
-          </Text>
+          <img src={info.getValue()} alt="Brand" width={70} height={70} style={{ borderRadius: '8px' }} />
         ),
       }),
       columnHelper.accessor('actions', {
@@ -196,9 +163,8 @@ import {
               h="18px"
               me="10px"
               color="blue.500"
-              as={IoIosSend}
+              as={FaEye}
               cursor="pointer"
-              title = "Send Notification"
             />
           </Flex>
         ),
@@ -232,7 +198,7 @@ import {
               fontWeight="700"
               lineHeight="100%"
             >
-              Notifications
+              All Returns
             </Text>
             <Button
               variant='darkBrand'
@@ -242,11 +208,11 @@ import {
               borderRadius='70px'
               px='24px'
               py='5px'
-              onClick={() => navigate('/admin/add-notifications')}
+              onClick={() => navigate('/admin/cms/add-return')}
               width={'200px'}
             >
               <PlusSquareIcon me="10px" />
-              Add Notification
+              Create New Return
             </Button>
           </Flex>
           <Box>
@@ -317,5 +283,5 @@ import {
       </div>
     );
   };
-  
-  export default AllNotification;
+
+export default Returns

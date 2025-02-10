@@ -109,7 +109,7 @@ const Banner = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Out Link
+          External Link
         </Text>
       ),
       cell: (info) => <Text color={textColor}>{info.getValue()}</Text>,
@@ -123,7 +123,7 @@ const Banner = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Inside Link
+          Internal Link
         </Text>
       ),
       cell: (info) => <Text color={textColor}>{info.getValue()}</Text>,

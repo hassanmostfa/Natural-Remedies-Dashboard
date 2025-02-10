@@ -10,12 +10,12 @@ import {
   Icon,
 
 } from "@chakra-ui/react";
-import "./AllTypes.css";
+
 import { FaUpload } from "react-icons/fa6";
 import { IoMdArrowBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 
-const AddType = () => {
+const AddVariant = () => {
   const [type, setType] = useState("");
 
 
@@ -43,7 +43,7 @@ const AddType = () => {
             mb="20px !important"
             lineHeight="100%"
             >
-            Add New Product Type
+            Add New Variant
             </Text>
             <Button
             type="button"
@@ -61,13 +61,13 @@ const AddType = () => {
           <div className="row col-md-12">
             <div className="mb-3 col-md-12">
               <Text color={textColor} fontSize="sm" fontWeight="700">
-                Product En-Type
+                Variant Name
                 <span className="text-danger mx-1">*</span>
               </Text> 
               <Input
                 type="text"
                 id="type"
-                placeholder="Enter Product En-Type"
+                placeholder="Enter variant name"
                 value={type}
                 onChange={(e) => setType(e.target.value)}
                 required
@@ -76,23 +76,6 @@ const AddType = () => {
             </div>
           </div>
 
-          <div className="row col-md-12">
-            <div className="mb-3 col-md-12">
-              <Text color={textColor} fontSize="sm" fontWeight="700">
-                Product Ar-Type
-                <span className="text-danger mx-1">*</span>
-              </Text> 
-              <Input
-                type="text"
-                id="type"
-                placeholder="Enter Product Ar-Type"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                required
-                mt={"8px"}
-              />
-            </div>
-          </div>
           {/* Action Buttons */}
           <Flex justify="start" mt={4}>
             <Button variant='darkBrand' color='white' fontSize='sm' fontWeight='500' borderRadius='70px' px='24px' py='5px' onClick={handleSend}>
@@ -105,5 +88,5 @@ const AddType = () => {
   );
 };
 
-export default AddType;
+export default AddVariant;
 

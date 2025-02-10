@@ -29,24 +29,27 @@ const AddPromoCode = () => {
           {/* Name & Amount Fields */}
           <div className="row col-md-12">
             <div className="mb-3 col-md-6">
-              <label htmlFor="promoName" className="form-label">
-                Promo Code Name <span className="text-danger">*</span>
-              </label>
-              <input type="text" className="form-control" id="promoName" placeholder="Enter promo code name" required />
+              <Text color={textColor} fontSize="sm" fontWeight="700">
+                Promo Code Name
+                <span className="text-danger mx-1">*</span>
+              </Text> 
+              <input type="text" className="form-control mt-2" id="promoName" placeholder="Enter promo code name" required />
             </div>
             <div className="mb-3 col-md-6">
-              <label htmlFor="amount" className="form-label">
-                Amount <span className="text-danger">*</span>
-              </label>
-              <input type="number" className="form-control" id="amount" placeholder="Enter amount" required />
+              <Text color={textColor} fontSize="sm" fontWeight="700">
+                Amount
+                <span className="text-danger mx-1">*</span>
+              </Text> 
+              <input type="number" className="form-control mt-2" id="amount" placeholder="Enter amount" required />
             </div>
           </div>
 
           {/* Type Dropdown - Chakra UI Menu */}
           <div className="mb-3">
-            <label htmlFor="type" className="form-label">
-              Type <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Type
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Menu>
               <MenuButton 
                 as={Button} 
@@ -82,21 +85,23 @@ const AddPromoCode = () => {
           {/* Max Usage & Count Usage Fields */}
           <div className="row col-md-12">
             <div className="mb-3 col-md-6">
-              <label htmlFor="maxUsage" className="form-label">
-                Max Usage <span className="text-danger">*</span>
-              </label>
-              <input type="number" className="form-control" id="maxUsage" placeholder="Enter max usage" required />
+              <Text color={textColor} fontSize="sm" fontWeight="700">
+                Max Usage
+                <span className="text-danger mx-1">*</span>
+              </Text> 
+              <input type="number" className="form-control mt-2" id="maxUsage" placeholder="Enter max usage" required />
             </div>
             <div className="mb-3 col-md-6">
-              <label htmlFor="countUsage" className="form-label">
-                Count Usage <span className="text-danger">*</span>
-              </label>
-              <input type="number" className="form-control" id="countUsage" placeholder="Enter count usage" required />
+              <Text color={textColor} fontSize="sm" fontWeight="700">
+                Count Usage
+                <span className="text-danger mx-1">*</span>
+              </Text> 
+              <input type="number" className="form-control mt-2" id="countUsage" placeholder="Enter count usage" required />
             </div>
           </div>
 
           {/* Submit Button */}
-          <Button variant="darkBrand" color="white" fontSize="sm" fontWeight="500" borderRadius="70px" px="24px" py="5px" type="submit">
+          <Button variant="darkBrand" mt={"20px"} color="white" fontSize="sm" fontWeight="500" borderRadius="70px" px="24px" py="5px" type="submit">
             Submit
           </Button>
         </form>

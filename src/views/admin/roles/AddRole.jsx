@@ -12,11 +12,10 @@ import {
   } from '@chakra-ui/react';
   import * as React from 'react';
   import './roles.css';
-import { Navigate, useNavigate } from 'react-router-dom';
+import {useNavigate } from 'react-router-dom';
 import { IoMdArrowBack } from 'react-icons/io';
   const AddRole = () => {
     const textColor = useColorModeValue('secondaryGray.900', 'white');
-    const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
     const navigate = useNavigate();
     // Sample data for categories and subcategories
     const [categories, setCategories] = React.useState([
@@ -170,15 +169,16 @@ import { IoMdArrowBack } from 'react-icons/io';
                 <form onSubmit={handleSubmit}>
                 {/* Rule Name Input */}
                 <Box mb="20px">
-                    <Text fontSize="sm" fontWeight="600" mb="8px">
-                    Rule Name
-                    </Text>
+                    <Text color={textColor} fontSize="sm" fontWeight="700">
+                      Role Name
+                    </Text> 
                     <Input
                     name="roleName"
                     placeholder="Enter role name"
                     size="sm"
                     width={'50%'}
                     required
+                    mt="8px"
                     />
                 </Box>
         

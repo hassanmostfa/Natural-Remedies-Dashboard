@@ -92,9 +92,10 @@ const AddCategory = () => {
         <form>
           {/* Name Field */}
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-            Category En-Name <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Category En-Name
+              <span className="text-danger mx-1">*</span>
+            </Text> 
             <Input
               type="text"
               id="en_name"
@@ -102,14 +103,17 @@ const AddCategory = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt={"8px"}
             />
           </div>
 
           {/* Name Field */}
           <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-            Category Ar-Name <span className="text-danger">*</span>
-            </label>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Category Ar-Name
+              <span className="text-danger mx-1">*</span>
+            </Text> 
+
             <Input
               type="text"
               id="ar_name"
@@ -117,6 +121,7 @@ const AddCategory = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              mt={"8px"}
             />
           </div>
 
