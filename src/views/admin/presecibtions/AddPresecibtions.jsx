@@ -161,19 +161,19 @@ const AddPrescription = () => {
 
           {/* Drag-and-Drop Upload Section */}
           <Box
-            border="2px dashed gray"
+            border="1px dashed"
+            borderColor="gray.300"
             borderRadius="md"
             p={4}
             textAlign="center"
-            backgroundColor={isDragging ? "blue.50" : "transparent"}
+            backgroundColor="gray.100"
             cursor="pointer"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            mt={4}
             mb={4}
           >
-            <Icon as={FaUpload} w={8} h={8} color="gray.500" mb={2} />
+            <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
             <Text color="gray.500" mb={2}>
               Drag & Drop Prescription Image Here
             </Text>
@@ -182,7 +182,8 @@ const AddPrescription = () => {
             </Text>
             <Button
               variant="outline"
-              colorScheme="blue"
+              color="#422afb"
+              border="none"
               onClick={() => document.getElementById("fileInput").click()}
             >
               Upload Image

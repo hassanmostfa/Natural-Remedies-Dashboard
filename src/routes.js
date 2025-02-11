@@ -370,7 +370,7 @@ const routes = [
     icon: (
       <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
     ),
-    component: <DataTables />,
+    component: <Profile />,
     showInSidebar: true,
   },
   {

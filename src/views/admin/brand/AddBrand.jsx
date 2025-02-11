@@ -122,21 +122,21 @@ const AddBrand = () => {
               mt={"8px"}
             />
           </div>
-
-          {/* Drag-and-Drop Upload Section */}
+ {/* Drag-and-Drop Upload Section */}
           <Box
-            border={`2px dashed `}
+            border="1px dashed"
+            borderColor="gray.300"
             borderRadius="md"
             p={4}
             textAlign="center"
-            backgroundColor={isDragging ? "blue.50" : "transparent"}
+            backgroundColor="gray.100"
             cursor="pointer"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             mb={4}
           >
-            <Icon as={FaUpload} w={8} h={8} color="gray.500" mb={2} />
+            <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
             <Text color="gray.500" mb={2}>
               Drag & Drop Image Here
             </Text>
@@ -145,8 +145,9 @@ const AddBrand = () => {
             </Text>
             <Button
               variant="outline"
-              colorScheme="blue"
-              onClick={() => document.getElementById("fileInput").click()}
+              color="#422afb"
+              border="none"
+              onClick={() => document.getElementById('fileInput').click()}
             >
               Upload Image
               <input
@@ -158,11 +159,23 @@ const AddBrand = () => {
               />
             </Button>
             {image && (
-              <Box mt={4} display={"flex"} justifyContent="center" alignItems="center">
-                <img src={URL.createObjectURL(image)} alt={image.name} width={80} height={80} borderRadius="md" />
+              <Box
+                mt={4}
+                display={'flex'}
+                justifyContent="center"
+                alignItems="center"
+              >
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt={image.name}
+                  width={80}
+                  height={80}
+                  borderRadius="md"
+                />
               </Box>
             )}
           </Box>
+
 
           {/* Action Buttons */}
           <Flex justify="center" mt={4}>

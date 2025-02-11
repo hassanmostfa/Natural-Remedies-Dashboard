@@ -98,47 +98,60 @@ const AddBranch = () => {
           </Grid>
 
           {/* Drag-and-Drop Upload Section */}
-          <Box
-            border={`2px dashed `}
-            borderRadius="md"
-            p={4}
-            textAlign="center"
-            backgroundColor={isDragging ? "blue.50" : "transparent"}
-            cursor="pointer"
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            mb={4}
-            mt={4}
-          >
-            <Icon as={FaUpload} w={8} h={8} color="gray.500" mb={2} />
-            <Text color="gray.500" mb={2}>
-              Drag & Drop Image Here
-            </Text>
-            <Text color="gray.500" mb={2}>
-              or
-            </Text>
-            <Button
-              variant="outline"
-              colorScheme="blue"
-              onClick={() => document.getElementById("fileInput").click()}
-            >
-              Upload Image
-              <input
-                type="file"
-                id="fileInput"
-                hidden
-                accept="image/*"
-                onChange={handleFileInputChange}
-              />
-            </Button>
-            {image && (
-              <Box mt={4} display={"flex"} justifyContent="center" alignItems="center">
-                <img src={URL.createObjectURL(image)} alt={image.name} width={80} height={80} borderRadius="md" />
-              </Box>
-            )}
-          </Box>
-
+                   <Box
+                     border="1px dashed"
+                     borderColor="gray.300"
+                     borderRadius="md"
+                     p={4}
+                     textAlign="center"
+                     backgroundColor="gray.100"
+                     cursor="pointer"
+                     onDragOver={handleDragOver}
+                     onDragLeave={handleDragLeave}
+                     onDrop={handleDrop}
+                     mb={4}
+                     mt={4}
+                   >
+                     <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
+                     <Text color="gray.500" mb={2}>
+                       Drag & Drop Image Here
+                     </Text>
+                     <Text color="gray.500" mb={2}>
+                       or
+                     </Text>
+                     <Button
+                       variant="outline"
+                       color="#422afb"
+                       border="none"
+                       onClick={() => document.getElementById('fileInput').click()}
+                     >
+                       Upload Image
+                       <input
+                         type="file"
+                         id="fileInput"
+                         hidden
+                         accept="image/*"
+                         onChange={handleFileInputChange}
+                       />
+                     </Button>
+                     {image && (
+                       <Box
+                         mt={4}
+                         display={'flex'}
+                         justifyContent="center"
+                         alignItems="center"
+                       >
+                         <img
+                           src={URL.createObjectURL(image)}
+                           alt={image.name}
+                           width={80}
+                           height={80}
+                           borderRadius="md"
+                         />
+                       </Box>
+                     )}
+                   </Box>
+         
 
           <Flex justify="center" mt={6}>
             <Button variant="outline" colorScheme="red" mr={2}>
