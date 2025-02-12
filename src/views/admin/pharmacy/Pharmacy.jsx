@@ -11,6 +11,9 @@ import {
     Thead,
     Tr,
     useColorModeValue,
+    Input,
+    InputGroup,
+    InputLeftElement,
   } from '@chakra-ui/react';
   import {
     createColumnHelper,
@@ -20,16 +23,19 @@ import {
     useReactTable,
   } from '@tanstack/react-table';
   import * as React from 'react';
-  import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
   import Card from 'components/card/Card';
-  import Menu from 'components/menu/MainMenu';
-  import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
+  import { EditIcon, PlusSquareIcon} from '@chakra-ui/icons';
   import { FaEye, FaTrash } from 'react-icons/fa6';
   import { useNavigate } from 'react-router-dom';
-  
+  import { CiSearch } from "react-icons/ci";
+  import { useState } from 'react';
   const columnHelper = createColumnHelper();
   
   const Pharmacy = () => {
+
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 20;
+
     const [data, setData] = React.useState([
         {
             name: 'Al-Shifa Pharmacy',
@@ -143,6 +149,12 @@ import {
       debugTable: true,
     });
 
+
+
+    const changePage = (page) => {
+      setCurrentPage(page);
+    };
+
     return (
       <div className="container">
         <Card
@@ -160,6 +172,25 @@ import {
             >
               All Pharmacies
             </Text>
+
+          {/* Search Input */}
+          <Box>
+              <InputGroup borderRadius="15px" background={"gray.100"} w={{ base: "400", md: "400px" }}>
+                  <InputLeftElement pointerEvents="none">
+                      <CiSearch color="gray.400" />
+                  </InputLeftElement>
+                  <Input
+                      variant="outline"
+                      fontSize="sm"
+                      placeholder="Search..."
+                      border="1px solid"
+                      borderColor="gray.200"
+                      _hover={{ borderColor: "gray.400" }}
+                      borderRadius={"15px"}
+                  />
+              </InputGroup>
+          </Box>
+
             <Button
               variant='darkBrand'
               color='white'
@@ -238,6 +269,23 @@ import {
                   })}
               </Tbody>
             </Table>
+
+            {/* Pagination */}
+            <div className="pagination d-flex justify-content-center">
+              {Array.from(
+                Array(Math.ceil(data.length / itemsPerPage)).keys()
+              ).map((page) => (
+                <button
+                  className={`btn mx-1 btn-outline-dark ${
+                    page === currentPage? 'active' : ''
+                  }`}
+                  key={page + 1}
+                  onClick={() => changePage(page)}
+                >
+                  {page + 1}
+                </button>
+              ))}
+            </div>
           </Box>
         </Card>
       </div>

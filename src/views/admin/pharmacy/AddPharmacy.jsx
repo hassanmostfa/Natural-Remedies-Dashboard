@@ -93,11 +93,12 @@ const AddPharmacy = () => {
             {[
               { label: 'Pharmacy Name En', name: 'nameEn' },
               { label: 'Pharmacy Name Ar', name: 'nameAr' },
-              { label: 'WhatsApp Number', name: 'whatsappNumber' },
               { label: 'Email', name: 'email' },
+              { label: 'Password', name: 'password', type: 'password' },
+              { label: 'WhatsApp Number', name: 'whatsappNumber' },
               { label: 'Working Hours', name: 'workingHours' },
-              { label: 'Revenue Share', name: 'revenueShare' },
-              { label: 'Fixed Fees', name: 'fixedFees' },
+              { label: 'Revenue Share', name: 'revenueShare' , type: 'number'},
+              { label: 'Fixed Fees', name: 'fixedFees' , type: 'number'},
               { label: 'Fees Start Date', name: 'feesStartDate', type: 'date' },
               { label: 'Fees End Date', name: 'feesEndDate', type: 'date' },
             ].map(({ label, name, type = 'text' }) => (
