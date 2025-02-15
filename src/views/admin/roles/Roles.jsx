@@ -27,28 +27,23 @@ import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
 import './roles.css';
 import { FaEye, FaTrash } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
+import { useGetRolesQuery, useDeleteRoleMutation } from 'api/roleSlice';
+import Swal from 'sweetalert2';
+
 const columnHelper = createColumnHelper();
 
 const Roles = () => {
-  const [data, setData] = React.useState([
-    {
-      name: 'John Doe',
-      email: 'john@example.com',
-      role: 'Super Admin',
-      status: 'Active',
-    },
-    {
-      name: 'Jane Doe',
-      email: 'jane@example.com',
-      role: 'Admin',
-      status: 'Inactive',
-    },
-  ]);
+  const { data, refetch, isError, isLoading } = useGetRolesQuery();
+  const [deleteRole, { isError: isDeleteError, isLoading: isDeleteLoading }] =
+    useDeleteRoleMutation();
 
   const [sorting, setSorting] = React.useState([]);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+
+  // Fallback to hardcoded data if API fails
+  const tableData = data?.data || [];
 
   const columns = [
     columnHelper.accessor('name', {
@@ -71,43 +66,7 @@ const Roles = () => {
         </Flex>
       ),
     }),
-    columnHelper.accessor('email', {
-      id: 'email',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          EMAIL
-        </Text>
-      ),
-      cell: (info) => (
-        <Text color={textColor} fontSize="sm" fontWeight="700">
-          {info.getValue()}
-        </Text>
-      ),
-    }),
-    columnHelper.accessor('role', {
-      id: 'role',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Rule
-        </Text>
-      ),
-      cell: (info) => (
-        <Text color={textColor} fontSize="sm" fontWeight="700">
-          {info.getValue()}
-        </Text>
-      ),
-    }),
-    columnHelper.accessor('actions', {
+    columnHelper.accessor('id', {
       id: 'actions',
       header: () => (
         <Text
@@ -128,6 +87,7 @@ const Roles = () => {
             color="red.500"
             as={FaTrash}
             cursor="pointer"
+            onClick={() => handleDeleteRole(info.getValue())} // Pass the role ID here
           />
           <Icon
             w="18px"
@@ -151,7 +111,7 @@ const Roles = () => {
   ];
 
   const table = useReactTable({
-    data,
+    data: tableData,
     columns,
     state: {
       sorting,
@@ -161,7 +121,33 @@ const Roles = () => {
     getSortedRowModel: getSortedRowModel(),
     debugTable: true,
   });
+
   const navigate = useNavigate();
+
+  // Delete function
+  const handleDeleteRole = async (id) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+      });
+
+      if (result.isConfirmed) {
+        await deleteRole(id).unwrap(); // Delete the role
+        refetch(); // Refetch the data
+        Swal.fire('Deleted!', 'The role has been deleted.', 'success');
+      }
+    } catch (error) {
+      console.error('Failed to delete role:', error);
+      Swal.fire('Error!', 'Failed to delete the role.', 'error');
+    }
+  };
+
   return (
     <div className="container">
       <Card
@@ -180,17 +166,16 @@ const Roles = () => {
             Rules
           </Text>
           <Button
-            variant='darkBrand'
-            color='white'
-            fontSize='sm'
-            fontWeight='500'
-            borderRadius='70px'
-            px='24px'
-            py='5px'
+            variant="darkBrand"
+            color="white"
+            fontSize="sm"
+            fontWeight="500"
+            borderRadius="70px"
+            px="24px"
+            py="5px"
             onClick={() => navigate('/admin/add-New-Rule')}
             width={'200px'}
-            >
-              
+          >
             <PlusSquareIcon me="10px" />
             Create New Rule
           </Button>
@@ -198,9 +183,9 @@ const Roles = () => {
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
             <Thead>
-              {table.getHeaderGroups().map((headerGroup) => (
+              {table.getHeaderGroups()?.map((headerGroup) => (
                 <Tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
+                  {headerGroup.headers?.map((header) => {
                     return (
                       <Th
                         key={header.id}

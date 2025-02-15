@@ -26,7 +26,7 @@ import Menu from 'components/menu/MainMenu';
 import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
 import { FaEye, FaTrash } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
-import { useGetSliderQuery } from 'api/SliderSlice';
+
 
 const columnHelper = createColumnHelper();
 
@@ -58,8 +58,7 @@ const Banner = () => {
     },
   ]);
 
-  const { data: banners, isLoading, isError } = useGetSliderQuery();
-  console.log(banners);
+ 
   
   const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);

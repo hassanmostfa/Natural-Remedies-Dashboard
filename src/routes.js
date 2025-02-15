@@ -71,6 +71,7 @@ import Tags from 'views/admin/tags/Tags';
 import AddTag from 'views/admin/tags/AddTag';
 import Presecibtions from 'views/admin/presecibtions/Presecibtions';
 import AddPresecibtions from 'views/admin/presecibtions/AddPresecibtions';
+import ProtectedRoute from 'components/protectedRoute/ProtectedRoute';
 
 
 const routes = [
@@ -79,9 +80,17 @@ const routes = [
     layout: '/admin',
     path: '/dashboard',
     icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
-    component: <MainDashboard />,
+    component:<ProtectedRoute><MainDashboard /></ProtectedRoute> ,
     showInSidebar: true,
   },
+  // {
+  //   name: 'Sign in',
+  //   layout: '/admin',
+  //   path: '/sign-in',
+  //   icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
+  //   component: <SignInCentered />,
+  //   showInSidebar: true,
+  // },
   {
     name: 'Admin Management',
     layout: '/admin',

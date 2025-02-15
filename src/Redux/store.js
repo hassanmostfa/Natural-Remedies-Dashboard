@@ -1,16 +1,20 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import { SliderApi } from "api/SliderSlice";
+import { roleApi } from "api/roleSlice";
+import { apiService } from "api/userSlice";
 
 // import { userApi, authReducer } from './userSlice';
 
 export const store = configureStore({
   reducer: {
-     [SliderApi.reducerPath]: SliderApi.reducer,
+    [apiService.reducerPath]: apiService.reducer,
+    [roleApi.reducerPath]: roleApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
-      SliderApi.middleware
+      
+      apiService.middleware,
+      roleApi.middleware
     ),
 });
 

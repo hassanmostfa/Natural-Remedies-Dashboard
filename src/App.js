@@ -8,6 +8,7 @@ import initialTheme from './theme/theme';
 import { useState } from 'react';
 import routes from './routes'; // Import your routes
 import SignInCentered from './views/auth/signIn/index';
+import ProtectedRoute from 'components/protectedRoute/ProtectedRoute';
 export default function Main() {
   const [currentTheme, setCurrentTheme] = useState(initialTheme);
   return (
@@ -30,7 +31,7 @@ export default function Main() {
             <RTLLayout theme={currentTheme} setTheme={setCurrentTheme} />
           }
         />
-        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/" element={<ProtectedRoute><Navigate to="/admin/dashboard" replace /></ProtectedRoute>} />
 
         <Route path="admin/auth/sign-in" element={<SignInCentered />} />
       </Routes>
