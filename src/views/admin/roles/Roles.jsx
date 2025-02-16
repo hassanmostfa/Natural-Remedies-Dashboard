@@ -66,6 +66,26 @@ const Roles = () => {
         </Flex>
       ),
     }),
+    columnHelper.accessor('platform', {
+      id: 'platform',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Platform
+        </Text>
+      ),
+      cell: (info) => (
+        <Flex align="center">
+          <Text color={textColor} fontSize="sm" fontWeight="700">
+            {info.getValue()}
+          </Text>
+        </Flex>
+      ),
+    }),
     columnHelper.accessor('id', {
       id: 'actions',
       header: () => (

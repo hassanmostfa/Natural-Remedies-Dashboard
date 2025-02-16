@@ -8,54 +8,20 @@ import {
   useColorModeValue,
   Grid,
   GridItem,
-  Textarea,
-  Icon,
 } from "@chakra-ui/react";
 import { IoMdArrowBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
-import { FaUpload } from "react-icons/fa6";
 
 const AddBranch = () => {
-  const [formData, setFormData] = useState();
+  const [formData, setFormData] = useState({});
 
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const navigate = useNavigate();
-  const [image, setImage] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
-
-
-  const handleImageUpload = (files) => {
-    if (files && files.length > 0) {
-      setImage(files[0]);
-    }
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = e.dataTransfer.files;
-    handleImageUpload(files);
-  };
-
-  const handleFileInputChange = (e) => {
-    const files = e.target.files;
-    handleImageUpload(files);
-  };
-
 
   const handleSend = () => {
     console.log("Pharmacy Data:", formData);
@@ -79,10 +45,12 @@ const AddBranch = () => {
           </Button>
         </div>
         <form>
-          <Grid templateColumns="repeat(1, 1fr)" gap={4}>
+          <Grid templateColumns="repeat(2, 1fr)" gap={4}>
             {[
-              { label: "Name", name: "name" },
-              { label: "Address", name: "address" },
+              { label: "En-Name", name: "name" },
+              { label: "En-Address", name: "address" },
+              { label: "Ar-Name", name: "name_ar" },
+              { label: "Ar-Address", name: "address_ar" },
             ].map(({ label, name, type = "text" }) => (
               <GridItem key={name}>
                 <Text color={textColor} fontSize="sm" fontWeight="700">
@@ -90,6 +58,7 @@ const AddBranch = () => {
                 </Text>
                 <Input
                   type={type}
+                  name={name}
                   onChange={handleChange}
                   mt={2}
                 />
@@ -97,61 +66,23 @@ const AddBranch = () => {
             ))}
           </Grid>
 
-          {/* Drag-and-Drop Upload Section */}
-                   <Box
-                     border="1px dashed"
-                     borderColor="gray.300"
-                     borderRadius="md"
-                     p={4}
-                     textAlign="center"
-                     backgroundColor="gray.100"
-                     cursor="pointer"
-                     onDragOver={handleDragOver}
-                     onDragLeave={handleDragLeave}
-                     onDrop={handleDrop}
-                     mb={4}
-                     mt={4}
-                   >
-                     <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
-                     <Text color="gray.500" mb={2}>
-                       Drag & Drop Image Here
-                     </Text>
-                     <Text color="gray.500" mb={2}>
-                       or
-                     </Text>
-                     <Button
-                       variant="outline"
-                       color="#422afb"
-                       border="none"
-                       onClick={() => document.getElementById('fileInput').click()}
-                     >
-                       Upload Image
-                       <input
-                         type="file"
-                         id="fileInput"
-                         hidden
-                         accept="image/*"
-                         onChange={handleFileInputChange}
-                       />
-                     </Button>
-                     {image && (
-                       <Box
-                         mt={4}
-                         display={'flex'}
-                         justifyContent="center"
-                         alignItems="center"
-                       >
-                         <img
-                           src={URL.createObjectURL(image)}
-                           alt={image.name}
-                           width={80}
-                           height={80}
-                           borderRadius="md"
-                         />
-                       </Box>
-                     )}
-                   </Box>
-         
+          <Grid templateColumns="repeat(1, 1fr)" gap={4} mt={4}>
+            {[
+              { label: "Location Link", name: "location_link" },
+            ].map(({ label, name, type = "text" }) => (
+              <GridItem key={name}>
+                <Text color={textColor} fontSize="sm" fontWeight="700">
+                  {label} <span className="text-danger">*</span>
+                </Text>
+                <Input
+                  type={type}
+                  name={name}
+                  onChange={handleChange}
+                  mt={2}
+                />
+              </GridItem>
+            ))}
+          </Grid>
 
           <Flex justify="center" mt={6}>
             <Button variant="outline" colorScheme="red" mr={2}>
