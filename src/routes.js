@@ -72,6 +72,8 @@ import Presecibtions from 'views/admin/presecibtions/Presecibtions';
 import AddPresecibtions from 'views/admin/presecibtions/AddPresecibtions';
 import ProtectedRoute from 'components/protectedRoute/ProtectedRoute';
 import EditRole from 'views/admin/roles/EditRole';
+import Products from 'views/admin/products/Products';
+import AddProduct from 'views/admin/products/AddProduct';
 
 
 const routes = [
