@@ -20,9 +20,7 @@ import {
     useReactTable,
   } from '@tanstack/react-table';
   import * as React from 'react';
-  import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
   import Card from 'components/card/Card';
-  import Menu from 'components/menu/MainMenu';
   import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
   import { FaEye, FaTrash } from 'react-icons/fa6';
   import { useNavigate } from 'react-router-dom';
@@ -34,14 +32,17 @@ const Variants = () => {
          {
            id: 1,
             product_en_type:'size',
+            no_of_attributes:2
          },
          {
            id: 2,
            product_en_type:'color',
+           no_of_attributes:5
          },
          {
            id: 3,
            product_en_type:'weight',
+           no_of_attributes:6
          },
        ]);
        const [sorting, setSorting] = React.useState([]);
@@ -80,6 +81,26 @@ const Variants = () => {
                color="gray.400"
              >
                Variant Name
+             </Text>
+           ),
+           cell: (info) => (
+             <Flex align="center">
+               <Text color={textColor}>
+                 {info.getValue()}
+               </Text>
+             </Flex>
+           ),
+         }),
+         columnHelper.accessor('no_of_attributes', {
+           id: 'no_of_attributes',
+           header: () => (
+             <Text
+               justifyContent="space-between"
+               align="center"
+               fontSize={{ sm: '10px', lg: '12px' }}
+               color="gray.400"
+             >
+               Number of Attributes
              </Text>
            ),
            cell: (info) => (

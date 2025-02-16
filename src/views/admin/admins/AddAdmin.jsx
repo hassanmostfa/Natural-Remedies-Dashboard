@@ -24,20 +24,13 @@ const AddAdmin = () => {
         </Text>
         <form onSubmit={handleSubmit}>
           {/* First Name and Last Name Fields */}
-          <div className="row col-md-12">
             <div className="mb-3 col-md-12">
-              <label htmlFor="firstName" className="form-label">
-                Name <span className="text-danger">*</span>
-              </label>
-              <input type="text" className="form-control" id="firstName" placeholder="Enter first name" required />
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Name
+              <span className="text-danger mx-1">*</span>
+            </Text> 
+              <input type="text" className="form-control mt-2" id="firstName" placeholder="Enter Admin Name" required />
             </div>
-            {/* <div className="mb-3 col-md-6">
-              <label htmlFor="lastName" className="form-label">
-                Last Name <span className="text-danger">*</span>
-              </label>
-              <input type="text" className="form-control" id="lastName" placeholder="Enter last name" required />
-            </div> */}
-          </div>
 
           {/* Email Field */}
           <div className="mb-3">

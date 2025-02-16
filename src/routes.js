@@ -11,7 +11,6 @@ import {
   MdCategory,
   MdInventory,
   MdAssignment,
-  MdNotifications,
   MdList,
 } from 'react-icons/md';
 
@@ -229,8 +228,15 @@ const routes = [
     layout: '/admin',
     path: '/products',
     icon: <Icon as={MdInventory} width="20px" height="20px" color="inherit" />,
-    component: <DataTables />,
+    component: <Products />,
     showInSidebar: true,
+  },
+  {
+    name: 'Products',
+    layout: '/admin',
+    path: '/add-product',
+    component: <AddProduct />,
+    showInSidebar: false,
   },
   {
     name: 'Variants',

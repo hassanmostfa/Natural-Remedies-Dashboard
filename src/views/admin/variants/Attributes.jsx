@@ -33,7 +33,7 @@ const Attributes = () => {
      const [data, setData] = React.useState([
          {
            id: 1,
-            product_en_type:'large',
+          product_en_type:'large',
          },
          {
            id: 2,

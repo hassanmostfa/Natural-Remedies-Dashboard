@@ -15,6 +15,14 @@ import {
   Thead,
   Tr,
   useColorModeValue,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -24,13 +32,12 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import * as React from 'react';
-import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
 import Card from 'components/card/Card';
-import Menu from 'components/menu/MainMenu';
-import { EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
+import { EditIcon, SearchIcon } from '@chakra-ui/icons';
 import { FaEye, FaTrash } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
-
+import { CgAssign } from 'react-icons/cg';
+import { CiSearch } from "react-icons/ci";
 const columnHelper = createColumnHelper();
 
 const Presecibtions = () => {
@@ -63,9 +70,18 @@ const Presecibtions = () => {
 
   const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);
+  const { isOpen, onOpen, onClose } = useDisclosure(); // Modal state
+  const [selectedPrescription, setSelectedPrescription] = React.useState(null); // Track selected prescription
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+
+  // List of pharmacies for the modal
+  const pharmacies = [
+    { id: 1, name: 'Al-Shifa Pharmacy' },
+    { id: 2, name: 'Al-Noor Pharmacy' },
+    { id: 3, name: 'Al-Razi Pharmacy' },
+  ];
 
   const columns = [
     columnHelper.accessor('user', {
@@ -95,7 +111,17 @@ const Presecibtions = () => {
     columnHelper.accessor('status', {
       header: 'Status',
       cell: (info) => (
-        <Text color={info.getValue() === 'new' ? 'blue.500' : info.getValue() === 'assigned' ? 'green.500' : 'orange.500'}>
+        <Text
+          fontWeight="bold"
+          textAlign={'center'}
+          color={
+            info.getValue() === 'new'
+              ? 'blue.500'
+              : info.getValue() === 'assigned'
+              ? 'green.500'
+              : 'orange.500'
+          }
+        >
           {info.getValue()}
         </Text>
       ),
@@ -106,12 +132,45 @@ const Presecibtions = () => {
     }),
     columnHelper.accessor('actions', {
       header: 'Actions',
-      cell: () => (
+      cell: (info) => (
         <Flex align="center">
-          <Icon w="18px" h="18px" me="10px" color="red.500" as={FaTrash} cursor="pointer" />
-          <Icon w="18px" h="18px" me="10px" color="green.500" as={EditIcon} cursor="pointer" />
-          <Icon w="18px" h="18px" me="10px" color="blue.500" as={FaEye} cursor="pointer"
+          <Icon
+            w="18px"
+            h="18px"
+            me="10px"
+            color="red.500"
+            as={FaTrash}
+            cursor="pointer"
+          />
+          <Icon
+            w="18px"
+            h="18px"
+            me="10px"
+            color="green.500"
+            as={EditIcon}
+            cursor="pointer"
+          />
+          <Icon
+            w="18px"
+            h="18px"
+            me="10px"
+            color="blue.500"
+            as={FaEye}
+            cursor="pointer"
             onClick={() => navigate('/admin/pharmacy-branches')}
+          />
+          <Icon
+            w="18px"
+            h="18px"
+            me="10px"
+            color="black"
+            title="Assign"
+            as={CgAssign}
+            cursor="pointer"
+            onClick={() => {
+              setSelectedPrescription(info.row.original); // Set selected prescription
+              onOpen(); // Open modal
+            }}
           />
         </Flex>
       ),
@@ -130,6 +189,19 @@ const Presecibtions = () => {
     debugTable: true,
   });
 
+  // Handle assigning a pharmacy
+  const handleAssignPharmacy = (pharmacy) => {
+    const updatedData = data.map((item) =>
+      item.user === selectedPrescription.user
+        ? { ...item, assignedPharmacy: pharmacy.name }
+        : item
+    );
+    setData(updatedData);
+    console.log('Assigned Pharmacy:', pharmacy.name , "to", selectedPrescription.user);
+    
+    onClose(); // Close modal
+  };
+
   return (
     <div className="container">
       <Card
@@ -147,26 +219,28 @@ const Presecibtions = () => {
           >
             All Prescriptions
           </Text>
-          <div style={{ display: 'flex', alignItems: 'center',gap: '10px' }}>
-            <InputGroup width="300px" mr="20px">
-              <InputLeftElement
-                pointerEvents="none"
-                children={<SearchIcon color="gray.300" />}
-              />
-              <Input
-                placeholder="Search by user name"
-                onChange={(e) => {
-                  const searchValue = e.target.value.toLowerCase();
-                  const filteredData = data.filter((item) =>
-                    item.user.toLowerCase().includes(searchValue)
-                  );
-                  setData(filteredData);
-                }}
-              />
-            </InputGroup>
-            <Select
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Search Input */}
+          <Box>
+              <InputGroup borderRadius="15px" background={"gray.100"} w={{ base: "300", md: "300px" }}>
+                  <InputLeftElement pointerEvents="none">
+                      <CiSearch color="gray.400" />
+                  </InputLeftElement>
+                  <Input
+                      variant="outline"
+                      fontSize="sm"
+                      placeholder="Search..."
+                      border="1px solid"
+                      borderColor="gray.200"
+                      _hover={{ borderColor: "gray.400" }}
+                      borderRadius={"15px"}
+                  />
+              </InputGroup>
+          </Box>
+          <Select
               placeholder="Filter by status"
-              width="200px"
+              width="300px"
+              background={"gray.100"}
               onChange={(e) => {
                 const statusValue = e.target.value;
                 const filteredData = data.filter((item) =>
@@ -174,26 +248,17 @@ const Presecibtions = () => {
                 );
                 setData(filteredData);
               }}
+              variant="outline"
+                fontSize="sm"
+                border="1px solid"
+                borderColor="gray.200"
+                _hover={{ borderColor: "gray.400" }}
+                borderRadius={"15px"}
             >
               <option value="new">New</option>
               <option value="assigned">Assigned</option>
               <option value="checkout">Checkout</option>
             </Select>
-
-            <Button
-              variant='darkBrand'
-              color='white'
-              fontSize='sm'
-              fontWeight='500'
-              borderRadius='70px'
-              px='24px'
-              py='5px'
-              onClick={() => navigate('/admin/add-prescription')}
-              width={'200px'}
-            >
-              <PlusSquareIcon me="10px" />
-              Create New Prescription
-            </Button>
           </div>
         </Flex>
         <Box>
@@ -261,6 +326,37 @@ const Presecibtions = () => {
           </Table>
         </Box>
       </Card>
+
+      {/* Modal for Assigning Pharmacy */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Assign Pharmacy</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text mb="4">Select a pharmacy to assign:</Text>
+            {pharmacies.map((pharmacy) => (
+              <Box
+                key={pharmacy.id}
+                p="2"
+                mb="2"
+                borderWidth="1px"
+                borderRadius="md"
+                cursor="pointer"
+                _hover={{ bg: 'gray.100' }}
+                onClick={() => handleAssignPharmacy(pharmacy)}
+              >
+                <Text>{pharmacy.name}</Text>
+              </Box>
+            ))}
+          </ModalBody>
+          <ModalFooter>
+            {/* <Button colorScheme="blue" onClick={onClose}>
+              Close
+            </Button> */}
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 };
