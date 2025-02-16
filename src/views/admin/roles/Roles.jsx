@@ -44,7 +44,9 @@ const Roles = () => {
 
   // Fallback to hardcoded data if API fails
   const tableData = data?.data || [];
-
+  React.useEffect(() => {
+    refetch();
+  },[]);
   const columns = [
     columnHelper.accessor('name', {
       id: 'name',
@@ -96,6 +98,7 @@ const Roles = () => {
             color="green.500"
             as={EditIcon}
             cursor="pointer"
+            onClick={() => navigate(`/admin/Edit-Rule/${info.getValue()}`)}
           />
           <Icon
             w="18px"
@@ -104,6 +107,7 @@ const Roles = () => {
             color="blue.500"
             as={FaEye}
             cursor="pointer"
+            onClick={() => navigate(`/admin/Edit-Rule/${info.getValue()}`)}
           />
         </Flex>
       ),

@@ -72,6 +72,7 @@ import AddTag from 'views/admin/tags/AddTag';
 import Presecibtions from 'views/admin/presecibtions/Presecibtions';
 import AddPresecibtions from 'views/admin/presecibtions/AddPresecibtions';
 import ProtectedRoute from 'components/protectedRoute/ProtectedRoute';
+import EditRole from 'views/admin/roles/EditRole';
 
 
 const routes = [
@@ -512,6 +513,16 @@ const routes = [
       <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
     ),
     component: <AddRole />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Admin Management',
+    layout: '/admin',
+    path: '/Edit-Rule/:id',
+    icon: (
+      <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
+    ),
+    component: <EditRole />,
     showInSidebar: false,
   },
   {

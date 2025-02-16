@@ -36,10 +36,13 @@ export const roleApi = createApi({
         body: role,
       }),
     }),
+    getRolePermissios:builder.query({
+        query:(id) => `/admin/role/${id}/permissions`
+    }),
 
     updateRole: builder.mutation({
       query: ({ id, role }) => ({
-        url: `/roles/${id}`,
+        url: `/admin/role/${id}`,
         method: "PUT",
         body: role,
       }),
@@ -61,4 +64,5 @@ export const {
   useAddRoleMutation,
   useUpdateRoleMutation,
   useDeleteRoleMutation,
+  useGetRolePermissiosQuery
 } = roleApi;
