@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 // Chakra imports
 import {
   Box,
@@ -18,11 +18,9 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 // Custom components
-import { HSeparator } from "components/separator/Separator";
 import DefaultAuth from "layouts/auth/Default";
 // Assets
 import illustration from "assets/img/auth/auth.png";
-import { FcGoogle } from "react-icons/fc";
 import { MdOutlineRemoveRedEye } from "react-icons/md";
 import { RiEyeCloseLine } from "react-icons/ri";
 import { useLoginUserMutation } from "api/userSlice";
@@ -32,19 +30,7 @@ function SignIn() {
   // Chakra color mode
   const textColor = useColorModeValue("navy.700", "white");
   const textColorSecondary = "gray.400";
-  const textColorDetails = useColorModeValue("navy.700", "secondaryGray.600");
-  const textColorBrand = useColorModeValue("brand.500", "white");
   const brandStars = useColorModeValue("brand.500", "brand.400");
-  const googleBg = useColorModeValue("secondaryGray.300", "whiteAlpha.200");
-  const googleText = useColorModeValue("navy.700", "white");
-  const googleHover = useColorModeValue(
-    { bg: "gray.200" },
-    { bg: "whiteAlpha.300" }
-  );
-  const googleActive = useColorModeValue(
-    { bg: "secondaryGray.300" },
-    { bg: "whiteAlpha.200" }
-  );
 
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -218,7 +204,7 @@ function SignIn() {
                     Keep me logged in
                   </FormLabel>
                 </FormControl>
-                <NavLink to='/auth/forgot-password'>
+                {/* <NavLink to='/auth/forgot-password'>
                   <Text
                     color={textColorBrand}
                     fontSize='sm'
@@ -226,7 +212,7 @@ function SignIn() {
                     fontWeight='500'>
                     Forgot password?
                   </Text>
-                </NavLink>
+                </NavLink> */}
               </Flex>
               <Button
                 fontSize='sm'
