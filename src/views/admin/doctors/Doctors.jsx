@@ -20,35 +20,61 @@ import {
     useReactTable,
   } from '@tanstack/react-table';
   import * as React from 'react';
+  import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
   import Card from 'components/card/Card';
+  import Menu from 'components/menu/MainMenu';
   import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
   import { FaEye, FaTrash } from 'react-icons/fa6';
   import { useNavigate } from 'react-router-dom';
   
   const columnHelper = createColumnHelper();
   
-  const AllCategories = () => {
+  const Doctors = () => {
     const [data, setData] = React.useState([
       {
         id: 1,
-        image:'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-        en_name:'brand 1',
-        ar_name:'العلامة التجارية 1',
-        category_type:'type 1'
+        first_name: 'John',
+        last_name: 'Doe',
+        certifications: 'MD, PhD',
+        languages: 'English, Arabic',
+        about: {
+          en: 'Experienced doctor with over 10 years of practice.',
+          ar: 'طبيب ذو خبرة تزيد عن 10 سنوات في الممارسة.',
+        },
+        phones: ['+1234567890', '+0987654321'],
+        email: 'john.doe@example.com',
+        password: '********', // Masked for security
+        fees: 100,
       },
       {
         id: 2,
-        image:'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-        en_name:'brand 2',
-        ar_name:'العلامة التجارية 2',
-        category_type:'type 1'
+        first_name: 'Jane',
+        last_name: 'Smith',
+        certifications: 'MBBS, MS',
+        languages: 'English, French',
+        about: {
+          en: 'Specialist in cardiology and internal medicine.',
+          ar: 'أخصائي في أمراض القلب والطب الباطني.',
+        },
+        phones: ['+1122334455'],
+        email: 'jane.smith@example.com',
+        password: '********', // Masked for security
+        fees: 150,
       },
       {
         id: 3,
-        image:'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-        en_name:'brand 3',
-        ar_name:'العلامة التجارية 3',
-        category_type:'type 1'
+        first_name: 'Ahmed',
+        last_name: 'Ali',
+        certifications: 'BDS, MDS',
+        languages: 'Arabic, English',
+        about: {
+          en: 'Dental surgeon with expertise in orthodontics.',
+          ar: 'جراح أسنان متخصص في تقويم الأسنان.',
+        },
+        phones: ['+9988776655'],
+        email: 'ahmed.ali@example.com',
+        password: '********', // Masked for security
+        fees: 200,
       },
     ]);
   
@@ -79,8 +105,8 @@ import {
           </Flex>
         ),
       }),
-      columnHelper.accessor('en_name', {
-        id: 'en_name',
+      columnHelper.accessor('first_name', {
+        id: 'first_name',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -88,7 +114,7 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-           En-Name
+            First Name
           </Text>
         ),
         cell: (info) => (
@@ -97,8 +123,8 @@ import {
           </Text>
         ),
       }),
-      columnHelper.accessor('ar_name', {
-        id: 'ar_name',
+      columnHelper.accessor('last_name', {
+        id: 'last_name',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -106,7 +132,7 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-           Ar-Name
+            Last Name
           </Text>
         ),
         cell: (info) => (
@@ -115,8 +141,8 @@ import {
           </Text>
         ),
       }),
-      columnHelper.accessor('category_type', {
-        id: 'category_type',
+      columnHelper.accessor('certifications', {
+        id: 'certifications',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -124,7 +150,7 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-            Category Type
+            Certifications
           </Text>
         ),
         cell: (info) => (
@@ -133,8 +159,8 @@ import {
           </Text>
         ),
       }),
-      columnHelper.accessor('image', {
-        id: 'image',
+      columnHelper.accessor('languages', {
+        id: 'languages',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -142,11 +168,71 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-            Image
+            Languages
           </Text>
         ),
         cell: (info) => (
-          <img src={info.getValue()} alt="Brand Image" width={70} height={70} style={{ borderRadius: '8px' }} />
+          <Text color={textColor}>
+            {info.getValue()}
+          </Text>
+        ),
+      }),
+      columnHelper.accessor('phones', {
+        id: 'phones',
+        header: () => (
+          <Text
+            justifyContent="space-between"
+            align="center"
+            fontSize={{ sm: '10px', lg: '12px' }}
+            color="gray.400"
+          >
+            Phones
+          </Text>
+        ),
+        cell: (info) => (
+          <Box>
+            {info.getValue().map((phone, index) => (
+              <Text key={index} color={textColor}>
+                {phone}
+              </Text>
+            ))}
+          </Box>
+        ),
+      }),
+      columnHelper.accessor('email', {
+        id: 'email',
+        header: () => (
+          <Text
+            justifyContent="space-between"
+            align="center"
+            fontSize={{ sm: '10px', lg: '12px' }}
+            color="gray.400"
+          >
+            Email
+          </Text>
+        ),
+        cell: (info) => (
+          <Text color={textColor}>
+            {info.getValue()}
+          </Text>
+        ),
+      }),
+      columnHelper.accessor('fees', {
+        id: 'fees',
+        header: () => (
+          <Text
+            justifyContent="space-between"
+            align="center"
+            fontSize={{ sm: '10px', lg: '12px' }}
+            color="gray.400"
+          >
+            Fees
+          </Text>
+        ),
+        cell: (info) => (
+          <Text color={textColor}>
+            ${info.getValue()}
+          </Text>
         ),
       }),
       columnHelper.accessor('actions', {
@@ -219,7 +305,7 @@ import {
               fontWeight="700"
               lineHeight="100%"
             >
-              All Categories
+              All Doctors
             </Text>
             <Button
               variant='darkBrand'
@@ -229,11 +315,10 @@ import {
               borderRadius='70px'
               px='24px'
               py='5px'
-              onClick={() => navigate('/admin/add-category')}
+              onClick={() => navigate('/admin/add/doctor')}
               width={'200px'}
             >
-              <PlusSquareIcon me="10px" />
-              Create New Category
+              Add New Doctor
             </Button>
           </Flex>
           <Box>
@@ -305,4 +390,4 @@ import {
     );
   };
   
-  export default AllCategories;
+  export default Doctors;

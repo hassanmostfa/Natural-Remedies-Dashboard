@@ -74,6 +74,10 @@ import ProtectedRoute from 'components/protectedRoute/ProtectedRoute';
 import EditRole from 'views/admin/roles/EditRole';
 import Products from 'views/admin/products/Products';
 import AddProduct from 'views/admin/products/AddProduct';
+import Doctors from 'views/admin/doctors/Doctors';
+import AddDoctor from 'views/admin/doctors/AddDoctor';
+import Clinics from 'views/admin/clinics/Clinics';
+import AddClinic from 'views/admin/clinics/AddClinic';
 
 
 const routes = [
@@ -162,6 +166,7 @@ const routes = [
     component: <AddBranch />,
     showInSidebar: false,
   },
+  /* Start Doctors Routes */
   {
     name: 'Doctor Management',
     layout: '/admin',
@@ -169,9 +174,19 @@ const routes = [
     icon: (
       <Icon as={MdMedicalServices} width="20px" height="20px" color="inherit" />
     ),
-    component: <DataTables />,
+    component: <Doctors />,
     showInSidebar: true,
   },
+  {
+    name: 'Doctor Management',
+    layout: '/admin',
+    path: '/add/doctor',
+    component: <AddDoctor />,
+    showInSidebar: false,
+  },
+  /* End Doctors Routes */
+
+  /* Start Clinics Routes */
   {
     name: 'Clinic Management',
     layout: '/admin',
@@ -184,9 +199,18 @@ const routes = [
         color="inherit"
       />
     ),
-    component: <DataTables />,
+    component: <Clinics />,
     showInSidebar: true,
   },
+  {
+    name: 'Clinic Management',
+    layout: '/admin',
+    path: '/add-clinic',
+    component: <AddClinic />,
+    showInSidebar: false,
+  },
+  /* Start Clinics Routes */
+
   {
     name: 'User Management',
     layout: '/admin',
@@ -526,7 +550,7 @@ const routes = [
   {
     name: 'Admin Management',
     layout: '/admin',
-    path: '/Edit-Rule/:id',
+    path: '/edit/rule/:id',
     icon: (
       <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
     ),

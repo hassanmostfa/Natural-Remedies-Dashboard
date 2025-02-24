@@ -45,11 +45,15 @@ p{
 }
 /* Login Page */
 .css-kyaamw {
-  background: url("../img/login-bg.jpeg")  !important;
+  background: url("../img/login-bg.jpeg") !important;
   background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
   border-radius: 0px !important;
+}
+
+.css-1rkd2xd{
+  background: white !important;
 }
 
 .custom-table{

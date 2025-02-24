@@ -117,7 +117,12 @@ const EditRole = () => {
         title: 'Success',
         text: 'Role updated successfully',
         confirmButtonText: 'OK',
-        onClose: () => {
+        customClass: {
+          popup: 'custom-swal-popup', // Add a custom class for the popup
+          title: 'custom-swal-title', // Add a custom class for the title
+          content: 'custom-swal-content', // Add a custom class for the content
+          confirmButton: 'custom-swal-confirm-button', // Add a custom class for the confirm button
+        },        onClose: () => {
           navigate('/admin/undefined/rules'); // Redirect to the roles page after successful submission
         }
       }).then((result) => {

@@ -118,7 +118,7 @@ const Roles = () => {
             color="green.500"
             as={EditIcon}
             cursor="pointer"
-            onClick={() => navigate(`/admin/Edit-Rule/${info.getValue()}`)}
+            onClick={() => navigate(`/admin/edit/rule/${info.getValue()}`)}
           />
           <Icon
             w="18px"
@@ -127,7 +127,7 @@ const Roles = () => {
             color="blue.500"
             as={FaEye}
             cursor="pointer"
-            onClick={() => navigate(`/admin/Edit-Rule/${info.getValue()}`)}
+            onClick={() => navigate(`/admin/edit/rule/${info.getValue()}`)}
           />
         </Flex>
       ),

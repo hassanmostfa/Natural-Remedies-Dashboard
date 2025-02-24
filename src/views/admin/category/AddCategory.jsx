@@ -9,17 +9,20 @@ import {
   Text,
   useColorModeValue,
   Icon,
-
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
-import "./brand.css";
 import { FaUpload } from "react-icons/fa6";
-import { IoMdArrowBack } from "react-icons/io";
+import { IoMdArrowBack, IoIosArrowDown } from "react-icons/io"; // Import the dropdown icon
 import { useNavigate } from "react-router-dom";
 
 const AddCategory = () => {
   const [name, setName] = useState("");
   const [image, setImage] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedCategoryType, setSelectedCategoryType] = useState("Select Category Type"); // State for selected category type
 
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
@@ -55,15 +58,22 @@ const AddCategory = () => {
   const handleCancel = () => {
     setName("");
     setImage(null);
+    setSelectedCategoryType("Select Category Type"); // Reset category type
   };
 
   const handleSend = () => {
-    const brandData = {
+    const categoryData = {
       name,
       image,
+      categoryType: selectedCategoryType,
     };
-    console.log("Brand Data:", brandData);
+    console.log("Category Data:", categoryData);
     // You can send this data to an API or perform other actions
+  };
+
+  // Handle category type selection
+  const handleSelectCategoryType = (type) => {
+    setSelectedCategoryType(type);
   };
 
   return (
@@ -95,7 +105,7 @@ const AddCategory = () => {
             <Text color={textColor} fontSize="sm" fontWeight="700">
               Category En-Name
               <span className="text-danger mx-1">*</span>
-            </Text> 
+            </Text>
             <Input
               type="text"
               id="en_name"
@@ -112,8 +122,7 @@ const AddCategory = () => {
             <Text color={textColor} fontSize="sm" fontWeight="700">
               Category Ar-Name
               <span className="text-danger mx-1">*</span>
-            </Text> 
-
+            </Text>
             <Input
               type="text"
               id="ar_name"
@@ -125,60 +134,102 @@ const AddCategory = () => {
             />
           </div>
 
+          {/* Category Type Dropdown */}
+          <div className="mb-3">
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Category Type
+              <span className="text-danger mx-1">*</span>
+            </Text>
+            <Menu>
+              <MenuButton
+                as={Button}
+                rightIcon={<IoIosArrowDown />} // Dropdown icon
+                width="100%"
+                bg="white"
+                border="1px solid #ddd"
+                borderRadius="md"
+                _hover={{ bg: "gray.200" }}
+                textAlign="left"
+                fontSize={"sm"}
+              >
+                {selectedCategoryType}
+              </MenuButton>
+              <MenuList width="100%">
+                <MenuItem
+                  _hover={{ bg: "#38487c", color: "white" }}
+                  onClick={() => handleSelectCategoryType("Type A")}
+                >
+                  Type A
+                </MenuItem>
+                <MenuItem
+                  _hover={{ bg: "#38487c", color: "white" }}
+                  onClick={() => handleSelectCategoryType("Type B")}
+                >
+                  Type B
+                </MenuItem>
+                <MenuItem
+                  _hover={{ bg: "#38487c", color: "white" }}
+                  onClick={() => handleSelectCategoryType("Type C")}
+                >
+                  Type C
+                </MenuItem>
+              </MenuList>
+            </Menu>
+          </div>
+
           {/* Drag-and-Drop Upload Section */}
-                   <Box
-                     border="1px dashed"
-                     borderColor="gray.300"
-                     borderRadius="md"
-                     p={4}
-                     textAlign="center"
-                     backgroundColor="gray.100"
-                     cursor="pointer"
-                     onDragOver={handleDragOver}
-                     onDragLeave={handleDragLeave}
-                     onDrop={handleDrop}
-                     mb={4}
-                   >
-                     <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
-                     <Text color="gray.500" mb={2}>
-                       Drag & Drop Image Here
-                     </Text>
-                     <Text color="gray.500" mb={2}>
-                       or
-                     </Text>
-                     <Button
-                       variant="outline"
-                       color="#422afb"
-                       border="none"
-                       onClick={() => document.getElementById('fileInput').click()}
-                     >
-                       Upload Image
-                       <input
-                         type="file"
-                         id="fileInput"
-                         hidden
-                         accept="image/*"
-                         onChange={handleFileInputChange}
-                       />
-                     </Button>
-                     {image && (
-                       <Box
-                         mt={4}
-                         display={'flex'}
-                         justifyContent="center"
-                         alignItems="center"
-                       >
-                         <img
-                           src={URL.createObjectURL(image)}
-                           alt={image.name}
-                           width={80}
-                           height={80}
-                           borderRadius="md"
-                         />
-                       </Box>
-                     )}
-                   </Box>
-         
+          <Box
+            border="1px dashed"
+            borderColor="gray.300"
+            borderRadius="md"
+            p={4}
+            textAlign="center"
+            backgroundColor="gray.100"
+            cursor="pointer"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            mb={4}
+          >
+            <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
+            <Text color="gray.500" mb={2}>
+              Drag & Drop Image Here
+            </Text>
+            <Text color="gray.500" mb={2}>
+              or
+            </Text>
+            <Button
+              variant="outline"
+              color="#422afb"
+              border="none"
+              onClick={() => document.getElementById("fileInput").click()}
+            >
+              Upload Image
+              <input
+                type="file"
+                id="fileInput"
+                hidden
+                accept="image/*"
+                onChange={handleFileInputChange}
+              />
+            </Button>
+            {image && (
+              <Box
+                mt={4}
+                display={"flex"}
+                justifyContent="center"
+                alignItems="center"
+              >
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt={image.name}
+                  width={80}
+                  height={80}
+                  borderRadius="md"
+                />
+              </Box>
+            )}
+          </Box>
 
           {/* Action Buttons */}
           <Flex justify="center" mt={4}>
@@ -186,13 +237,13 @@ const AddCategory = () => {
               Cancel
             </Button>
             <Button
-              variant='darkBrand'
-              color='white'
-              fontSize='sm'
-              fontWeight='500'
-              borderRadius='70px'
-              px='24px'
-              py='5px'
+              variant="darkBrand"
+              color="white"
+              fontSize="sm"
+              fontWeight="500"
+              borderRadius="70px"
+              px="24px"
+              py="5px"
               onClick={handleSend}
             >
               Save

@@ -21,34 +21,40 @@ import {
   } from '@tanstack/react-table';
   import * as React from 'react';
   import Card from 'components/card/Card';
-  import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
+  import { EditIcon } from '@chakra-ui/icons';
   import { FaEye, FaTrash } from 'react-icons/fa6';
   import { useNavigate } from 'react-router-dom';
   
   const columnHelper = createColumnHelper();
   
-  const AllCategories = () => {
+  const Clinics = () => {
     const [data, setData] = React.useState([
       {
         id: 1,
-        image:'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-        en_name:'brand 1',
-        ar_name:'العلامة التجارية 1',
-        category_type:'type 1'
+        name: 'Clinic A',
+        email: 'clinicA@example.com',
+        password: '********', // Masked for security
+        locations: ['Location 1', 'Location 2'],
+        from: '09:00 AM',
+        to: '05:00 PM',
       },
       {
         id: 2,
-        image:'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-        en_name:'brand 2',
-        ar_name:'العلامة التجارية 2',
-        category_type:'type 1'
+        name: 'Clinic B',
+        email: 'clinicB@example.com',
+        password: '********', // Masked for security
+        locations: ['Location 3'],
+        from: '10:00 AM',
+        to: '06:00 PM',
       },
       {
         id: 3,
-        image:'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-        en_name:'brand 3',
-        ar_name:'العلامة التجارية 3',
-        category_type:'type 1'
+        name: 'Clinic C',
+        email: 'clinicC@example.com',
+        password: '********', // Masked for security
+        locations: ['Location 4', 'Location 5'],
+        from: '08:00 AM',
+        to: '04:00 PM',
       },
     ]);
   
@@ -79,8 +85,8 @@ import {
           </Flex>
         ),
       }),
-      columnHelper.accessor('en_name', {
-        id: 'en_name',
+      columnHelper.accessor('name', {
+        id: 'name',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -88,7 +94,7 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-           En-Name
+            Name
           </Text>
         ),
         cell: (info) => (
@@ -97,8 +103,8 @@ import {
           </Text>
         ),
       }),
-      columnHelper.accessor('ar_name', {
-        id: 'ar_name',
+      columnHelper.accessor('email', {
+        id: 'email',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -106,7 +112,7 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-           Ar-Name
+            Email
           </Text>
         ),
         cell: (info) => (
@@ -115,8 +121,8 @@ import {
           </Text>
         ),
       }),
-      columnHelper.accessor('category_type', {
-        id: 'category_type',
+      columnHelper.accessor('locations', {
+        id: 'locations',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -124,7 +130,29 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-            Category Type
+            Locations
+          </Text>
+        ),
+        cell: (info) => (
+          <Box>
+            {info.getValue().map((location, index) => (
+              <Text key={index} color={textColor}>
+                {location}
+              </Text>
+            ))}
+          </Box>
+        ),
+      }),
+      columnHelper.accessor('from', {
+        id: 'from',
+        header: () => (
+          <Text
+            justifyContent="space-between"
+            align="center"
+            fontSize={{ sm: '10px', lg: '12px' }}
+            color="gray.400"
+          >
+            From
           </Text>
         ),
         cell: (info) => (
@@ -133,8 +161,8 @@ import {
           </Text>
         ),
       }),
-      columnHelper.accessor('image', {
-        id: 'image',
+      columnHelper.accessor('to', {
+        id: 'to',
         header: () => (
           <Text
             justifyContent="space-between"
@@ -142,11 +170,13 @@ import {
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
           >
-            Image
+            To
           </Text>
         ),
         cell: (info) => (
-          <img src={info.getValue()} alt="Brand Image" width={70} height={70} style={{ borderRadius: '8px' }} />
+          <Text color={textColor}>
+            {info.getValue()}
+          </Text>
         ),
       }),
       columnHelper.accessor('actions', {
@@ -170,6 +200,7 @@ import {
               color="red.500"
               as={FaTrash}
               cursor="pointer"
+              onClick={() => handleDelete(info.row.original.id)}
             />
             <Icon
               w="18px"
@@ -178,6 +209,7 @@ import {
               color="green.500"
               as={EditIcon}
               cursor="pointer"
+              onClick={() => handleEdit(info.row.original.id)}
             />
             <Icon
               w="18px"
@@ -186,6 +218,7 @@ import {
               color="blue.500"
               as={FaEye}
               cursor="pointer"
+              onClick={() => handleView(info.row.original.id)}
             />
           </Flex>
         ),
@@ -204,6 +237,21 @@ import {
       debugTable: true,
     });
   
+    // Handle delete action
+    const handleDelete = (id) => {
+      setData(data.filter((clinic) => clinic.id !== id));
+    };
+  
+    // Handle edit action
+    const handleEdit = (id) => {
+      navigate(`/admin/edit/clinic/${id}`);
+    };
+  
+    // Handle view action
+    const handleView = (id) => {
+      navigate(`/admin/view/clinic/${id}`);
+    };
+  
     return (
       <div className="container">
         <Card
@@ -219,7 +267,7 @@ import {
               fontWeight="700"
               lineHeight="100%"
             >
-              All Categories
+              All Clinics
             </Text>
             <Button
               variant='darkBrand'
@@ -229,11 +277,10 @@ import {
               borderRadius='70px'
               px='24px'
               py='5px'
-              onClick={() => navigate('/admin/add-category')}
+              onClick={() => navigate('/admin/add-clinic')}
               width={'200px'}
             >
-              <PlusSquareIcon me="10px" />
-              Create New Category
+              Add New Clinic
             </Button>
           </Flex>
           <Box>
@@ -305,4 +352,4 @@ import {
     );
   };
   
-  export default AllCategories;
+  export default Clinics;

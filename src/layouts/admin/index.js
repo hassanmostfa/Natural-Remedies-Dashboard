@@ -12,6 +12,25 @@ const capitalizeFirstLetter = (string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
+// Function to remove the ID segment from the path
+const removeIdFromPath = (path) => {
+  const segments = path.split("/").filter(Boolean); // Split and remove empty segments
+  const lastSegment = segments[segments.length - 1]; // Get the last segment
+
+  // Check if the last segment is an ID (numeric or UUID)
+  const isId =
+    /^\d+$/.test(lastSegment) || // Check if numeric
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      lastSegment
+    ); // Check if UUID
+
+  if (isId) {
+    return segments.slice(0, -1).join("/"); // Remove the last segment (ID)
+  }
+
+  return path; // Return the original path if no ID is found
+};
+
 // Function to find the route name and parent route
 const getBreadcrumbPath = (pathname, routes) => {
   const segments = pathname.split("/").filter(Boolean);
@@ -21,16 +40,19 @@ const getBreadcrumbPath = (pathname, routes) => {
 
   const pathSegments = segments.slice(adminIndex + 1); // Get everything after "/admin/"
   const cleanedSegments = pathSegments.filter(segment => segment.toLowerCase() !== "undefined"); // Remove "undefined"
-  
+
+  // Remove the ID segment from the path
+  const pathWithoutId = removeIdFromPath(cleanedSegments.join("/"));
+
   let breadcrumb = [];
   let currentPath = "/admin";
 
-  cleanedSegments.forEach(segment => {
+  pathWithoutId.split("/").forEach(segment => {
     currentPath += `/${segment}`;
-    
+
     // Find the matching route name
     const matchedRoute = routes.find(route => `${route.layout}${route.path}` === currentPath);
-    
+
     if (matchedRoute) {
       breadcrumb.push(capitalizeFirstLetter(matchedRoute.name));
     } else {

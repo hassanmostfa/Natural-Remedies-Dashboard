@@ -5,3 +5,23 @@
     margin-top: 100px;
     padding: 10px;
 }
+
+/* Sweet Alert Styles*/
+/* Custom CSS for SweetAlert */
+.custom-swal-popup {
+    width: 700px !important; /* Set the width of the popup */
+    font-size: 1.5rem !important; /* Increase the font size */
+  }
+  
+  .custom-swal-title {
+    font-size: 2.5rem !important; /* Increase the title font size */
+  }
+  
+  .custom-swal-content {
+    font-size: 2rem !important; /* Increase the content font size */
+  }
+  
+  .custom-swal-confirm-button {
+    font-size: 1.2rem !important; /* Increase the button font size */
+    padding: 10px 20px !important; /* Increase the button padding */
+  }
