@@ -11,6 +11,10 @@ import {
   Thead,
   Tr,
   useColorModeValue,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  IconButton,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -23,40 +27,47 @@ import * as React from 'react';
 import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
-import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
+import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
 import { FaEye, FaTrash } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
+import { useGetAdminsQuery, useDeleteUserMutation } from 'api/userSlice';
+import Swal from 'sweetalert2';
+
 const columnHelper = createColumnHelper();
 
 const Admins = () => {
-  const [data, setData] = React.useState([
-    {
-      first_name: 'John',
-      last_name: 'Doe',
-      email: 'john@example.com',
-      password: 'password123',
-      role: 'Super Admin',
-      status: 'Active',
-    },
-    {
-      first_name: 'Jane',
-      last_name: 'Doe',
-      email: 'jane@example.com',
-      password: 'password123',
-      role: 'Admin',
-      status: 'Inactive',
-    },
-  ]);
-
+  const [page, setPage] = React.useState(1); // Current page
+  const [limit, setLimit] = React.useState(10); // Items per page
+  const [searchQuery, setSearchQuery] = React.useState(''); // Search query
+  const { data, refetch, isError, isLoading } = useGetAdminsQuery({ page, limit });
+  const [deleteUser, { isError: isDeleteError, isLoading: isDeleteLoading }] = useDeleteUserMutation();
   const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
+  // Extract table data and pagination info
+  const tableData = data?.data?.data || [];
+  const pagination = data?.data?.pagination || { page: 1, limit: 10, totalItems: 0, totalPages: 1 };
+
+  // Filter data based on search query
+  const filteredData = React.useMemo(() => {
+    if (!searchQuery) return tableData; // Return all data if no search query
+    return tableData.filter((item) =>
+      Object.values(item).some((value) =>
+        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  }, [tableData, searchQuery]);
+
+  React.useEffect(() => {
+    refetch();
+  }, [page, limit, refetch]);
+
   const columns = [
-    columnHelper.accessor('first_name', {
-      id: 'first_name',
+    columnHelper.accessor('name', {
+      id: 'name',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -64,27 +75,7 @@ const Admins = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          First Name
-        </Text>
-      ),
-      cell: (info) => (
-        <Flex align="center">
-          <Text color={textColor}>
-            {info.getValue()}
-          </Text>
-        </Flex>
-      ),
-    }),
-    columnHelper.accessor('last_name', {
-      id: 'last_name',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Last Name
+          Name
         </Text>
       ),
       cell: (info) => (
@@ -108,30 +99,12 @@ const Admins = () => {
         </Text>
       ),
       cell: (info) => (
-        <Text color={textColor} >
-          {info.getValue()}
-        </Text>
-      ),
-    }),
-    columnHelper.accessor('password', {
-      id: 'password',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Password
-        </Text>
-      ),
-      cell: (info) => (
         <Text color={textColor}>
           {info.getValue()}
         </Text>
       ),
     }),
-    columnHelper.accessor('role', {
+    columnHelper.accessor('roleId', {
       id: 'role',
       header: () => (
         <Text
@@ -145,11 +118,11 @@ const Admins = () => {
       ),
       cell: (info) => (
         <Text color={textColor}>
-          {info.getValue()}
+          Admin
         </Text>
       ),
     }),
-    columnHelper.accessor('actions', {
+    columnHelper.accessor('id', {
       id: 'actions',
       header: () => (
         <Text
@@ -170,6 +143,7 @@ const Admins = () => {
             color="red.500"
             as={FaTrash}
             cursor="pointer"
+            onClick={() => handleDeleteRole(info.getValue())}
           />
           <Icon
             w="18px"
@@ -178,6 +152,7 @@ const Admins = () => {
             color="green.500"
             as={EditIcon}
             cursor="pointer"
+            onClick={() => navigate(`/admin/edit-admin/${info.getValue()}`)}
           />
           <Icon
             w="18px"
@@ -193,7 +168,7 @@ const Admins = () => {
   ];
 
   const table = useReactTable({
-    data,
+    data: filteredData, // Use filtered data
     columns,
     state: {
       sorting,
@@ -203,6 +178,48 @@ const Admins = () => {
     getSortedRowModel: getSortedRowModel(),
     debugTable: true,
   });
+
+  // Delete function
+  const handleDeleteRole = async (id) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+      });
+
+      if (result.isConfirmed) {
+        await deleteUser(id).unwrap(); // Delete the role
+        refetch(); // Refetch the data
+        Swal.fire('Deleted!', 'The Admin has been deleted.', 'success');
+      }
+    } catch (error) {
+      console.error('Failed to delete role:', error);
+      Swal.fire('Error!', 'Failed to delete the role.', 'error');
+    }
+  };
+
+  // Pagination controls
+  const handleNextPage = () => {
+    if (page < pagination.totalPages) {
+      setPage(page + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleLimitChange = (e) => {
+    setLimit(Number(e.target.value));
+    setPage(1); // Reset to the first page when changing the limit
+  };
 
   return (
     <div className="container">
@@ -221,22 +238,64 @@ const Admins = () => {
           >
             Admins
           </Text>
-          <Button
-            variant='darkBrand'
-            color='white'
-            fontSize='sm'
-            fontWeight='500'
-            borderRadius='70px'
-            px='24px'
-            py='5px'
-            onClick={() => navigate('/admin/add-admin')}
-            width={'200px'}
+          <div className="search-container d-flex align-items-center gap-2">
+
+            <InputGroup w={{ base: "100%", md: "200px" }}>
+              <InputLeftElement>
+                <IconButton
+                  bg='inherit'
+                  borderRadius='inherit'
+                  _hover='none'
+                  _active={{
+                    bg: "inherit",
+                    transform: "none",
+                    borderColor: "transparent",
+                  }}
+                  _focus={{
+                    boxShadow: "none",
+                  }}
+                  icon={
+                    <SearchIcon
+                      w='15px'
+                      h='15px'
+                    />
+                  }
+                />
+              </InputLeftElement>
+              <Input
+                variant='search'
+                fontSize='sm'
+                bg='secondaryGray.300' // Default value
+                color='gray.700' // Default value
+                fontWeight='500'
+                _placeholder={{ color: "gray.400", fontSize: "14px" }}
+                borderRadius='30px' // Default value
+                placeholder='Search...' // Default value
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </InputGroup>
+            <Button
+              variant='darkBrand'
+              color='white'
+              fontSize='sm'
+              fontWeight='500'
+              borderRadius='70px'
+              px='24px'
+              py='5px'
+              onClick={() => navigate('/admin/add-admin')}
+              width={'200px'}
             >
-              
-            <PlusSquareIcon me="10px" />
-            Create New Admin
-          </Button>
+              <PlusSquareIcon me="10px" />
+              Create New Admin
+            </Button>
+          </div>
         </Flex>
+
+       
+          
+        
+
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
             <Thead>
@@ -274,33 +333,72 @@ const Admins = () => {
               ))}
             </Thead>
             <Tbody>
-              {table
-                .getRowModel()
-                .rows.slice(0, 11)
-                .map((row) => {
-                  return (
-                    <Tr key={row.id}>
-                      {row.getVisibleCells().map((cell) => {
-                        return (
-                          <Td
-                            key={cell.id}
-                            fontSize={{ sm: '14px' }}
-                            minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                            borderColor="transparent"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </Td>
-                        );
-                      })}
-                    </Tr>
-                  );
-                })}
+              {table.getRowModel().rows.map((row) => {
+                return (
+                  <Tr key={row.id}>
+                    {row.getVisibleCells().map((cell) => {
+                      return (
+                        <Td
+                          key={cell.id}
+                          fontSize={{ sm: '14px' }}
+                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                          borderColor="transparent"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </Td>
+                      );
+                    })}
+                  </Tr>
+                );
+              })}
             </Tbody>
           </Table>
         </Box>
+
+        {/* Pagination Controls */}
+        <Flex justifyContent="space-between" alignItems="center" px="25px" py="10px">
+          <Flex alignItems="center">
+            <Text color={textColor} fontSize="sm" mr="10px">
+              Rows per page:
+            </Text>
+            <select
+              value={limit}
+              onChange={handleLimitChange}
+              style={{ padding: '5px', borderRadius: '5px', border: '1px solid #ddd' }}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </Flex>
+          <Text color={textColor} fontSize="sm">
+            Page {pagination.page} of {pagination.totalPages}
+          </Text>
+          <Flex>
+            <Button
+              onClick={handlePreviousPage}
+              disabled={page === 1}
+              variant="outline"
+              size="sm"
+              mr="10px"
+            >
+              <Icon as={ChevronLeftIcon} mr="5px" />
+              Previous
+            </Button>
+            <Button
+              onClick={handleNextPage}
+              disabled={page === pagination.totalPages}
+              variant="outline"
+              size="sm"
+            >
+              Next
+              <Icon as={ChevronRightIcon} ml="5px" />
+            </Button>
+          </Flex>
+        </Flex>
       </Card>
     </div>
   );

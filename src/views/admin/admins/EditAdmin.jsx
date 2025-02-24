@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button,
   Menu,
@@ -11,26 +11,44 @@ import {
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import './admins.css';
 import { useGetRolesQuery } from 'api/roleSlice';
-import { useCreateUserMutation } from 'api/userSlice';
 import Swal from 'sweetalert2';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useUpdateUserMutation } from 'api/userSlice';
+import { useGetAdminsQuery } from 'api/userSlice';
+import { useGetUserProfileQuery } from 'api/userSlice';
 
-const AddAdmin = () => {
-  const { data: roles, isLoading, isError } = useGetRolesQuery();
-  const [createAdmin, { isLoading: isCreating }] = useCreateUserMutation();
+const EditAdmin = () => {
+  const { id } = useParams();
+  const { data: roles, isLoading: isRolesLoading, isError: isRolesError } = useGetRolesQuery();
+  const { data: admin, isLoading: isAdminLoading, isError: isAdminError } = useGetUserProfileQuery(id);
+  const [editAdmin, { isLoading: isCreating }] = useUpdateUserMutation();
   const navigate = useNavigate();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const [selectedRole, setSelectedRole] = useState('Select a role');
-  const [showPassword, setShowPassword] = useState(false);
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     roleId: '',
   });
+
+  // Update formData when admin data is available
+  useEffect(() => {
+
+    if (admin?.data) {
+      setFormData({
+        name: admin.data?.name,
+        email: admin.data?.email,
+        password: '', // Password is not pre-filled for security reasons
+        roleId: admin.data?.roleId,
+      });
+      // Set the selected role name
+      const role = roles?.data?.find((r) => r.id === admin.data?.roleId);
+      if (role) {
+        setSelectedRole(role?.name);
+      }
+    }
+  }, [admin, roles]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -39,37 +57,45 @@ const AddAdmin = () => {
       [name]: value,
     });
   };
-  const handleSelect =  (role) => {
+
+  const handleSelect = (role) => {
     setSelectedRole(role.name);
     setFormData({ ...formData, roleId: role.id });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try{
-      const response = await createAdmin(formData).unwrap();
-       Swal.fire({
-              icon: 'success',
-              title: 'Success',
-              text: 'Admin added successfully',
-              confirmButtonText: 'OK',
-              onClose: () => {
-                navigate('/admin/undefined/admins'); // Redirect to the roles page after successful submission
-              }
-            }).then((result) => {
-              if (result.isConfirmed) {
-                navigate('/admin/undefined/admins'); // Redirect to the roles page after successful submission
-              }
-            });
-    }catch(error){
+    
+    try {
+      
+      const response = await editAdmin({id, user:formData}).unwrap();
       Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: error.data.message,
-              confirmButtonText: 'OK',
-            });
+        icon: 'success',
+        title: 'Success',
+        text: 'Admin updated successfully',
+        confirmButtonText: 'OK',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/admin/undefined/admins'); // Redirect to the admins page after successful submission
+        }
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.data?.message || 'Failed to update admin',
+        confirmButtonText: 'OK',
+      });
     }
   };
+
+  if (isAdminLoading || isRolesLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isAdminError || isRolesError) {
+    return <div>Error loading data</div>;
+  }
 
   return (
     <div className="container add-admin-container w-100">
@@ -81,10 +107,10 @@ const AddAdmin = () => {
           mb="20px !important"
           lineHeight="100%"
         >
-          Add New Admin
+          Edit Admin
         </Text>
         <form onSubmit={handleSubmit}>
-          {/* First Name and Last Name Fields */}
+          {/* Name Field */}
           <div className="mb-3 col-md-12">
             <Text color={textColor} fontSize="sm" fontWeight="700">
               Name
@@ -96,7 +122,8 @@ const AddAdmin = () => {
               className="form-control mt-2"
               id="name"
               placeholder="Enter Admin Name"
-              onChange={(e) => handleInputChange(e)}
+              value={formData.name}
+              onChange={handleInputChange}
               required
             />
           </div>
@@ -110,10 +137,11 @@ const AddAdmin = () => {
             <input
               type="email"
               name="email"
-              onChange={(e) => handleInputChange(e)}
               className="form-control mt-2"
               id="email"
               placeholder="Enter email"
+              value={formData.email}
+              onChange={handleInputChange}
               required
             />
           </div>
@@ -127,51 +155,39 @@ const AddAdmin = () => {
             <input
               type="password"
               name="password"
-              onChange={(e) => handleInputChange(e)}
               className="form-control mt-2"
               id="password"
-              placeholder="Enter password"
-              required
+              placeholder="Enter new password (leave blank to keep current)"
+              value={formData.password}
+              onChange={handleInputChange}
             />
           </div>
 
-          {/* Role Dropdown - Chakra UI Menu */}
+          {/* Role Dropdown */}
           <div className="mb-3">
             <Text color={textColor} fontSize="sm" fontWeight="700">
               Role
               <span className="text-danger mx-1">*</span>
             </Text>
-
-            <Menu >
+            <Menu>
               <MenuButton
                 as={Button}
                 rightIcon={<ChevronDownIcon />}
                 width="100%"
                 bg="white"
-                border="1px solid #ddd" // Add a border
-                borderRadius="md" // Optional: Rounded corners
+                border="1px solid #ddd"
+                borderRadius="md"
                 _hover={{ bg: 'gray.200' }}
-                textAlign={'left'}
+                textAlign="left"
               >
                 {selectedRole}
               </MenuButton>
-              <MenuList width={'100%'}>
-                {isLoading ? (
-                  <MenuItem>Loading...</MenuItem>
-                ) : isError ? (
-                  <MenuItem>Error fetching roles</MenuItem>
-                ) : roles?.length == 0 ? (
-                  <MenuItem>No roles found</MenuItem>
-                ) : (
-                  roles.data?.map((role) => (
-                    <MenuItem
-                      key={role.id}
-                      onClick={() => handleSelect(role)}
-                    >
-                      {role.name}
-                    </MenuItem>
-                  ))
-                )}
+              <MenuList width="100%">
+                {roles?.data?.map((role) => (
+                  <MenuItem key={role.id} onClick={() => handleSelect(role)}>
+                    {role.name}
+                  </MenuItem>
+                ))}
               </MenuList>
             </Menu>
           </div>
@@ -186,8 +202,9 @@ const AddAdmin = () => {
             px="24px"
             py="5px"
             type="submit"
+            isLoading={isCreating}
           >
-            Submit
+            Update Admin
           </Button>
         </form>
       </div>
@@ -195,4 +212,4 @@ const AddAdmin = () => {
   );
 };
 
-export default AddAdmin;
+export default EditAdmin;

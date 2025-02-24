@@ -11,6 +11,10 @@ import {
   Thead,
   Tr,
   useColorModeValue,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  IconButton,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -23,8 +27,7 @@ import * as React from 'react';
 import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
-import { EditIcon, PlusSquareIcon } from '@chakra-ui/icons';
-import './roles.css';
+import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
 import { FaEye, FaTrash } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
 import { useGetRolesQuery, useDeleteRoleMutation } from 'api/roleSlice';
@@ -33,20 +36,35 @@ import Swal from 'sweetalert2';
 const columnHelper = createColumnHelper();
 
 const Roles = () => {
-  const { data, refetch, isError, isLoading } = useGetRolesQuery();
-  const [deleteRole, { isError: isDeleteError, isLoading: isDeleteLoading }] =
-    useDeleteRoleMutation();
-
+  const [page, setPage] = React.useState(1); // Current page
+  const [limit, setLimit] = React.useState(10); // Items per page
+  const [searchQuery, setSearchQuery] = React.useState(''); // Search query
+  const { data, refetch, isError, isLoading } = useGetRolesQuery({ page, limit });
+  const [deleteRole, { isError: isDeleteError, isLoading: isDeleteLoading }] = useDeleteRoleMutation();
+  const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
-  // Fallback to hardcoded data if API fails
+  // Extract table data and pagination info
   const tableData = data?.data || [];
+  const pagination = data?.pagination || { page: 1, limit: 10, totalItems: 0, totalPages: 1 };
+
+  // Filter data based on search query
+  const filteredData = React.useMemo(() => {
+    if (!searchQuery) return tableData; // Return all data if no search query
+    return tableData.filter((item) =>
+      Object.values(item).some((value) =>
+        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  }, [tableData, searchQuery]);
+
   React.useEffect(() => {
     refetch();
-  },[]);
+  }, [page, limit, refetch]);
+
   const columns = [
     columnHelper.accessor('name', {
       id: 'name',
@@ -135,7 +153,7 @@ const Roles = () => {
   ];
 
   const table = useReactTable({
-    data: tableData,
+    data: filteredData, // Use filtered data
     columns,
     state: {
       sorting,
@@ -145,8 +163,6 @@ const Roles = () => {
     getSortedRowModel: getSortedRowModel(),
     debugTable: true,
   });
-
-  const navigate = useNavigate();
 
   // Delete function
   const handleDeleteRole = async (id) => {
@@ -172,6 +188,24 @@ const Roles = () => {
     }
   };
 
+  // Pagination controls
+  const handleNextPage = () => {
+    if (page < pagination.totalPages) {
+      setPage(page + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleLimitChange = (e) => {
+    setLimit(Number(e.target.value));
+    setPage(1); // Reset to the first page when changing the limit
+  };
+
   return (
     <div className="container">
       <Card
@@ -189,21 +223,61 @@ const Roles = () => {
           >
             Rules
           </Text>
-          <Button
-            variant="darkBrand"
-            color="white"
-            fontSize="sm"
-            fontWeight="500"
-            borderRadius="70px"
-            px="24px"
-            py="5px"
-            onClick={() => navigate('/admin/add-New-Rule')}
-            width={'200px'}
-          >
-            <PlusSquareIcon me="10px" />
-            Create New Rule
-          </Button>
+          <div className='d-flex align-items-center gap-2'>
+
+            <InputGroup w={{ base: "100%", md: "200px" }}>
+                <InputLeftElement>
+                  <IconButton
+                    bg='inherit'
+                    borderRadius='inherit'
+                    _hover='none'
+                    _active={{
+                      bg: "inherit",
+                      transform: "none",
+                      borderColor: "transparent",
+                    }}
+                    _focus={{
+                      boxShadow: "none",
+                    }}
+                    icon={
+                      <SearchIcon
+                        w='15px'
+                        h='15px'
+                      />
+                    }
+                  />
+                </InputLeftElement>
+                <Input
+                  variant='search'
+                  fontSize='sm'
+                  bg='secondaryGray.300' // Default value
+                  color='gray.700' // Default value
+                  fontWeight='500'
+                  _placeholder={{ color: "gray.400", fontSize: "14px" }}
+                  borderRadius='30px' // Default value
+                  placeholder='Search...' // Default value
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </InputGroup>
+            <Button
+              variant="darkBrand"
+              color="white"
+              fontSize="sm"
+              fontWeight="500"
+              borderRadius="70px"
+              px="24px"
+              py="5px"
+              onClick={() => navigate('/admin/add-New-Rule')}
+              width={'200px'}
+            >
+              <PlusSquareIcon me="10px" />
+              Create New Rule
+            </Button>
+          </div>
         </Flex>
+
+      
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
             <Thead>
@@ -241,33 +315,72 @@ const Roles = () => {
               ))}
             </Thead>
             <Tbody>
-              {table
-                .getRowModel()
-                .rows.slice(0, 11)
-                .map((row) => {
-                  return (
-                    <Tr key={row.id}>
-                      {row.getVisibleCells().map((cell) => {
-                        return (
-                          <Td
-                            key={cell.id}
-                            fontSize={{ sm: '14px' }}
-                            minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                            borderColor="transparent"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </Td>
-                        );
-                      })}
-                    </Tr>
-                  );
-                })}
+              {table.getRowModel().rows.map((row) => {
+                return (
+                  <Tr key={row.id}>
+                    {row.getVisibleCells().map((cell) => {
+                      return (
+                        <Td
+                          key={cell.id}
+                          fontSize={{ sm: '14px' }}
+                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                          borderColor="transparent"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </Td>
+                      );
+                    })}
+                  </Tr>
+                );
+              })}
             </Tbody>
           </Table>
         </Box>
+
+        {/* Pagination Controls */}
+        <Flex justifyContent="space-between" alignItems="center" px="25px" py="10px">
+          <Flex alignItems="center">
+            <Text color={textColor} fontSize="sm" mr="10px">
+              Rows per page:
+            </Text>
+            <select
+              value={limit}
+              onChange={handleLimitChange}
+              style={{ padding: '5px', borderRadius: '5px', border: '1px solid #ddd' }}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </Flex>
+          <Text color={textColor} fontSize="sm">
+            Page {pagination.page} of {pagination.totalPages}
+          </Text>
+          <Flex>
+            <Button
+              onClick={handlePreviousPage}
+              disabled={page === 1}
+              variant="outline"
+              size="sm"
+              mr="10px"
+            >
+              <Icon as={ChevronLeftIcon} ml="5px" />
+              Previous
+            </Button>
+            <Button
+              onClick={handleNextPage}
+              disabled={page === pagination.totalPages}
+              variant="outline"
+              size="sm"
+            >
+              Next
+              <Icon as={ChevronRightIcon} ml="5px" />
+            </Button>
+          </Flex>
+        </Flex>
       </Card>
     </div>
   );
