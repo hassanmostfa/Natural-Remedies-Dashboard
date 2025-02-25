@@ -79,6 +79,7 @@ import AddDoctor from 'views/admin/doctors/AddDoctor';
 import Clinics from 'views/admin/clinics/Clinics';
 import AddClinic from 'views/admin/clinics/AddClinic';
 import EditAdmin from 'views/admin/admins/EditAdmin';
+import ShowAdmin from 'views/admin/admins/ShowAdmin';
 
 
 const routes = [
@@ -570,6 +571,13 @@ const routes = [
     layout: '/admin',
     path: '/edit-admin/:id',
     component: <EditAdmin />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Admin Management',
+    layout: '/admin',
+    path: '/show-admin/:id',
+    component: <ShowAdmin />,
     showInSidebar: false,
   },
   {

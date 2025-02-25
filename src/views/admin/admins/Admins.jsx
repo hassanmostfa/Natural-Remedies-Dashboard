@@ -161,6 +161,7 @@ const Admins = () => {
             color="blue.500"
             as={FaEye}
             cursor="pointer"
+            onClick={() => navigate(`/admin/show-admin/${info.getValue()}`)}
           />
         </Flex>
       ),
@@ -291,11 +292,6 @@ const Admins = () => {
             </Button>
           </div>
         </Flex>
-
-       
-          
-        
-
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
             <Thead>
