@@ -14,48 +14,86 @@ import {
   RadioGroup,
   Stack,
   SimpleGrid,
+  useToast,
 } from '@chakra-ui/react';
 import { IoMdArrowBack } from 'react-icons/io';
 import { useNavigate } from 'react-router-dom';
 import { FaUpload } from 'react-icons/fa6';
+import { useAddPharmacyMutation } from 'api/pharmacySlice';
 
 const AddPharmacy = () => {
   const [formData, setFormData] = useState({
-    name: 'Al-Shifa Pharmacy',
-    image:
-      'https://th.bing.com/th/id/OIP.2tLY6p_5ubR3VvBlrP4iyAHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-    description: '24/7 pharmacy service with home delivery',
-    whatsappNumber: '+96599123456',
-    email: 'alshifa2@example.com',
-    workingHours: 'From Saturday to Friday 8:00 to 23:00',
-    revenueShareType: 'fixed', // 'fixed' or 'percentage'
-    revenueShareValue: '15.5', // Percentage or fixed amount
-    feesStartDate: '2024-02-01',
-    feesEndDate: '2025-02-01',
+    name: '',
+    imageKey: '',
+    description: '',
+    whatsappNumber: '',
+    numOfBranches: 0,
+    email: '',
+    password: '',
+    workingHours: '',
+    revenueShare: 0, // Percentage
+    fixedFees: 0, // Fixed amount
+    feesStartDate: '',
+    feesEndDate: '',
+    isActive: true,
+    translations: [
+      {
+        languageId: 'ar',
+        name: '',
+        description: '',
+      },
+      {
+        languageId: 'en',
+        name: '',
+        description: '',
+      },
+    ],
+    branches: [],
   });
 
   const [numberOfBranches, setNumberOfBranches] = useState(0); // State for number of branches
-  const textColor = useColorModeValue('secondaryGray.900', 'white');
-  const navigate = useNavigate();
   const [image, setImage] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const textColor = useColorModeValue('secondaryGray.900', 'white');
+  const navigate = useNavigate();
+  const toast = useToast();
+  const [error, setError] = useState(null);
+
+  // Mutation hook for creating a pharmacy
+  const [createPharmacy, { isLoading }] = useAddPharmacyMutation();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handleTranslationChange = (languageId, field, value) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      translations: prevData.translations?.map((translation) =>
+        translation.languageId === languageId
+          ? { ...translation, [field]: value }
+          : translation
+      ),
+    }));
   };
 
   const handleRevenueShareTypeChange = (value) => {
     setFormData((prevData) => ({
       ...prevData,
       revenueShareType: value,
-      revenueShareValue: '', // Reset value when switching type
+      revenueShare: value === 'percentage' ? prevData.revenueShare : 0,
+      fixedFees: value === 'fixed' ? prevData.fixedFees : 0,
     }));
   };
 
   const handleImageUpload = (files) => {
     if (files && files.length > 0) {
       setImage(files[0]);
+      setFormData((prevData) => ({
+        ...prevData,
+        imageKey: files[0].name, // Update with the actual image key logic
+      }));
     }
   };
 
@@ -80,13 +118,108 @@ const AddPharmacy = () => {
     handleImageUpload(files);
   };
 
-  const handleSend = () => {
-    console.log('Pharmacy Data:', formData);
-  };
-
   const handleNumberOfBranchesChange = (e) => {
     const value = parseInt(e.target.value, 10);
-    setNumberOfBranches(value >= 0 ? value : ''); // Ensure the value is non-negative
+    setNumberOfBranches(value >= 0 ? value : 0); // Ensure the value is non-negative
+
+    // Initialize branches array with empty objects
+    setFormData((prevData) => ({
+      ...prevData,
+      numOfBranches: value,
+      branches: Array.from({ length: value })?.map((_, index) => ({
+        name: '',
+        address: '',
+        locationLink: '',
+        isActive: true,
+        translations: [
+          {
+            languageId: 'ar',
+            name: '',
+            address: '',
+          },
+          {
+            languageId: 'en',
+            name: '',
+            address: '',
+          },
+        ],
+      })),
+    }));
+  };
+
+  const handleBranchChange = (index) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      branches: prevData.branches?.map((branch, i) =>
+        i === index
+          ? {
+              ...branch,
+              name: branch.translations.find((t) => t.languageId === 'en').name,
+              address: branch.translations.find((t) => t.languageId === 'en')
+                .address,
+            }
+          : branch
+      ),
+    }));
+  };
+
+  const handleBranchTranslationChange = (index, languageId, field, value) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      branches: prevData.branches?.map((branch, i) =>
+        i === index
+          ? {
+              ...branch,
+              translations: branch.translations?.map((translation) =>
+                translation.languageId === languageId
+                  ? { ...translation, [field]: value }
+                  : translation
+              ),
+            }
+          : branch
+      ),
+    }));
+  };
+
+  const handleSend = async () => {
+    try {
+      // Format the data based on revenueShareType
+      const payload = {
+        ...formData,
+        feesStartDate: formData.feesStartDate ? formData.feesStartDate + 'T00:00:00Z' : '2024-05-01T00:00:00Z',
+        feesEndDate: formData.feesEndDate ? formData.feesEndDate + 'T00:00:00Z' : '2025-05-01T00:00:00Z',
+        name: formData.translations.find((t) => t.languageId === 'en').name,
+        description: formData.translations.find((t) => t.languageId === 'en').description,
+        revenueShare: formData.revenueShareType === 'percentage' ? parseInt(formData.revenueShare) : 0,
+        fixedFees: formData.revenueShareType === 'fixed' ? parseInt(formData.fixedFees) : 0, // Convert to integer if fixedformData.fixedFees : 0,
+      };
+      delete payload.revenueShareType;
+
+      // Send the data to the API
+      const response = await createPharmacy(payload).unwrap();
+
+      // Show success message
+      toast({
+        title: 'Success',
+        description: 'Pharmacy created successfully',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+
+      // Navigate back or to another page
+      navigate('/admin/pharmacy');
+    } catch (error) {
+      setError(error.data);
+      // Show error message
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to create pharmacy',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
 
   return (
@@ -107,19 +240,41 @@ const AddPharmacy = () => {
           </Button>
         </div>
         <form>
+          {error?.success === false && (
+            <div className="alert alert-danger" role="alert">
+              <h4 className="alert-heading">Validation failed</h4>
+              <ul>
+                {error.errors?.map((err) => (
+                  <li key={err.field}>
+                    {err.field} - {err.message.en || err.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <Grid templateColumns="repeat(2, 1fr)" gap={4}>
             {/* Row 1: Pharmacy Name En and Pharmacy Name Ar */}
             <GridItem>
               <Text color={textColor} fontSize="sm" fontWeight="700">
                 Pharmacy Name En <span className="text-danger">*</span>
               </Text>
-              <Input name="nameEn" onChange={handleChange} mt={2} />
+              <Input
+                name="name"
+                value={formData.translations.find((t) => t.languageId === 'en').name}
+                onChange={(e) => handleTranslationChange('en', 'name', e.target.value)}
+                mt={2}
+              />
             </GridItem>
             <GridItem>
               <Text color={textColor} fontSize="sm" fontWeight="700">
                 Pharmacy Name Ar <span className="text-danger">*</span>
               </Text>
-              <Input name="nameAr" onChange={handleChange} mt={2} />
+              <Input
+                name="nameAr"
+                value={formData.translations.find((t) => t.languageId === 'ar').name}
+                onChange={(e) => handleTranslationChange('ar', 'name', e.target.value)}
+                mt={2}
+              />
             </GridItem>
 
             {/* Row 2: Email and Iban */}
@@ -127,13 +282,13 @@ const AddPharmacy = () => {
               <Text color={textColor} fontSize="sm" fontWeight="700">
                 Email <span className="text-danger">*</span>
               </Text>
-              <Input name="email" onChange={handleChange} mt={2} />
+              <Input name="email" value={formData.email} onChange={handleChange} mt={2} />
             </GridItem>
             <GridItem>
               <Text color={textColor} fontSize="sm" fontWeight="700">
                 Iban <span className="text-danger">*</span>
               </Text>
-              <Input name="iban" onChange={handleChange} mt={2} />
+              <Input name="iban" value={formData.iban} onChange={handleChange} mt={2} />
             </GridItem>
 
             {/* Row 3: Password and WhatsApp Number */}
@@ -141,13 +296,24 @@ const AddPharmacy = () => {
               <Text color={textColor} fontSize="sm" fontWeight="700">
                 Password <span className="text-danger">*</span>
               </Text>
-              <Input type="password" name="password" onChange={handleChange} mt={2} />
+              <Input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                mt={2}
+              />
             </GridItem>
             <GridItem>
               <Text color={textColor} fontSize="sm" fontWeight="700">
                 WhatsApp Number <span className="text-danger">*</span>
               </Text>
-              <Input name="whatsappNumber" onChange={handleChange} mt={2} />
+              <Input
+                name="whatsappNumber"
+                value={formData.whatsappNumber}
+                onChange={handleChange}
+                mt={2}
+              />
             </GridItem>
 
             {/* Row 4: Working Hours and Revenue Share Type */}
@@ -155,7 +321,12 @@ const AddPharmacy = () => {
               <Text color={textColor} fontSize="sm" fontWeight="700">
                 Working Hours <span className="text-danger">*</span>
               </Text>
-              <Input name="workingHours" onChange={handleChange} mt={2} />
+              <Input
+                name="workingHours"
+                value={formData.workingHours}
+                onChange={handleChange}
+                mt={2}
+              />
             </GridItem>
             <GridItem>
               <Text color={textColor} fontSize="sm" fontWeight="700">
@@ -167,8 +338,8 @@ const AddPharmacy = () => {
                 mt={2}
               >
                 <Stack direction="row">
-                  <Radio value="fixed">Fixed Fees</Radio>
                   <Radio value="percentage">Percentage</Radio>
+                  <Radio value="fixed">Fixed Fees</Radio>
                 </Stack>
               </RadioGroup>
             </GridItem>
@@ -181,8 +352,8 @@ const AddPharmacy = () => {
                 </Text>
                 <Input
                   type="number"
-                  name="revenueShareValue"
-                  value={formData.revenueShareValue}
+                  name="revenueShare"
+                  value={formData.revenueShare}
                   onChange={handleChange}
                   mt={2}
                 />
@@ -195,8 +366,8 @@ const AddPharmacy = () => {
                   </Text>
                   <Input
                     type="number"
-                    name="revenueShareValue"
-                    value={formData.revenueShareValue}
+                    name="fixedFees"
+                    value={formData.fixedFees}
                     onChange={handleChange}
                     mt={2}
                   />
@@ -236,8 +407,8 @@ const AddPharmacy = () => {
                 Description En<span className="text-danger">*</span>
               </Text>
               <Textarea
-                name="descriptionEn"
-                onChange={handleChange}
+                value={formData.translations.find((t) => t.languageId === 'en').description}
+                onChange={(e) => handleTranslationChange('en', 'description', e.target.value)}
                 mt={2}
                 mb={4}
                 width="100%"
@@ -248,8 +419,8 @@ const AddPharmacy = () => {
                 Description Ar<span className="text-danger">*</span>
               </Text>
               <Textarea
-                name="descriptionAr"
-                onChange={handleChange}
+                value={formData.translations.find((t) => t.languageId === 'ar').description}
+                onChange={(e) => handleTranslationChange('ar', 'description', e.target.value)}
                 mt={2}
                 mb={4}
                 width="100%"
@@ -326,47 +497,71 @@ const AddPharmacy = () => {
           </Box>
 
           {/* Render Inputs Dynamically with Card Styles */}
-          {Array.from({ length: numberOfBranches }).map((_, index) => (
-            <Box 
-              key={index} 
-              mt={4} 
-              p={4} 
-              borderRadius="lg" 
-              boxShadow="sm" 
+          {Array.from({ length: numberOfBranches })?.map((_, index) => (
+            <Box
+              key={index}
+              mt={4}
+              p={4}
+              borderRadius="lg"
+              boxShadow="sm"
               border="1px solid #ccc"
               bg="white"
             >
               <Text color={textColor} fontSize="md" fontWeight="bold">
                 Branch {index + 1}
               </Text>
-              
+
               <SimpleGrid columns={2} mt={4} spacing={4}>
                 <Box>
                   <Text color={textColor} fontSize="sm" fontWeight="700">
                     Branch En-Name <span className="text-danger">*</span>
                   </Text>
-                  <Input placeholder="Enter Branch En-Name" />
+                  <Input
+                    placeholder="Enter Branch En-Name"
+                    value={formData.branches[index]?.translations.find((t) => t.languageId === 'en').name || ''}
+                    onChange={(e) =>
+                      handleBranchTranslationChange(index, 'en', 'name', e.target.value)
+                    }
+                  />
                 </Box>
 
                 <Box>
                   <Text color={textColor} fontSize="sm" fontWeight="700">
                     Branch En-Address <span className="text-danger">*</span>
                   </Text>
-                  <Input placeholder="Enter Branch En-Address" />
+                  <Input
+                    placeholder="Enter Branch En-Address"
+                    value={formData.branches[index]?.translations.find((t) => t.languageId === 'en').address || ''}
+                    onChange={(e) =>
+                      handleBranchTranslationChange(index, 'en', 'address', e.target.value)
+                    }
+                  />
                 </Box>
 
                 <Box>
                   <Text color={textColor} fontSize="sm" fontWeight="700">
                     Branch Ar-Name <span className="text-danger">*</span>
                   </Text>
-                  <Input placeholder="أدخل اسم الفرع بالعربية" />
+                  <Input
+                    placeholder="أدخل اسم الفرع بالعربية"
+                    value={formData.branches[index]?.translations.find((t) => t.languageId === 'ar').name || ''}
+                    onChange={(e) =>
+                      handleBranchTranslationChange(index, 'ar', 'name', e.target.value)
+                    }
+                  />
                 </Box>
 
                 <Box>
                   <Text color={textColor} fontSize="sm" fontWeight="700">
                     Branch Ar-Address <span className="text-danger">*</span>
                   </Text>
-                  <Input placeholder="أدخل عنوان الفرع بالعربية" />
+                  <Input
+                    placeholder="أدخل عنوان الفرع بالعربية"
+                    value={formData.branches[index]?.translations.find((t) => t.languageId === 'ar').address || ''}
+                    onChange={(e) =>
+                      handleBranchTranslationChange(index, 'ar', 'address', e.target.value)
+                    }
+                  />
                 </Box>
               </SimpleGrid>
 
@@ -375,7 +570,13 @@ const AddPharmacy = () => {
                   <Text color={textColor} fontSize="sm" fontWeight="700">
                     Location <span className="text-danger">*</span>
                   </Text>
-                  <Input placeholder="Enter Branch Location" />
+                  <Input
+                    placeholder="Enter Branch Location"
+                    value={formData.branches[index]?.locationLink || ''}
+                    onChange={(e) =>
+                      handleBranchChange(index, 'locationLink', e.target.value)
+                    }
+                  />
                 </Box>
               </SimpleGrid>
             </Box>
@@ -383,7 +584,7 @@ const AddPharmacy = () => {
 
           {/* Save and Cancel Buttons */}
           <Flex justify="center" mt={6}>
-            <Button variant="outline" colorScheme="red" mr={2}>
+            <Button variant="outline" colorScheme="red" mr={2} onClick={() => navigate(-1)}>
               Cancel
             </Button>
             <Button
@@ -395,6 +596,7 @@ const AddPharmacy = () => {
               px="24px"
               py="5px"
               onClick={handleSend}
+              isLoading={isLoading}
             >
               Save
             </Button>

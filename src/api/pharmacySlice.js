@@ -30,7 +30,7 @@ export const pharmacyApi = createApi({
     }),
     addPharmacy: builder.mutation({
       query: (pharmacy) => ({
-        url: "/admin/pharmacy",
+        url: "/admin/pharmacies",
         method: "POST",
         body: pharmacy,
       }),
