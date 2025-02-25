@@ -170,6 +170,9 @@ const AddPharmacy = () => {
         i === index
           ? {
               ...branch,
+              name: branch.translations.find((t) => t.languageId === 'en').name,
+              address: branch.translations.find((t) => t.languageId === 'en')
+                .address,
               translations: branch.translations?.map((translation) =>
                 translation.languageId === languageId
                   ? { ...translation, [field]: value }
@@ -574,7 +577,12 @@ const AddPharmacy = () => {
                     placeholder="Enter Branch Location"
                     value={formData.branches[index]?.locationLink || ''}
                     onChange={(e) =>
-                      handleBranchChange(index, 'locationLink', e.target.value)
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        branches: prevData.branches.map((branch, i) =>
+                          i === index ? { ...branch, locationLink: e.target.value } : branch
+                        ),
+                      }))
                     }
                   />
                 </Box>
