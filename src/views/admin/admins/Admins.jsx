@@ -104,8 +104,8 @@ const Admins = () => {
         </Text>
       ),
     }),
-    columnHelper.accessor('roleId', {
-      id: 'role',
+    columnHelper.accessor('roleName', {
+      id: 'roleName',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -118,7 +118,7 @@ const Admins = () => {
       ),
       cell: (info) => (
         <Text color={textColor}>
-          Admin
+          {info.getValue()}
         </Text>
       ),
     }),
@@ -239,8 +239,7 @@ const Admins = () => {
             Admins
           </Text>
           <div className="search-container d-flex align-items-center gap-2">
-
-            <InputGroup w={{ base: "100%", md: "200px" }}>
+            <InputGroup w={{ base: "100", md: "400px" }}>
               <InputLeftElement>
                 <IconButton
                   bg='inherit'
@@ -270,11 +269,12 @@ const Admins = () => {
                 fontWeight='500'
                 _placeholder={{ color: "gray.400", fontSize: "14px" }}
                 borderRadius='30px' // Default value
-                placeholder='Search...' // Default value
+                placeholder='Search by name...' // Default value
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </InputGroup>
+          </div>
             <Button
               variant='darkBrand'
               color='white'
@@ -286,10 +286,8 @@ const Admins = () => {
               onClick={() => navigate('/admin/add-admin')}
               width={'200px'}
             >
-              <PlusSquareIcon me="10px" />
               Create New Admin
             </Button>
-          </div>
         </Flex>
 
        

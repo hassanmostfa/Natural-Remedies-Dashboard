@@ -122,7 +122,7 @@ const EditRole = () => {
           title: 'custom-swal-title', // Add a custom class for the title
           content: 'custom-swal-content', // Add a custom class for the content
           confirmButton: 'custom-swal-confirm-button', // Add a custom class for the confirm button
-        },        onClose: () => {
+        },onClose: () => {
           navigate('/admin/undefined/rules'); // Redirect to the roles page after successful submission
         }
       }).then((result) => {
