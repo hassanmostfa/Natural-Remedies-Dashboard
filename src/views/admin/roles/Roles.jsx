@@ -225,7 +225,7 @@ const Roles = () => {
           </Text>
           <div className='d-flex align-items-center gap-2'>
 
-            <InputGroup w={{ base: "100%", md: "200px" }}>
+            <InputGroup w={{ base: "100%", md: "400px" }}>
                 <InputLeftElement>
                   <IconButton
                     bg='inherit'
@@ -260,6 +260,7 @@ const Roles = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </InputGroup>
+          </div>
             <Button
               variant="darkBrand"
               color="white"
@@ -271,10 +272,8 @@ const Roles = () => {
               onClick={() => navigate('/admin/add-New-Rule')}
               width={'200px'}
             >
-              <PlusSquareIcon me="10px" />
               Create New Rule
             </Button>
-          </div>
         </Flex>
 
       

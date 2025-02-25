@@ -167,6 +167,7 @@ const AddAdmin = () => {
                     <MenuItem
                       key={role.id}
                       onClick={() => handleSelect(role)}
+                      _hover={{ bg: '#38487c', color: 'white' }}
                     >
                       {role.name}
                     </MenuItem>

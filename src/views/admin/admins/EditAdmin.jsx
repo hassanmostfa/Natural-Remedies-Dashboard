@@ -14,7 +14,6 @@ import { useGetRolesQuery } from 'api/roleSlice';
 import Swal from 'sweetalert2';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateUserMutation } from 'api/userSlice';
-import { useGetAdminsQuery } from 'api/userSlice';
 import { useGetUserProfileQuery } from 'api/userSlice';
 
 const EditAdmin = () => {
@@ -34,7 +33,6 @@ const EditAdmin = () => {
 
   // Update formData when admin data is available
   useEffect(() => {
-
     if (admin?.data) {
       setFormData({
         name: admin.data?.name,
@@ -48,7 +46,7 @@ const EditAdmin = () => {
         setSelectedRole(role?.name);
       }
     }
-  }, [admin, roles]);
+  }, [admin , roles]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -65,15 +63,28 @@ const EditAdmin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Create a copy of formData
+    const dataToSend = { ...formData };
+
+    // Remove the password field if it's empty
+    if (!dataToSend.password) {
+      delete dataToSend.password;
+    }
+
     try {
-      
-      const response = await editAdmin({id, user:formData}).unwrap();
+      const response = await editAdmin({ id, user: dataToSend }).unwrap();
       Swal.fire({
         icon: 'success',
         title: 'Success',
         text: 'Admin updated successfully',
         confirmButtonText: 'OK',
+        customClass: {
+          popup: 'custom-swal-popup', // Add a custom class for the popup
+          title: 'custom-swal-title', // Add a custom class for the title
+          content: 'custom-swal-content', // Add a custom class for the content
+          confirmButton: 'custom-swal-confirm-button', // Add a custom class for the confirm button
+        },
       }).then((result) => {
         if (result.isConfirmed) {
           navigate('/admin/undefined/admins'); // Redirect to the admins page after successful submission
