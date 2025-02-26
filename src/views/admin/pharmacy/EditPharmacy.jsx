@@ -224,7 +224,7 @@ const EditPharmacy = () => {
     try {
       // Filter out unnecessary fields from branches
       const filteredBranches = formData.branches?.map((branch) => {
-        const { id, createdAt, updatedAt, ...rest } = branch; // Exclude unwanted keys
+        const { id, createdAt, updatedAt, ...rest } = branch;
         return rest;
       });
   
