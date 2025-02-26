@@ -48,6 +48,9 @@ const Pharmacy = () => {
     limit,
   });
   const [deletePharmacy, { isError: isDeleteError, isLoading: isDeleteLoading }] = useDeletePharmacyMutation();
+    React.useEffect(() => {
+      refetch();
+    }, [page, limit, refetch]);
   const deletePharmacyHandler = async (id) => {
     try {
       Swal.fire({
@@ -167,7 +170,7 @@ const Pharmacy = () => {
             color="green.500"
             as={EditIcon}
             cursor="pointer"
-            onClick={() => navigate(`/admin/pharmacy/${info.row.original.id}`)}
+            onClick={() => navigate(`/admin/edit-pharmacy/${info.row.original.id}`)}
           />
           <Icon
             w="18px"

@@ -80,6 +80,7 @@ import Clinics from 'views/admin/clinics/Clinics';
 import AddClinic from 'views/admin/clinics/AddClinic';
 import EditAdmin from 'views/admin/admins/EditAdmin';
 import ShowAdmin from 'views/admin/admins/ShowAdmin';
+import EditPharmacy from 'views/admin/pharmacy/EditPharmacy';
 
 
 const routes = [
@@ -152,6 +153,13 @@ const routes = [
     layout: '/admin',
     path: '/add-pharmacy',
     component: <AddPharmacy />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Pharmacy Management',
+    layout: '/admin',
+    path: '/edit-pharmacy/:id',
+    component: <EditPharmacy />,
     showInSidebar: false,
   },
   {

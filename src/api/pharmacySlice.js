@@ -26,7 +26,7 @@ export const pharmacyApi = createApi({
       query: () => '/admin/pharmacies',
     }),
     getPharmacy: builder.query({
-      query: (id) => `/admin/pharmacy/${id}`,
+      query: (id) => `/admin/pharmacies/${id}`,
     }),
     addPharmacy: builder.mutation({
       query: (pharmacy) => ({
@@ -37,7 +37,7 @@ export const pharmacyApi = createApi({
     }),
     updatePharmacy: builder.mutation({
       query: ({ id, pharmacy }) => ({
-        url: `/admin/pharmacy/${id}`,
+        url: `/admin/pharmacies/${id}`,
         method: "PUT",
         body: pharmacy,
       }),
