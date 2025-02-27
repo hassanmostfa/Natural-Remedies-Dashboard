@@ -7,6 +7,9 @@ option {
   color: black;
 }
 
+.css-inswfa{
+  padding-top: 90px !important;
+}
 
 p{
   margin-bottom: 0px !important;
@@ -54,6 +57,7 @@ p{
 
 .css-1rkd2xd{
   background: white !important;
+  height: 100vh !important;
 }
 
 .custom-table{

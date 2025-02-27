@@ -234,8 +234,7 @@ const Pharmacy = () => {
             All Pharmacies
           </Text>
 
-          <div className="search-container d-flex align-items-center gap-2">
-            <InputGroup w={{ base: "100%", md: "200px" }}>
+            <InputGroup w={{ base: "100%", md: "400px" }}>
               <InputLeftElement>
                 <IconButton
                   bg='inherit'
@@ -284,7 +283,6 @@ const Pharmacy = () => {
               <PlusSquareIcon me="10px" />
               Create New Pharmacy
             </Button>
-          </div>
         </Flex>
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">

@@ -29,8 +29,7 @@ import Menu from 'components/menu/MainMenu';
 
 const columnHelper = createColumnHelper();
 
-export default function CheckTable(props) {
-  const { tableData } = props;
+export default function CheckTable({tableData , title}) {
   const [sorting, setSorting] = React.useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
@@ -142,7 +141,7 @@ export default function CheckTable(props) {
           fontWeight="700"
           lineHeight="100%"
         >
-          Check Table
+          {title}
         </Text>
         <Menu />
       </Flex>

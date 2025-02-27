@@ -22,12 +22,13 @@ import { FaRegCalendarDays } from 'react-icons/fa6';
 import { LiaClinicMedicalSolid } from 'react-icons/lia';
 import { IoNotificationsOutline } from 'react-icons/io5';
 import { CiDiscount1 } from 'react-icons/ci';
+import { BsEnvelopeArrowUpFill } from "react-icons/bs";
+
 
 // Admin Imports
 import MainDashboard from 'views/admin/default';
 import NFTMarketplace from 'views/admin/marketplace';
 import Profile from 'views/admin/profile';
-import DataTables from 'views/admin/dataTables';
 import Admins from 'views/admin/admins/Admins';
 import AddAdmin from 'views/admin/admins/AddAdmin';
 import Roles from 'views/admin/roles/Roles';
@@ -35,8 +36,6 @@ import Users from 'views/admin/users/Users';
 import FamilyAccounts from 'views/admin/users/FamilyAccounts';
 import PromoCodes from 'views/admin/promoCodes/PromoCodes';
 import AddPromoCode from 'views/admin/promoCodes/AddPromoCode';
-// Auth Imports
-import SignInCentered from 'views/auth/signIn';
 import AddRole from 'views/admin/roles/AddRole';
 import AllNotification from 'views/admin/notification/AllNotification';
 import AddNotification from 'views/admin/notification/AddNotification';
@@ -81,6 +80,9 @@ import AddClinic from 'views/admin/clinics/AddClinic';
 import EditAdmin from 'views/admin/admins/EditAdmin';
 import ShowAdmin from 'views/admin/admins/ShowAdmin';
 import EditPharmacy from 'views/admin/pharmacy/EditPharmacy';
+import Orders from 'views/admin/orders/Orders';
+import Appointments from 'views/admin/appointments/Appointments';
+import PharmacyRequests from 'views/admin/pharmacy/PharmacyRequests';
 
 
 const routes = [
@@ -367,7 +369,22 @@ const routes = [
         color="inherit"
       />
     ),
-    component: <DataTables />,
+    component: <Orders />,
+    showInSidebar: true,
+  },
+  {
+    name: 'Pharmacy Requests',
+    layout: '/admin',
+    path: '/pharmacy-requests',
+    icon: (
+      <Icon
+        as={BsEnvelopeArrowUpFill}
+        width="20px"
+        height="20px"
+        color="inherit"
+      />
+    ),
+    component: <PharmacyRequests />,
     showInSidebar: true,
   },
   {
@@ -422,7 +439,7 @@ const routes = [
     icon: (
       <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
     ),
-    component: <Profile />,
+    component: <Appointments />,
     showInSidebar: true,
   },
   {

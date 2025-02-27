@@ -14,6 +14,7 @@ import {
   InputRightElement,
   Text,
   useColorModeValue,
+  Image,
 } from "@chakra-ui/react";
 import DefaultAuth from "layouts/auth/Default";
 import illustration from "assets/img/auth/auth.png";
@@ -22,7 +23,7 @@ import { RiEyeCloseLine } from "react-icons/ri";
 import { useLoginUserMutation } from "api/userSlice";
 import Swal from "sweetalert2";
 import { LanguageContext } from "../../../components/auth/LanguageContext"; // Adjust the path accordingly
-
+import Logo from "../../../assets/img/bio-logo.png";
 function SignIn() {
   const { language, toggleLanguage } = useContext(LanguageContext);
   const textColor = useColorModeValue("navy.700", "white");
@@ -38,11 +39,11 @@ function SignIn() {
   const translations = {
     en: {
       welcome: "Welcome Back!",
-      enterDetails: "Enter your email and password to sign in!",
+      enterDetails: "Please enter your login details",
       email: "Email",
       password: "Password",
       rememberMe: "Remember Me",
-      signIn: "Sign In",
+      signIn: "Log in",
     },
     ar: {
       welcome: "مرحبًا بعودتك!",
@@ -98,6 +99,9 @@ function SignIn() {
         dir={language === "ar" ? "rtl" : "ltr"} // Set direction based on language
       >
         <Box me="auto">
+          <Flex mb="40px" justifyContent="center">
+            <Image src={Logo} w="150px" />
+          </Flex>
           <Flex gap={40}>
           <Heading color={textColor} fontSize="36px" mb="10px">
             {translations[language].welcome}
@@ -145,7 +149,7 @@ function SignIn() {
                 fontWeight="500"
                 color={textColor}
                 mb="8px"
-                mt={"15px"}
+                mt={"30px"}
               >
                 {translations[language].email}
                 <Text color={brandStars}>*</Text>
@@ -164,6 +168,8 @@ function SignIn() {
                 value={formData.email}
                 onChange={handleChange}
               />
+
+
               <FormLabel
                 ms="4px"
                 fontSize="sm"
@@ -174,7 +180,7 @@ function SignIn() {
                 {translations[language].password}
                 <Text color={brandStars}>*</Text>
               </FormLabel>
-              <InputGroup size="md">
+              <InputGroup size="md" mb="20px">
                 <Input
                   isRequired={true}
                   fontSize="sm"
@@ -220,7 +226,7 @@ function SignIn() {
                 fontWeight="500"
                 w="100%"
                 h="50"
-                mb="24px"
+                mb="30px"
                 type="submit"
               >
                 {translations[language].signIn}
