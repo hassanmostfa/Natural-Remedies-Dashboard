@@ -42,6 +42,8 @@ const Pharmacy = () => {
   const [searchQuery, setSearchQuery] = useState(''); // Search query
   const [page, setPage] = React.useState(1); // Current page
 
+   const bg = useColorModeValue("secondaryGray.300", "gray.700"); // Background color for light and dark mode
+  const color=useColorModeValue("gray.700", "white"); // Text color for light and dark mode
   // Fetch data from API
   const { data: pharmacyData,refetch, isLoading, isError } = useGetPharmaciesQuery({
     page: currentPage,
@@ -259,8 +261,8 @@ const Pharmacy = () => {
               <Input
                 variant='search'
                 fontSize='sm'
-                bg='secondaryGray.300' // Default value
-                color='gray.700' // Default value
+                bg={bg}
+                color={textColor}
                 fontWeight='500'
                 _placeholder={{ color: "gray.400", fontSize: "14px" }}
                 borderRadius='30px' // Default value
@@ -280,7 +282,6 @@ const Pharmacy = () => {
               onClick={() => navigate('/admin/add-pharmacy')}
               width={'200px'}
             >
-              <PlusSquareIcon me="10px" />
               Create New Pharmacy
             </Button>
         </Flex>

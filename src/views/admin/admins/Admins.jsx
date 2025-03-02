@@ -24,9 +24,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import * as React from 'react';
-import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
 import Card from 'components/card/Card';
-import Menu from 'components/menu/MainMenu';
 import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
 import { FaEye, FaTrash } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
@@ -161,7 +159,7 @@ const Admins = () => {
             color="blue.500"
             as={FaEye}
             cursor="pointer"
-            onClick={() => navigate(`/admin/show-admin/${info.getValue()}`)}
+            onClick={() => navigate(`/admin/admin/details/${info.getValue()}`)}
           />
         </Flex>
       ),
@@ -243,9 +241,9 @@ const Admins = () => {
             <InputGroup w={{ base: "100", md: "400px" }}>
               <InputLeftElement>
                 <IconButton
-                  bg='inherit'
-                  borderRadius='inherit'
-                  _hover='none'
+                  bg="inherit"
+                  borderRadius="inherit"
+                  _hover="none"
                   _active={{
                     bg: "inherit",
                     transform: "none",
@@ -254,23 +252,18 @@ const Admins = () => {
                   _focus={{
                     boxShadow: "none",
                   }}
-                  icon={
-                    <SearchIcon
-                      w='15px'
-                      h='15px'
-                    />
-                  }
+                  icon={<SearchIcon w="15px" h="15px" />}
                 />
               </InputLeftElement>
               <Input
-                variant='search'
-                fontSize='sm'
-                bg='secondaryGray.300' // Default value
-                color='gray.700' // Default value
-                fontWeight='500'
+                variant="search"
+                fontSize="sm"
+                bg={useColorModeValue("secondaryGray.300", "gray.700")} // Light mode / Dark mode
+                color={useColorModeValue("gray.700", "white")} // Text color for light and dark mode
+                fontWeight="500"
                 _placeholder={{ color: "gray.400", fontSize: "14px" }}
-                borderRadius='30px' // Default value
-                placeholder='Search by name...' // Default value
+                borderRadius="30px"
+                placeholder="Search by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

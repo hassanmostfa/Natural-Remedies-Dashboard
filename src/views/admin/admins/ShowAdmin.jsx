@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Text,
   useColorModeValue,
   Table,
-  Thead,
   Tbody,
   Tr,
   Th,
   Td,
-} from '@chakra-ui/react';
-import { useParams } from 'react-router-dom';
-import { useGetUserProfileQuery } from 'api/userSlice';
-import { useGetRolesQuery } from 'api/roleSlice';
+  Box,
+  Flex,
+} from "@chakra-ui/react";
+import { useParams } from "react-router-dom";
+import { useGetUserProfileQuery } from "api/userSlice";
+import { useGetRolesQuery } from "api/roleSlice";
 
 const ShowAdmin = () => {
   const { id } = useParams();
@@ -19,9 +20,13 @@ const ShowAdmin = () => {
     useGetUserProfileQuery(id);
   const { data: roles, isLoading: isRolesLoading, isError: isRolesError } =
     useGetRolesQuery();
-  const textColor = useColorModeValue('secondaryGray.900', 'white');
 
-  const [selectedRole, setSelectedRole] = useState('');
+  const textColor = useColorModeValue("secondaryGray.900", "white");
+  const cardBg = useColorModeValue("white", "navy.700");
+  const tableBg = useColorModeValue("white", "navy.700");
+  const tableTextColor = useColorModeValue("gray.700", "white");
+
+  const [selectedRole, setSelectedRole] = useState("");
 
   useEffect(() => {
     if (admin?.data && roles?.data) {
@@ -33,50 +38,44 @@ const ShowAdmin = () => {
   }, [admin, roles]);
 
   if (isAdminLoading || isRolesLoading) {
-    return <div>Loading...</div>;
+    return <Box textAlign="center" p="20px">Loading...</Box>;
   }
 
   if (isAdminError || isRolesError) {
-    return <div>Error loading data</div>;
+    return <Box textAlign="center" p="20px" color="red.500">Error loading data</Box>;
   }
 
   return (
-    <div className="container add-admin-container w-100">
-      <div className="add-admin-card shadow p-4 bg-white w-100">
-        <Text
-          color={textColor}
-          fontSize="22px"
-          fontWeight="700"
-          mb="20px !important"
-          lineHeight="100%"
-        >
+    <Flex justify="center" p="20px" mt={"80px"}>
+      <Box w="100%" p="6" boxShadow="md" borderRadius="lg" bg={cardBg}>
+        <Text color={textColor} fontSize="22px" fontWeight="700" mb="20px">
           View Admin
         </Text>
 
         {/* Table Layout */}
-        <Table variant="simple" color="gray.500" mb="24px" mt="12px">
+        <Table w="100%" variant="simple" mb="24px" mt="12px" bg={tableBg} color={tableTextColor}>
           <Tbody>
             {/* Name Field */}
             <Tr>
-              <Th>Name</Th>
+              <Th w="30%">Name</Th>
               <Td>{admin.data?.name}</Td>
             </Tr>
 
             {/* Email Field */}
             <Tr>
-              <Th>Email</Th>
+              <Th w="30%">Email</Th>
               <Td>{admin.data?.email}</Td>
             </Tr>
 
             {/* Role Field */}
             <Tr>
-              <Th>Role</Th>
+              <Th w="30%">Role</Th>
               <Td>{selectedRole}</Td>
             </Tr>
           </Tbody>
         </Table>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 };
 

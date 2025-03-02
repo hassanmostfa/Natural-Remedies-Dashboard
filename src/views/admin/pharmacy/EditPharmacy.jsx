@@ -29,7 +29,8 @@ const EditPharmacy = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
-
+  const cardBg = useColorModeValue('white', 'navy.700');
+  const inputBg = useColorModeValue('gray.100', 'gray.700');
   // Fetch pharmacy data by ID
   const {
     data,
@@ -281,8 +282,8 @@ const EditPharmacy = () => {
 
   return (
     <div className="container add-admin-container w-100">
-      <div className="add-admin-card shadow p-4 bg-white w-100">
-        <div className="mb-3 d-flex justify-content-between align-items-center">
+      <Box bg={cardBg} className="add-admin-card shadow p-4 w-100">
+        <Box  className="mb-3 d-flex justify-content-between align-items-center">
           <Text color={textColor} fontSize="22px" fontWeight="700">
             Edit Pharmacy
           </Text>
@@ -295,7 +296,7 @@ const EditPharmacy = () => {
           >
             Back
           </Button>
-        </div>
+        </Box>
         <form>
           {/* Error Display */}
           {error?.success === false && (
@@ -318,6 +319,8 @@ const EditPharmacy = () => {
                 Pharmacy Name En <span className="text-danger">*</span>
               </Text>
               <Input
+                bg={inputBg}
+                color={textColor}
                 value={
                   formData.translations.find((t) => t.languageId === 'en').name
                 }
@@ -332,6 +335,8 @@ const EditPharmacy = () => {
                 Pharmacy Name Ar <span className="text-danger">*</span>
               </Text>
               <Input
+              bg={inputBg}
+              color={textColor}
                 value={
                   formData.translations.find((t) => t.languageId === 'ar').name
                 }
@@ -350,6 +355,8 @@ const EditPharmacy = () => {
                 Email <span className="text-danger">*</span>
               </Text>
               <Input
+                bg={inputBg}
+                color={textColor}
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
@@ -361,6 +368,8 @@ const EditPharmacy = () => {
                 WhatsApp Number <span className="text-danger">*</span>
               </Text>
               <Input
+              bg={inputBg}
+              color={textColor}
                 name="whatsappNumber"
                 value={formData.whatsappNumber}
                 onChange={handleChange}
@@ -376,6 +385,8 @@ const EditPharmacy = () => {
                 Password <span className="text-danger">*</span>
               </Text>
               <Input
+              bg={inputBg}
+              color={textColor}
                 type="password"
                 name="password"
                 value={formData.password}
@@ -388,6 +399,8 @@ const EditPharmacy = () => {
                 Iban <span className="text-danger">*</span>
               </Text>
               <Input
+              bg={inputBg}
+              color={textColor}
                 name="iban"
                 value={formData.iban}
                 onChange={handleChange}
@@ -403,6 +416,8 @@ const EditPharmacy = () => {
                 Working Hours <span className="text-danger">*</span>
               </Text>
               <Input
+              bg={inputBg}
+              color={textColor}
                 name="workingHours"
                 value={formData.workingHours}
                 onChange={handleChange}
@@ -438,6 +453,8 @@ const EditPharmacy = () => {
                 Percentage <span className="text-danger">*</span>
               </Text>
               <Input
+              bg={inputBg}
+              color={textColor}
                 type="number"
                 name="revenueShare"
                 value={formData.revenueShare}
@@ -452,6 +469,8 @@ const EditPharmacy = () => {
                   Fixed Fees <span className="text-danger">*</span>
                 </Text>
                 <Input
+                bg={inputBg}
+                color={textColor}
                   type="number"
                   name="fixedFees"
                   value={formData.fixedFees}
@@ -464,6 +483,8 @@ const EditPharmacy = () => {
                   Fees Start Date <span className="text-danger">*</span>
                 </Text>
                 <Input
+                bg={inputBg}
+                color={textColor}
                   type="date"
                   name="feesStartDate"
                   value={formData.feesStartDate}
@@ -476,6 +497,8 @@ const EditPharmacy = () => {
                   Fees End Date <span className="text-danger">*</span>
                 </Text>
                 <Input
+                bg={inputBg}
+                color={textColor}
                   type="date"
                   name="feesEndDate"
                   value={formData.feesEndDate}
@@ -493,6 +516,8 @@ const EditPharmacy = () => {
                 Description En<span className="text-danger">*</span>
               </Text>
               <Textarea
+              bg={inputBg}
+              color={textColor}
                 value={
                   formData.translations.find((t) => t.languageId === 'en')
                     .description
@@ -510,6 +535,8 @@ const EditPharmacy = () => {
                 Description Ar<span className="text-danger">*</span>
               </Text>
               <Textarea
+              bg={inputBg}
+              color={textColor}
                 value={
                   formData.translations.find((t) => t.languageId === 'ar')
                     .description
@@ -531,7 +558,8 @@ const EditPharmacy = () => {
             borderRadius="md"
             p={4}
             textAlign="center"
-            backgroundColor="gray.100"
+            bg={inputBg}
+                color={textColor}
             cursor="pointer"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -584,6 +612,8 @@ const EditPharmacy = () => {
               Number of Branches <span className="text-danger">*</span>
             </Text>
             <Input
+            bg={inputBg}
+            color={textColor}
               type="number"
               value={numberOfBranches}
               onChange={handleNumberOfBranchesChange}
@@ -601,7 +631,7 @@ const EditPharmacy = () => {
               borderRadius="lg"
               boxShadow="sm"
               border="1px solid #ccc"
-              bg="white"
+              bg={cardBg}
             >
               <Text color={textColor} fontSize="md" fontWeight="bold">
                 Branch {index + 1}
@@ -613,6 +643,8 @@ const EditPharmacy = () => {
                     Branch En-Name <span className="text-danger">*</span>
                   </Text>
                   <Input
+                  bg={inputBg}
+                  color={textColor}
                     placeholder="Enter Branch En-Name"
                     value={
                       formData.branches[index]?.translations.find(
@@ -635,6 +667,8 @@ const EditPharmacy = () => {
                     Branch En-Address <span className="text-danger">*</span>
                   </Text>
                   <Input
+                  bg={inputBg}
+                  color={textColor}
                     placeholder="Enter Branch En-Address"
                     value={
                       formData.branches[index]?.translations.find(
@@ -657,6 +691,8 @@ const EditPharmacy = () => {
                     Branch Ar-Name <span className="text-danger">*</span>
                   </Text>
                   <Input
+                  bg={inputBg}
+                  color={textColor}
                     placeholder="أدخل اسم الفرع بالعربية"
                     value={
                       formData.branches[index]?.translations.find(
@@ -679,6 +715,8 @@ const EditPharmacy = () => {
                     Branch Ar-Address <span className="text-danger">*</span>
                   </Text>
                   <Input
+                  bg={inputBg}
+                  color={textColor}
                     placeholder="أدخل عنوان الفرع بالعربية"
                     value={
                       formData.branches[index]?.translations.find(
@@ -702,7 +740,10 @@ const EditPharmacy = () => {
                 <Text color={textColor} fontSize="sm" fontWeight="700">
                   Location Link <span className="text-danger">*</span>
                 </Text>
+                
                 <Input
+                bg={inputBg}
+                color={textColor}
                   placeholder="Enter Branch Location Link"
                   value={formData.branches[index]?.locationLink || ''}
                   onChange={(e) =>
@@ -745,7 +786,7 @@ const EditPharmacy = () => {
             </Button>
           </Flex>
         </form>
-      </div>
+      </Box>
     </div>
   );
 };

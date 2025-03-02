@@ -7,6 +7,9 @@ import {
   MenuItem,
   Text,
   useColorModeValue,
+  Flex,
+  Box,
+  Input,
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import './admins.css';
@@ -23,6 +26,9 @@ const EditAdmin = () => {
   const [editAdmin, { isLoading: isCreating }] = useUpdateUserMutation();
   const navigate = useNavigate();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
+  const cardBg = useColorModeValue("white", "navy.700");
+  const inputBg = useColorModeValue("gray.100", "gray.700");
+  const inputBorder = useColorModeValue("gray.300", "gray.600");
   const [selectedRole, setSelectedRole] = useState('Select a role');
   const [formData, setFormData] = useState({
     name: '',
@@ -35,18 +41,18 @@ const EditAdmin = () => {
   useEffect(() => {
     if (admin?.data) {
       setFormData({
-        name: admin.data?.name,
-        email: admin.data?.email,
+        name: admin.data.name,
+        email: admin.data.email,
         password: '', // Password is not pre-filled for security reasons
-        roleId: admin.data?.roleId,
+        roleId: admin.data.roleId,
       });
       // Set the selected role name
-      const role = roles?.data?.find((r) => r.id === admin.data?.roleId);
+      const role = roles?.data?.find((r) => r.id === admin.data.roleId);
       if (role) {
-        setSelectedRole(role?.name);
+        setSelectedRole(role.name);
       }
     }
-  }, [admin , roles]);
+  }, [admin, roles]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -87,7 +93,7 @@ const EditAdmin = () => {
         },
       }).then((result) => {
         if (result.isConfirmed) {
-          navigate('/admin/undefined/admins'); // Redirect to the admins page after successful submission
+          navigate(`/admin/undefined/admins`); // Redirect to the admins page after successful submission
         }
       });
     } catch (error) {
@@ -109,89 +115,83 @@ const EditAdmin = () => {
   }
 
   return (
-    <div className="container add-admin-container w-100">
-      <div className="add-admin-card shadow p-4 bg-white w-100">
-        <Text
-          color={textColor}
-          fontSize="22px"
-          fontWeight="700"
-          mb="20px !important"
-          lineHeight="100%"
-        >
+    <Flex justify="center" p="20px" mt={"80px"}>
+      <Box w="100%" p="6" boxShadow="md" borderRadius="lg" bg={cardBg}>
+        <Text color={textColor} fontSize="22px" fontWeight="700" mb="20px">
           Edit Admin
         </Text>
+
         <form onSubmit={handleSubmit}>
           {/* Name Field */}
-          <div className="mb-3 col-md-12">
-            <Text color={textColor} fontSize="sm" fontWeight="700">
-              Name
-              <span className="text-danger mx-1">*</span>
+          <Box mb="3" mt={"20px"}>
+            <Text color={textColor} fontSize="sm" fontWeight="700" mb="1">
+              Name <span style={{ color: "red" }}>*</span>
             </Text>
-            <input
+            <Input
               type="text"
               name="name"
-              className="form-control mt-2"
-              id="name"
+              bg={inputBg}
+              color={textColor}
+              borderColor={inputBorder}
               placeholder="Enter Admin Name"
               value={formData.name}
               onChange={handleInputChange}
               required
             />
-          </div>
+          </Box>
 
           {/* Email Field */}
-          <div className="mb-3">
-            <Text color={textColor} fontSize="sm" fontWeight="700">
-              Email
-              <span className="text-danger mx-1">*</span>
+          <Box mb="3">
+            <Text color={textColor} fontSize="sm" fontWeight="700" mb="1">
+              Email <span style={{ color: "red" }}>*</span>
             </Text>
-            <input
+            <Input
               type="email"
               name="email"
-              className="form-control mt-2"
-              id="email"
+              bg={inputBg}
+              color={textColor}
+              borderColor={inputBorder}
               placeholder="Enter email"
               value={formData.email}
               onChange={handleInputChange}
               required
             />
-          </div>
+          </Box>
 
           {/* Password Field */}
-          <div className="mb-3">
-            <Text color={textColor} fontSize="sm" fontWeight="700">
+          <Box mb="3">
+            <Text color={textColor} fontSize="sm" fontWeight="700" mb="1">
               Password
-              <span className="text-danger mx-1">*</span>
             </Text>
-            <input
+            <Input
               type="password"
               name="password"
-              className="form-control mt-2"
-              id="password"
+              bg={inputBg}
+              color={textColor}
+              borderColor={inputBorder}
               placeholder="Enter new password (leave blank to keep current)"
               value={formData.password}
               onChange={handleInputChange}
             />
-          </div>
+          </Box>
 
           {/* Role Dropdown */}
-          <div className="mb-3">
-            <Text color={textColor} fontSize="sm" fontWeight="700">
-              Role
-              <span className="text-danger mx-1">*</span>
+          <Box mb="3">
+            <Text color={textColor} fontSize="sm" fontWeight="700" mb="1">
+              Role <span style={{ color: "red" }}>*</span>
             </Text>
             <Menu>
               <MenuButton
                 as={Button}
                 rightIcon={<ChevronDownIcon />}
                 width="100%"
-                bg="white"
-                border="1px solid #ddd"
+                bg={inputBg}
+                borderColor={inputBorder}
                 borderRadius="md"
-                _hover={{ bg: 'gray.200' }}
+                _hover={{ bg: "gray.200" }}
                 textAlign="left"
               >
-                {selectedRole}
+                {selectedRole || "Select Role"}
               </MenuButton>
               <MenuList width="100%">
                 {roles?.data?.map((role) => (
@@ -201,12 +201,13 @@ const EditAdmin = () => {
                 ))}
               </MenuList>
             </Menu>
-          </div>
+          </Box>
 
           {/* Submit Button */}
           <Button
-            variant="darkBrand"
-            color="white"
+            variant="solid"
+            colorScheme="brandScheme"
+            color={textColor}
             fontSize="sm"
             fontWeight="500"
             borderRadius="70px"
@@ -214,12 +215,13 @@ const EditAdmin = () => {
             py="5px"
             type="submit"
             isLoading={isCreating}
+            mt={"20px"}
           >
             Update Admin
           </Button>
         </form>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 };
 

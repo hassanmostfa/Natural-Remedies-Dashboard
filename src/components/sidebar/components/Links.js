@@ -21,7 +21,7 @@ export function SidebarLinks(props) {
   let activeColor = useColorModeValue("#fffffff", "#F7FAFC"); // Active route color (light/dark mode)
   let inactiveColor = useColorModeValue("#A0AEC0", "#E2E8F0"); // Inactive route color (light/dark mode)
   let activeIcon = useColorModeValue("#ffffff", "#F7FAFC"); // Active icon color (light/dark mode)
-  let textColor = useColorModeValue("#a9b6e3", "#F7FAFC"); // Text color (light/dark mode)
+  let textColor = useColorModeValue("#a9b6e3", "#a9b6e3"); // Text color (light/dark mode)
   let brandColor = useColorModeValue("#3182CE", "#2B6CB0"); // Brand color (light/dark mode)
   
   const { routes } = props;

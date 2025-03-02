@@ -20,6 +20,8 @@ import { SearchBar } from 'components/navbar/searchBar/SearchBar';
 import { SidebarResponsive } from 'components/sidebar/Sidebar';
 import PropTypes from 'prop-types';
 import React from 'react';
+import { RiLogoutCircleLine } from "react-icons/ri";
+
 // Assets
 import navImage from 'assets/img/layout/Navbar.png';
 import { MdNotificationsNone, MdInfoOutline } from 'react-icons/md';
@@ -43,6 +45,12 @@ export default function HeaderLinks(props) {
     '14px 17px 40px 4px rgba(112, 144, 176, 0.06)',
   );
   const borderButton = useColorModeValue('secondaryGray.500', 'whiteAlpha.200');
+
+   // Handle Logout
+   const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.reload();
+   }
   return (
     <Flex
       w={{ sm: '100%', md: 'auto' }}
@@ -214,23 +222,27 @@ export default function HeaderLinks(props) {
             </Text>
           </Flex>
           <Flex flexDirection="column" p="10px">
-            <MenuItem
+            {/* <MenuItem
               _hover={{ bg: 'none' }}
               _focus={{ bg: 'none' }}
               borderRadius="8px"
               px="14px"
             >
               <Text fontSize="sm">Update Profile</Text>
-            </MenuItem>
+            </MenuItem> */}
 
             <MenuItem
-              _hover={{ bg: 'none' }}
-              _focus={{ bg: 'none' }}
+              _hover={{ bg: 'gray.100' }}
               color="red.400"
               borderRadius="8px"
               px="14px"
             >
-              <Text fontSize="sm">Log out</Text>
+              <Text fontSize="sm"
+              onClick={handleLogout}
+              >
+                <Icon as={RiLogoutCircleLine} me="12px" color="red.400" w="16px" h="16px" />
+                Log out
+              </Text>
             </MenuItem>
           </Flex>
         </MenuList>

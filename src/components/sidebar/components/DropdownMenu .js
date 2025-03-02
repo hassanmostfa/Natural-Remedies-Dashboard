@@ -10,7 +10,7 @@ const DropdownMenu = ({ route }) => {
   // Chakra color mode
   let activeColor = useColorModeValue("red.500", "white");
   let inactiveColor = useColorModeValue("secondaryGray.600", "secondaryGray.600");
-  let textColor = useColorModeValue("#a9b6e3", "white");
+  let textColor = useColorModeValue("#a9b6e3", "#a9b6e3");
 
   // Toggle dropdown
   const toggleDropdown = () => setIsOpen(!isOpen);

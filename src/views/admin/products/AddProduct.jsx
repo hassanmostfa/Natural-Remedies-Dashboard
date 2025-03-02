@@ -11,6 +11,9 @@ import {
   Textarea,
   Switch,
   SimpleGrid,
+  Radio,
+  RadioGroup,
+  Stack,
 } from "@chakra-ui/react";
 import { FaUpload } from "react-icons/fa6";
 import { IoMdArrowBack } from "react-icons/io";
@@ -30,6 +33,8 @@ const AddProduct = () => {
   const [variants, setVariants] = useState([]);
   const [images, setImages] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [offerType, setOfferType] = useState(""); // State for radio button selection
+  const [percentage, setPercentage] = useState(""); // State for percentage input
 
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const navigate = useNavigate();
@@ -105,9 +110,19 @@ const AddProduct = () => {
       hasVariants,
       variants: hasVariants ? variants : [],
       images,
+      offerType,
+      percentage: offerType === "Monthly offers" ? percentage : "", // Include percentage only if "Monthly offers" is selected
     };
     console.log("Product Data:", productData);
     // You can send this data to an API or perform other actions
+  };
+
+  // Handle radio button change
+  const handleRadioChange = (value) => {
+    setOfferType(value);
+    if (value !== "Monthly offers") {
+      setPercentage(""); // Clear percentage if not "Monthly offers"
+    }
   };
 
   return (
@@ -211,22 +226,22 @@ const AddProduct = () => {
               </Select>
             </Box>
             <Box>
-                <Text color={textColor} fontSize="sm" fontWeight="700">
-                    Brand <span className="text-danger">*</span>
-                </Text>
-                <Select
-                    placeholder="Select Brand"
-                    value={brand}
-                    onChange={(e) => setBrand(e.target.value)}
-                    required
-                    mt={2}
-                >
-                    <option value="nike">Nike</option>
-                    <option value="adidas">Adidas</option>
-                    <option value="puma">Puma</option>
-                    <option value="reebok">Reebok</option>
-                </Select>
-                </Box>
+              <Text color={textColor} fontSize="sm" fontWeight="700">
+                Brand <span className="text-danger">*</span>
+              </Text>
+              <Select
+                placeholder="Select Brand"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                required
+                mt={2}
+              >
+                <option value="nike">Nike</option>
+                <option value="adidas">Adidas</option>
+                <option value="puma">Puma</option>
+                <option value="reebok">Reebok</option>
+              </Select>
+            </Box>
           </SimpleGrid>
 
           {/* Cost, Price, and Quantity */}
@@ -272,6 +287,34 @@ const AddProduct = () => {
             </Box>
           </SimpleGrid>
 
+          {/* Radio Buttons for Offer Type */}
+          <Box mb={4}>
+            <Text color={textColor} fontSize="sm" fontWeight="700">
+              Offer Type
+            </Text>
+            <RadioGroup value={offerType} onChange={handleRadioChange}>
+              <Stack direction="row">
+                <Radio value="Monthly offers">Monthly offers</Radio>
+                <Radio value="New arrivals">New arrivals</Radio>
+              </Stack>
+            </RadioGroup>
+            {offerType === "Monthly offers" && (
+              <Box mt={2}>
+                <Text color={textColor} fontSize="sm" fontWeight="700">
+                  Percentage <span className="text-danger">*</span>
+                </Text>
+                <Input
+                  type="number"
+                  placeholder="Enter Percentage"
+                  value={percentage}
+                  onChange={(e) => setPercentage(e.target.value)}
+                  required
+                  mt={2}
+                />
+              </Box>
+            )}
+          </Box>
+
           {/* Variants Section */}
           <Box mb={4}>
             <Flex align="center" mb={2}>
@@ -289,7 +332,13 @@ const AddProduct = () => {
                   Add Variant
                 </Button>
                 {variants.map((variant, index) => (
-                  <Box key={variant.id} mb={4} p={4} border="1px solid #ccc" borderRadius="md">
+                  <Box
+                    key={variant.id}
+                    mb={4}
+                    p={4}
+                    border="1px solid #ccc"
+                    borderRadius="md"
+                  >
                     <Text fontSize="md" fontWeight="bold" mb={2}>
                       Variant {index + 1}
                     </Text>
@@ -402,25 +451,22 @@ const AddProduct = () => {
               </Button>
 
               {images?.length > 0 && (
-  <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
-    {images.map((image, index) => (
-      <Box key={index} borderRadius="md" overflow="hidden">
-        <img
-          src={URL.createObjectURL(image)}
-          alt={`Product View ${index + 1}`}
-          width={80}
-          height={80}
-          style={{ borderRadius: "8px" }}
-        />
-      </Box>
-    ))}
-  </Box>
-)}
-
-
+                <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
+                  {images.map((image, index) => (
+                    <Box key={index} borderRadius="md" overflow="hidden">
+                      <img
+                        src={URL.createObjectURL(image)}
+                        alt={`Product View ${index + 1}`}
+                        width={80}
+                        height={80}
+                        style={{ borderRadius: "8px" }}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+              )}
             </Box>
           </Box>
-
 
           {/* Action Buttons */}
           <Flex justify="center" mt={4}>

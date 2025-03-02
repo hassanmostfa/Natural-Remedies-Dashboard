@@ -56,6 +56,8 @@ const AddPharmacy = () => {
   const [image, setImage] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
+  const cardBg = useColorModeValue('white', 'navy.700');
+  const inputBg = useColorModeValue('gray.100', 'gray.700');
   const navigate = useNavigate();
   const toast = useToast();
   const [error, setError] = useState(null);
@@ -121,7 +123,7 @@ const AddPharmacy = () => {
 
   const handleNumberOfBranchesChange = (e) => {
     const value = parseInt(e.target.value, 10);
-    setNumberOfBranches(value >= 0 ? value : 0); // Ensure the value is non-negative
+    setNumberOfBranches(value >= 0 ? value : ''); // Ensure the value is non-negative
 
     // Initialize branches array with empty objects
     setFormData((prevData) => ({
@@ -227,8 +229,9 @@ const AddPharmacy = () => {
   };
 
   return (
-    <div className="container add-admin-container w-100">
-      <div className="add-admin-card shadow p-4 bg-white w-100">
+    <Box w={"100%"} 
+     className="container add-admin-container w-100">
+      <Box bg={cardBg} className="add-admin-card shadow p-4 w-100">
         <div className="mb-3 d-flex justify-content-between align-items-center">
           <Text color={textColor} fontSize="22px" fontWeight="700">
             Add New Pharmacy
@@ -267,6 +270,8 @@ const AddPharmacy = () => {
                 value={formData.translations.find((t) => t.languageId === 'en').name}
                 onChange={(e) => handleTranslationChange('en', 'name', e.target.value)}
                 mt={2}
+                bg={inputBg}
+                color={textColor}
               />
             </GridItem>
             <GridItem>
@@ -278,6 +283,8 @@ const AddPharmacy = () => {
                 value={formData.translations.find((t) => t.languageId === 'ar').name}
                 onChange={(e) => handleTranslationChange('ar', 'name', e.target.value)}
                 mt={2}
+                bg={inputBg}
+                color={textColor}
               />
             </GridItem>
 
@@ -286,13 +293,18 @@ const AddPharmacy = () => {
               <Text color={textColor} fontSize="sm" fontWeight="700">
                 Email <span className="text-danger">*</span>
               </Text>
-              <Input name="email" value={formData.email} onChange={handleChange} mt={2} />
+              <Input name="email"
+                bg={inputBg}
+                color={textColor}
+                value={formData.email}
+                onChange={handleChange} mt={2} 
+                />
             </GridItem>
             <GridItem>
               <Text color={textColor} fontSize="sm" fontWeight="700">
                 Iban <span className="text-danger">*</span>
               </Text>
-              <Input name="iban" value={formData.iban} onChange={handleChange} mt={2} />
+              <Input name="iban" bg={inputBg} color={textColor} value={formData.iban} onChange={handleChange} mt={2} />
             </GridItem>
 
             {/* Row 3: Password and WhatsApp Number */}
@@ -306,6 +318,8 @@ const AddPharmacy = () => {
                 value={formData.password}
                 onChange={handleChange}
                 mt={2}
+                bg={inputBg}
+                color={textColor}
               />
             </GridItem>
             <GridItem>
@@ -317,6 +331,8 @@ const AddPharmacy = () => {
                 value={formData.whatsappNumber}
                 onChange={handleChange}
                 mt={2}
+                bg={inputBg}
+                color={textColor}
               />
             </GridItem>
 
@@ -330,6 +346,8 @@ const AddPharmacy = () => {
                 value={formData.workingHours}
                 onChange={handleChange}
                 mt={2}
+                bg={inputBg}
+                color={textColor}
               />
             </GridItem>
             <GridItem>
@@ -360,6 +378,8 @@ const AddPharmacy = () => {
                   value={formData.revenueShare}
                   onChange={handleChange}
                   mt={2}
+                  bg={inputBg}
+                  color={textColor}
                 />
               </GridItem>
             ) : (
@@ -374,6 +394,8 @@ const AddPharmacy = () => {
                     value={formData.fixedFees}
                     onChange={handleChange}
                     mt={2}
+                    bg={inputBg}
+                    color={textColor}
                   />
                 </GridItem>
                 <GridItem>
@@ -386,6 +408,8 @@ const AddPharmacy = () => {
                     value={formData.feesStartDate}
                     onChange={handleChange}
                     mt={2}
+                    bg={inputBg}
+                    color={textColor}
                   />
                 </GridItem>
                 <GridItem>
@@ -398,6 +422,8 @@ const AddPharmacy = () => {
                     value={formData.feesEndDate}
                     onChange={handleChange}
                     mt={2}
+                    bg={inputBg}
+                    color={textColor}
                   />
                 </GridItem>
               </>
@@ -416,6 +442,8 @@ const AddPharmacy = () => {
                 mt={2}
                 mb={4}
                 width="100%"
+                bg={inputBg}
+                color={textColor}
               />
             </Box>
             <Box>
@@ -428,6 +456,8 @@ const AddPharmacy = () => {
                 mt={2}
                 mb={4}
                 width="100%"
+                bg={inputBg}
+                color={textColor}
               />
             </Box>
           </Grid>
@@ -439,7 +469,7 @@ const AddPharmacy = () => {
             borderRadius="md"
             p={4}
             textAlign="center"
-            backgroundColor="gray.100"
+            backgroundColor={inputBg}
             cursor="pointer"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -497,6 +527,8 @@ const AddPharmacy = () => {
               onChange={handleNumberOfBranchesChange}
               mt={2}
               min={0}
+              bg={inputBg}
+              color={textColor}
             />
           </Box>
 
@@ -509,7 +541,7 @@ const AddPharmacy = () => {
               borderRadius="lg"
               boxShadow="sm"
               border="1px solid #ccc"
-              bg="white"
+              bg={cardBg}
             >
               <Text color={textColor} fontSize="md" fontWeight="bold">
                 Branch {index + 1}
@@ -521,6 +553,8 @@ const AddPharmacy = () => {
                     Branch En-Name <span className="text-danger">*</span>
                   </Text>
                   <Input
+                    bg={inputBg}
+                    color={textColor}
                     placeholder="Enter Branch En-Name"
                     value={formData.branches[index]?.translations.find((t) => t.languageId === 'en').name || ''}
                     onChange={(e) =>
@@ -534,6 +568,8 @@ const AddPharmacy = () => {
                     Branch En-Address <span className="text-danger">*</span>
                   </Text>
                   <Input
+                    bg={inputBg}
+                    color={textColor}
                     placeholder="Enter Branch En-Address"
                     value={formData.branches[index]?.translations.find((t) => t.languageId === 'en').address || ''}
                     onChange={(e) =>
@@ -547,6 +583,8 @@ const AddPharmacy = () => {
                     Branch Ar-Name <span className="text-danger">*</span>
                   </Text>
                   <Input
+                  bg={inputBg}
+                  color={textColor}
                     placeholder="أدخل اسم الفرع بالعربية"
                     value={formData.branches[index]?.translations.find((t) => t.languageId === 'ar').name || ''}
                     onChange={(e) =>
@@ -560,6 +598,8 @@ const AddPharmacy = () => {
                     Branch Ar-Address <span className="text-danger">*</span>
                   </Text>
                   <Input
+                  bg={inputBg}
+                  color={textColor}
                     placeholder="أدخل عنوان الفرع بالعربية"
                     value={formData.branches[index]?.translations.find((t) => t.languageId === 'ar').address || ''}
                     onChange={(e) =>
@@ -575,6 +615,8 @@ const AddPharmacy = () => {
                     Location <span className="text-danger">*</span>
                   </Text>
                   <Input
+                    bg={inputBg}
+                    color={textColor}
                     placeholder="Enter Branch Location"
                     value={formData.branches[index]?.locationLink || ''}
                     onChange={(e) =>
@@ -611,8 +653,8 @@ const AddPharmacy = () => {
             </Button>
           </Flex>
         </form>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

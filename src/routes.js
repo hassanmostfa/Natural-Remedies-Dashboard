@@ -94,23 +94,16 @@ const routes = [
     component:<ProtectedRoute><MainDashboard /></ProtectedRoute> ,
     showInSidebar: true,
   },
-  // {
-  //   name: 'Sign in',
-  //   layout: '/admin',
-  //   path: '/sign-in',
-  //   icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
-  //   component: <SignInCentered />,
-  //   showInSidebar: true,
-  // },
+  /* Start Admin Routes */
   {
     name: 'Admin Management',
     layout: '/admin',
     icon: (
       <Icon
-        as={MdAdminPanelSettings}
-        width="20px"
-        height="20px"
-        color="#8f9bba"
+      as={MdAdminPanelSettings}
+      width="20px"
+      height="20px"
+      color="#8f9bba"
       />
     ),
     component: null,
@@ -133,13 +126,47 @@ const routes = [
     ],
   },
   {
-    name: 'Add Rule',
+    name: 'Admin Management',
     layout: '/admin',
-    path: '/add-rule',
-    icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
-    component: <Profile />,
+    path: '/add-New-Rule',
+    icon: (
+      <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
+    ),
+    component: <AddRole />,
     showInSidebar: false,
   },
+  {
+    name: 'Admin Management',
+    layout: '/admin',
+    path: '/edit/rule/:id',
+    icon: (
+      <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
+    ),
+    component: <EditRole />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Admin Management',
+    layout: '/admin',
+    path: '/add-admin',
+    component: <AddAdmin />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Admin Management',
+    layout: '/admin',
+    path: '/edit-admin/:id',
+    component: <EditAdmin />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Admin Management',
+    layout: '/admin',
+    path: '/admin/details/:id',
+    component: <ShowAdmin />,
+    showInSidebar: false,
+  },
+  /* End Admin Routes */
   {
     name: 'Pharmacy Management',
     layout: '/admin',
@@ -564,47 +591,7 @@ const routes = [
     showInSidebar: false,
   },
 
-  {
-    name: 'Admin Management',
-    layout: '/admin',
-    path: '/add-New-Rule',
-    icon: (
-      <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
-    ),
-    component: <AddRole />,
-    showInSidebar: false,
-  },
-  {
-    name: 'Admin Management',
-    layout: '/admin',
-    path: '/edit/rule/:id',
-    icon: (
-      <Icon as={FaRegCalendarDays} width="20px" height="20px" color="inherit" />
-    ),
-    component: <EditRole />,
-    showInSidebar: false,
-  },
-  {
-    name: 'Admin Management',
-    layout: '/admin',
-    path: '/add-admin',
-    component: <AddAdmin />,
-    showInSidebar: false,
-  },
-  {
-    name: 'Admin Management',
-    layout: '/admin',
-    path: '/edit-admin/:id',
-    component: <EditAdmin />,
-    showInSidebar: false,
-  },
-  {
-    name: 'Admin Management',
-    layout: '/admin',
-    path: '/show-admin/:id',
-    component: <ShowAdmin />,
-    showInSidebar: false,
-  },
+  
   {
     name: 'Family Accounts',
     layout: '/admin',
