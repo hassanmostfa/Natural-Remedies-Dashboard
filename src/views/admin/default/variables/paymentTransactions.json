@@ -1,0 +1,42 @@
+[
+  {
+    "transactionId": "TXN-001",
+    "user": "John Doe",
+    "plan": "Skilled",
+    "amount": "$9.99",
+    "status": "successful",
+    "date": "2024-01-15"
+  },
+  {
+    "transactionId": "TXN-002",
+    "user": "Jane Smith",
+    "plan": "Master",
+    "amount": "$29.99",
+    "status": "successful",
+    "date": "2024-01-14"
+  },
+  {
+    "transactionId": "TXN-003",
+    "user": "Mike Johnson",
+    "plan": "Skilled",
+    "amount": "$9.99",
+    "status": "failed",
+    "date": "2024-01-13"
+  },
+  {
+    "transactionId": "TXN-004",
+    "user": "Sarah Wilson",
+    "plan": "Master",
+    "amount": "$249.00",
+    "status": "successful",
+    "date": "2024-01-12"
+  },
+  {
+    "transactionId": "TXN-005",
+    "user": "David Brown",
+    "plan": "Skilled",
+    "amount": "$99.00",
+    "status": "successful",
+    "date": "2024-01-11"
+  }
+] 

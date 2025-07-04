@@ -8,31 +8,22 @@ import IconBox from "components/icons/IconBox";
 import MiniStatistics from "components/card/MiniStatistics";
 import {
   MdOutlineGroup,
-  MdOutlineLocalPharmacy,
-  MdOutlineMedicalServices,
-  MdOutlineStore,
   MdOutlineShoppingCart,
-  MdOutlineEventNote,
-  MdOutlinePerson,
-  MdOutlineBrandingWatermark,
+  MdAssignment,
+  MdPayment,
+  MdTrendingUp,
+  MdAccountBalance,
 } from "react-icons/md";
-import TotalSpent from "views/admin/default/components/TotalSpent";
-import WeeklyRevenue from "views/admin/default/components/WeeklyRevenue";
 import CheckTable from "views/admin/default/components/CheckTable";
-import DailyTraffic from "views/admin/default/components/DailyTraffic";
-import PieCard from "views/admin/default/components/PieCard";
-import ComplexTable from "views/admin/default/components/ComplexTable";
-import Tasks from "views/admin/default/components/Tasks";
-import MiniCalendar from "components/calendar/MiniCalendar";
-import { columnsDataCheck, columnsDataComplex } from "views/admin/default/variables/columnsData";
+import { columnsDataCheck } from "views/admin/default/variables/columnsData";
 import tableDataCheck from "views/admin/default/variables/tableDataCheck.json";
-import tableDataComplex from "views/admin/default/variables/tableDataComplex.json";
+import SubscriptionGrowth from "views/admin/default/components/SubscriptionGrowth";
+import PaymentTransactions from "views/admin/default/components/PaymentTransactions";
+import TotalRevenue from "views/admin/default/components/TotalRevenue";
+import SubscriptionTable from "views/admin/default/components/SubscriptionTable";
+import PaymentTable from "views/admin/default/components/PaymentTable";
 
-import { AiOutlineProduct } from "react-icons/ai";
 import { LuShoppingBasket } from "react-icons/lu";
-import { LuLayers3 } from "react-icons/lu";
-import { MdFamilyRestroom } from "react-icons/md";
-
 
 export default function UserReports() {
   const brandColor = useColorModeValue("brand.500", "white");
@@ -40,17 +31,9 @@ export default function UserReports() {
 
   const cardData = [
     { name: "Total Admins", value: "25", icon: MdOutlineGroup },
-    { name: "Total Pharmacy", value: "150", icon: MdOutlineLocalPharmacy },
-    { name: "Total Doctors", value: "75", icon: MdOutlineMedicalServices },
-    { name: "Total Clinics", value: "40", icon: MdOutlineStore },
-    { name: "Total Orders", value: "5,235", icon: MdOutlineShoppingCart },
-    { name: "Total Appointments", value: "2,345", icon: MdOutlineEventNote },
-    { name: "Total Users", value: "10,000", icon: MdOutlinePerson },
-    { name: "Total Brands", value: "320", icon: MdOutlineBrandingWatermark },
-    { name: "Total Products", value: "1,000", icon: LuShoppingBasket },
-    { name: "Total Product Types", value: "5", icon: AiOutlineProduct },
-    { name: "Total Categories", value: "100", icon: LuLayers3 },
-    { name: "Total Family Accounts", value: "5", icon: MdFamilyRestroom },
+    { name: "Active Subscriptions", value: "1,247", icon: MdTrendingUp },
+    { name: "Total Revenue", value: "$266.8K", icon: MdAccountBalance },
+    { name: "Payment Success Rate", value: "94.1%", icon: MdPayment },
   ];
 
   return (
@@ -74,10 +57,21 @@ export default function UserReports() {
         ))}
       </SimpleGrid>
 
-      {/* Existing Components Below */}
+      {/* Subscription Growth and Payment Transactions */}
       <SimpleGrid columns={{ base: 1, md: 1, xl: 2 }} gap="20px" mb="20px">
-        <CheckTable columnsData={columnsDataCheck} tableData={tableDataCheck} title="Highest Requested Pharmacy" />
-        <CheckTable columnsData={columnsDataCheck} tableData={tableDataCheck} title="Highest Booked Doctors" />
+        <SubscriptionGrowth />
+        <PaymentTransactions />
+      </SimpleGrid>
+
+      {/* Total Revenue */}
+      <SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap="20px" mb="20px">
+        <TotalRevenue />
+      </SimpleGrid>
+
+      {/* Subscription and Payment Tables */}
+      <SimpleGrid columns={{ base: 1, md: 1, xl: 2 }} gap="20px" mb="20px">
+        <SubscriptionTable />
+        <PaymentTable />
       </SimpleGrid>
     </Box>
   );

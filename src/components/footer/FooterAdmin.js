@@ -42,10 +42,10 @@ export default function Footer() {
           <Link
             mx='3px'
             color={textColor}
-            href="https://cloudliftsolution.com/"
+            href="#"
             target='_blank'
             fontWeight='700'>
-            Cloud Lift Solutions
+            TM Solutions
           </Link>
         </Text>
       </Text>

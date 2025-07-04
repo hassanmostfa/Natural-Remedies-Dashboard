@@ -3,7 +3,6 @@ import {
   Button,
   Flex,
   Icon,
-  Image,
   Table,
   Tbody,
   Td,
@@ -17,6 +16,8 @@ import {
   InputLeftElement,
   IconButton,
   Badge,
+  Image,
+  Avatar,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -27,14 +28,14 @@ import {
 } from '@tanstack/react-table';
 import * as React from 'react';
 import Card from 'components/card/Card';
-import { ChevronLeftIcon, ChevronRightIcon, EditIcon, SearchIcon } from '@chakra-ui/icons';
-import { FaEye, FaTrash } from 'react-icons/fa6';
+import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
+import { FaEye, FaTrash, FaLeaf, FaSeedling, FaFlask, FaPills, FaMugHot, FaSprayCan } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const columnHelper = createColumnHelper();
 
-const Users = () => {
+const Remedies = () => {
   const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -42,55 +43,94 @@ const Users = () => {
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
-  // Static user data
-  const staticUsers = [
+  // Static remedies data
+  const staticData = [
     {
       id: 1,
-      name: 'Mohammed Ali',
-      image: 'https://randomuser.me/api/portraits/men/32.jpg',
-      email: 'mohammed.ali@example.com',
-      subscriptionPlan: 'Premium',
+      disease: 'Common Cold',
+      remedyType: 'Herbal Tea',
+      image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=100&h=100&fit=crop',
+      title: 'Ginger Honey Tea',
+      description: 'A soothing herbal tea to relieve cold symptoms and boost immunity',
+      ingredients: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Fresh Ginger' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Raw Honey' },
+        { image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop', name: 'Lemon' }
+      ],
+      instructions: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Boil water' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Add ginger' },
+        { image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop', name: 'Strain and serve' }
+      ],
+      benefits: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Relieves sore throat' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Boosts immunity' },
+        { image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop', name: 'Reduces inflammation' }
+      ],
+      precautions: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Avoid if allergic to ginger' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Not for children under 1' }
+      ],
       status: 'active',
     },
     {
       id: 2,
-      name: 'Sarah Johnson',
-      image: 'https://randomuser.me/api/portraits/women/44.jpg',
-      email: 'sarah.j@example.com',
-      subscriptionPlan: 'Basic',
+      disease: 'Headache',
+      remedyType: 'Essential Oil',
+      image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=100&fit=crop',
+      title: 'Lavender Oil Massage',
+      description: 'Natural headache relief using lavender essential oil',
+      ingredients: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Lavender Oil' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Carrier Oil' }
+      ],
+      instructions: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Dilute oil' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Apply to temples' },
+        { image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop', name: 'Massage gently' }
+      ],
+      benefits: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Relieves tension' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Promotes relaxation' }
+      ],
+      precautions: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Avoid eye contact' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Test for allergies' }
+      ],
       status: 'active',
     },
     {
       id: 3,
-      name: 'Ahmed Hassan',
-      image: 'https://randomuser.me/api/portraits/men/75.jpg',
-      email: 'ahmed.h@example.com',
-      subscriptionPlan: 'Pro',
-      status: 'expired',
-    },
-    {
-      id: 4,
-      name: 'Fatima Mahmoud',
-      image: 'https://randomuser.me/api/portraits/women/63.jpg',
-      email: 'fatima.m@example.com',
-      subscriptionPlan: 'Basic',
+      disease: 'Digestive Issues',
+      remedyType: 'Herbal Supplement',
+      image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&h=100&fit=crop',
+      title: 'Peppermint Capsules',
+      description: 'Natural digestive aid using peppermint extract',
+      ingredients: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Peppermint Oil' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Gelatin Capsule' }
+      ],
+      instructions: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Take with water' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Before meals' }
+      ],
+      benefits: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Relieves bloating' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Soothes stomach' }
+      ],
+      precautions: [
+        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Not for GERD patients' },
+        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Consult doctor if pregnant' }
+      ],
       status: 'active',
-    },
-    {
-      id: 5,
-      name: 'Omar Khalid',
-      image: 'https://randomuser.me/api/portraits/men/81.jpg',
-      email: 'omar.k@example.com',
-      subscriptionPlan: 'Premium',
-      status: 'suspended',
     },
   ];
 
   // Filter data based on search query
   const filteredData = React.useMemo(() => {
-    if (!searchQuery) return staticUsers;
-    return staticUsers.filter((user) =>
-      Object.values(user).some((value) =>
+    if (!searchQuery) return staticData;
+    return staticData.filter((item) =>
+      Object.values(item).some((value) =>
         String(value).toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
@@ -106,21 +146,20 @@ const Users = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Photo
+          Image
         </Text>
       ),
       cell: (info) => (
-        <Image
+        <Avatar
           src={info.getValue()}
-          borderRadius="full"
-          boxSize="40px"
-          objectFit="cover"
-          alt="User"
+          size="md"
+          borderRadius="lg"
+          fallback={<Icon as={FaLeaf} color="green.500" />}
         />
       ),
     }),
-    columnHelper.accessor('name', {
-      id: 'name',
+    columnHelper.accessor('title', {
+      id: 'title',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -128,47 +167,17 @@ const Users = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Name
+          Title
         </Text>
       ),
       cell: (info) => (
-        <Flex direction="column">
-          <Text color={textColor} fontWeight="bold">
-            {info.getValue()}
-          </Text>
-          <Badge 
-            colorScheme={
-              info.row.original.status === 'active' ? 'green' : 
-              info.row.original.status === 'expired' ? 'orange' : 'red'
-            }
-            width="fit-content"
-            mt="1"
-          >
-            {info.row.original.status}
-          </Badge>
-        </Flex>
-      ),
-    }),
-    columnHelper.accessor('email', {
-      id: 'email',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Email
-        </Text>
-      ),
-      cell: (info) => (
-        <Text color={textColor} fontSize="sm">
+        <Text color={textColor} fontWeight="bold">
           {info.getValue()}
         </Text>
       ),
     }),
-    columnHelper.accessor('subscriptionPlan', {
-      id: 'subscription',
+    columnHelper.accessor('disease', {
+      id: 'disease',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -176,18 +185,100 @@ const Users = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Subscription Plan
+          Disease
         </Text>
       ),
       cell: (info) => (
-        <Badge
-          colorScheme={
-            info.getValue() === 'Premium' ? 'purple' : 
-            info.getValue() === 'Pro' ? 'blue' : 'gray'
-          }
-          px="3"
+        <Badge 
+          colorScheme="blue"
+          px="2"
           py="1"
           borderRadius="full"
+          fontSize="xs"
+        >
+          {info.getValue()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor('remedyType', {
+      id: 'remedyType',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Remedy Type
+        </Text>
+      ),
+      cell: (info) => (
+        <Badge 
+          colorScheme="green"
+          px="2"
+          py="1"
+          borderRadius="full"
+          fontSize="xs"
+        >
+          {info.getValue()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor('description', {
+      id: 'description',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Description
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor} fontSize="sm" maxW="200px" noOfLines={2}>
+          {info.getValue()}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor('ingredients', {
+      id: 'ingredients',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Ingredients
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor} fontSize="sm">
+          {info.getValue().length} items
+        </Text>
+      ),
+    }),
+    columnHelper.accessor('status', {
+      id: 'status',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Status
+        </Text>
+      ),
+      cell: (info) => (
+        <Badge 
+          colorScheme={info.getValue() === 'active' ? 'green' : 'red'}
+          px="2"
+          py="1"
+          borderRadius="full"
+          fontSize="xs"
         >
           {info.getValue()}
         </Badge>
@@ -214,7 +305,7 @@ const Users = () => {
             color="red.500"
             as={FaTrash}
             cursor="pointer"
-            onClick={() => handleDeleteUser(info.getValue())}
+            onClick={() => handleDeleteRemedy(info.getValue())}
           />
           <Icon
             w="18px"
@@ -223,7 +314,7 @@ const Users = () => {
             color="green.500"
             as={EditIcon}
             cursor="pointer"
-            onClick={() => navigate(`/admin/edit-user/${info.getValue()}`)}
+            onClick={() => navigate(`/admin/edit-remedy/${info.getValue()}`)}
           />
           <Icon
             w="18px"
@@ -232,7 +323,7 @@ const Users = () => {
             color="blue.500"
             as={FaEye}
             cursor="pointer"
-            onClick={() => navigate(`/admin/user/${info.getValue()}`)}
+            onClick={() => navigate(`/admin/remedy/details/${info.getValue()}`)}
           />
         </Flex>
       ),
@@ -252,7 +343,7 @@ const Users = () => {
   });
 
   // Delete function
-  const handleDeleteUser = async (id) => {
+  const handleDeleteRemedy = async (id) => {
     try {
       const result = await Swal.fire({
         title: 'Are you sure?',
@@ -266,11 +357,11 @@ const Users = () => {
 
       if (result.isConfirmed) {
         // In a real app, you would call your API here
-        Swal.fire('Deleted!', 'The user has been deleted.', 'success');
+        Swal.fire('Deleted!', 'The remedy has been deleted.', 'success');
       }
     } catch (error) {
-      console.error('Failed to delete user:', error);
-      Swal.fire('Error!', 'Failed to delete the user.', 'error');
+      console.error('Failed to delete remedy:', error);
+      Swal.fire('Error!', 'Failed to delete the remedy.', 'error');
     }
   };
 
@@ -289,7 +380,7 @@ const Users = () => {
             fontWeight="700"
             lineHeight="100%"
           >
-            Users Management
+            Remedies
           </Text>
           <div className="search-container d-flex align-items-center gap-2">
             <InputGroup w={{ base: "100", md: "400px" }}>
@@ -317,7 +408,7 @@ const Users = () => {
                 fontWeight="500"
                 _placeholder={{ color: "gray.400", fontSize: "14px" }}
                 borderRadius="30px"
-                placeholder="Search users..."
+                placeholder="Search remedies..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -331,10 +422,10 @@ const Users = () => {
             borderRadius='70px'
             px='24px'
             py='5px'
-            onClick={() => navigate('/admin/add-user')}
+            onClick={() => navigate('/admin/add-remedy')}
             width={'200px'}
           >
-            Add New User
+            Add New Remedy
           </Button>
         </Flex>
         <Box>
@@ -403,4 +494,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default Remedies;

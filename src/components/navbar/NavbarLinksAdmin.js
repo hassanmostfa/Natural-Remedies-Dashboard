@@ -168,7 +168,7 @@ export default function HeaderLinks(props) {
 
       
 
-      <Button
+      {/* <Button
         variant="no-hover"
         bg="transparent"
         p="0px"
@@ -185,7 +185,7 @@ export default function HeaderLinks(props) {
           color={navbarIcon}
           as={colorMode === 'light' ? IoMdMoon : IoMdSunny}
         />
-      </Button>
+      </Button> */}
       <Menu>
         <MenuButton p="0px">
           <Avatar

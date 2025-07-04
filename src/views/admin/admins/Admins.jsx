@@ -28,40 +28,62 @@ import Card from 'components/card/Card';
 import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
 import { FaEye, FaTrash } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
-import { useGetAdminsQuery, useDeleteUserMutation } from 'api/userSlice';
 import Swal from 'sweetalert2';
 
 const columnHelper = createColumnHelper();
 
 const Admins = () => {
-  const [page, setPage] = React.useState(1); // Current page
-  const [limit, setLimit] = React.useState(10); // Items per page
-  const [searchQuery, setSearchQuery] = React.useState(''); // Search query
-  const { data, refetch, isError, isLoading } = useGetAdminsQuery({ page, limit });
-  const [deleteUser, { isError: isDeleteError, isLoading: isDeleteLoading }] = useDeleteUserMutation();
   const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
-  // Extract table data and pagination info
-  const tableData = data?.data?.data || [];
-  const pagination = data?.data?.pagination || { page: 1, limit: 10, totalItems: 0, totalPages: 1 };
+  // Static data
+  const staticData = [
+    {
+      id: 1,
+      name: 'John Doe',
+      email: 'john@example.com',
+      phone: '+966501234567',
+    },
+    {
+      id: 2,
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      phone: '+966502345678',
+    },
+    {
+      id: 3,
+      name: 'Ahmed Ali',
+      email: 'ahmed@example.com',
+      phone: '+966503456789',
+    },
+    {
+      id: 4,
+      name: 'Sarah Johnson',
+      email: 'sarah@example.com',
+      phone: '+966504567890',
+    },
+    {
+      id: 5,
+      name: 'Mohammed Ahmed',
+      email: 'mohammed@example.com',
+      phone: '+966505678901',
+    },
+  ];
+
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   // Filter data based on search query
   const filteredData = React.useMemo(() => {
-    if (!searchQuery) return tableData; // Return all data if no search query
-    return tableData.filter((item) =>
+    if (!searchQuery) return staticData;
+    return staticData.filter((item) =>
       Object.values(item).some((value) =>
         String(value).toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
-  }, [tableData, searchQuery]);
-
-  React.useEffect(() => {
-    refetch();
-  }, [page, limit, refetch]);
+  }, [searchQuery]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -93,7 +115,7 @@ const Admins = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          EMAIL
+          Email
         </Text>
       ),
       cell: (info) => (
@@ -102,8 +124,8 @@ const Admins = () => {
         </Text>
       ),
     }),
-    columnHelper.accessor('roleName', {
-      id: 'roleName',
+    columnHelper.accessor('phone', {
+      id: 'phone',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -111,7 +133,7 @@ const Admins = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          ROLE
+          Phone
         </Text>
       ),
       cell: (info) => (
@@ -141,7 +163,7 @@ const Admins = () => {
             color="red.500"
             as={FaTrash}
             cursor="pointer"
-            onClick={() => handleDeleteRole(info.getValue())}
+            onClick={() => handleDeleteAdmin(info.getValue())}
           />
           <Icon
             w="18px"
@@ -167,7 +189,7 @@ const Admins = () => {
   ];
 
   const table = useReactTable({
-    data: filteredData, // Use filtered data
+    data: filteredData,
     columns,
     state: {
       sorting,
@@ -179,7 +201,7 @@ const Admins = () => {
   });
 
   // Delete function
-  const handleDeleteRole = async (id) => {
+  const handleDeleteAdmin = async (id) => {
     try {
       const result = await Swal.fire({
         title: 'Are you sure?',
@@ -192,32 +214,14 @@ const Admins = () => {
       });
 
       if (result.isConfirmed) {
-        await deleteUser(id).unwrap(); // Delete the role
-        refetch(); // Refetch the data
-        Swal.fire('Deleted!', 'The Admin has been deleted.', 'success');
+        // In a real app, you would call your API here
+        // await deleteUser(id).unwrap();
+        Swal.fire('Deleted!', 'The admin has been deleted.', 'success');
       }
     } catch (error) {
-      console.error('Failed to delete role:', error);
-      Swal.fire('Error!', 'Failed to delete the role.', 'error');
+      console.error('Failed to delete admin:', error);
+      Swal.fire('Error!', 'Failed to delete the admin.', 'error');
     }
-  };
-
-  // Pagination controls
-  const handleNextPage = () => {
-    if (page < pagination.totalPages) {
-      setPage(page + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (page > 1) {
-      setPage(page - 1);
-    }
-  };
-
-  const handleLimitChange = (e) => {
-    setLimit(Number(e.target.value));
-    setPage(1); // Reset to the first page when changing the limit
   };
 
   return (
@@ -258,30 +262,30 @@ const Admins = () => {
               <Input
                 variant="search"
                 fontSize="sm"
-                bg={useColorModeValue("secondaryGray.300", "gray.700")} // Light mode / Dark mode
-                color={useColorModeValue("gray.700", "white")} // Text color for light and dark mode
+                bg={useColorModeValue("secondaryGray.300", "gray.700")}
+                color={useColorModeValue("gray.700", "white")}
                 fontWeight="500"
                 _placeholder={{ color: "gray.400", fontSize: "14px" }}
                 borderRadius="30px"
-                placeholder="Search by name..."
+                placeholder="Search by name, email or phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </InputGroup>
           </div>
-            <Button
-              variant='darkBrand'
-              color='white'
-              fontSize='sm'
-              fontWeight='500'
-              borderRadius='70px'
-              px='24px'
-              py='5px'
-              onClick={() => navigate('/admin/add-admin')}
-              width={'200px'}
-            >
-              Create New Admin
-            </Button>
+          <Button
+            variant='darkBrand'
+            color='white'
+            fontSize='sm'
+            fontWeight='500'
+            borderRadius='70px'
+            px='24px'
+            py='5px'
+            onClick={() => navigate('/admin/add-admin')}
+            width={'200px'}
+          >
+            Create New Admin
+          </Button>
         </Flex>
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
@@ -344,48 +348,6 @@ const Admins = () => {
             </Tbody>
           </Table>
         </Box>
-
-        {/* Pagination Controls */}
-        <Flex justifyContent="space-between" alignItems="center" px="25px" py="10px">
-          <Flex alignItems="center">
-            <Text color={textColor} fontSize="sm" mr="10px">
-              Rows per page:
-            </Text>
-            <select
-              value={limit}
-              onChange={handleLimitChange}
-              style={{ padding: '5px', borderRadius: '5px', border: '1px solid #ddd' }}
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
-          </Flex>
-          <Text color={textColor} fontSize="sm">
-            Page {pagination.page} of {pagination.totalPages}
-          </Text>
-          <Flex>
-            <Button
-              onClick={handlePreviousPage}
-              disabled={page === 1}
-              variant="outline"
-              size="sm"
-              mr="10px"
-            >
-              <Icon as={ChevronLeftIcon} mr="5px" />
-              Previous
-            </Button>
-            <Button
-              onClick={handleNextPage}
-              disabled={page === pagination.totalPages}
-              variant="outline"
-              size="sm"
-            >
-              Next
-              <Icon as={ChevronRightIcon} ml="5px" />
-            </Button>
-          </Flex>
-        </Flex>
       </Card>
     </div>
   );

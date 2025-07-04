@@ -5,7 +5,7 @@ import { Image } from "@chakra-ui/react";
 import { Flex, useColorModeValue } from "@chakra-ui/react";
 
 // Custom components
-import Logo from "../../../assets/img/bio-plus-logo22.png";
+import Logo from "../../../assets/img/logo2.png";
 import { HSeparator } from "components/separator/Separator";
 
 export function SidebarBrand() {

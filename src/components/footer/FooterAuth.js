@@ -40,12 +40,12 @@ export default function Footer() {
         <Text as='span' fontWeight='500' ms='4px' textAlign={"center"}>
           Powered by
           <Link
-            href="https://cloudliftsolution.com/"
+            href="#"
             mx='3px'
             color={textColor}
             target='_blank'
             fontWeight='700'>
-            Cloud Lift Solutions
+            TM Solutions
           </Link>
         </Text>
       </Text>

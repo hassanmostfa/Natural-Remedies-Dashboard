@@ -334,3 +334,258 @@ export const lineChartOptionsTotalSpent = {
   },
   color: ["#7551FF", "#39B8FF"],
 };
+
+// Subscription Growth Chart Data
+export const subscriptionGrowthData = [
+  {
+    name: "New Subscriptions",
+    data: [12, 19, 15, 25, 22, 30, 28, 35, 42, 38, 45, 50],
+  },
+  {
+    name: "Active Subscriptions",
+    data: [8, 15, 12, 20, 18, 25, 23, 30, 35, 32, 38, 42],
+  },
+];
+
+export const subscriptionGrowthOptions = {
+  chart: {
+    toolbar: {
+      show: false,
+    },
+    dropShadow: {
+      enabled: true,
+      top: 13,
+      left: 0,
+      blur: 10,
+      opacity: 0.1,
+      color: "#4318FF",
+    },
+  },
+  colors: ["#4318FF", "#39B8FF"],
+  markers: {
+    size: 0,
+    colors: "white",
+    strokeColors: "#7551FF",
+    strokeWidth: 3,
+    strokeOpacity: 0.9,
+    strokeDashArray: 0,
+    fillOpacity: 1,
+    discrete: [],
+    shape: "circle",
+    radius: 2,
+    offsetX: 0,
+    offsetY: 0,
+    showNullDataPoints: true,
+  },
+  tooltip: {
+    theme: "dark",
+  },
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    curve: "smooth",
+    type: "line",
+  },
+  xaxis: {
+    type: "category",
+    categories: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+    labels: {
+      style: {
+        colors: "#A3AED0",
+        fontSize: "12px",
+        fontWeight: "500",
+      },
+    },
+    axisBorder: {
+      show: false,
+    },
+    axisTicks: {
+      show: false,
+    },
+  },
+  yaxis: {
+    show: false,
+  },
+  legend: {
+    show: false,
+  },
+  grid: {
+    show: false,
+    column: {
+      color: ["#7551FF", "#39B8FF"],
+      opacity: 0.5,
+    },
+  },
+  color: ["#7551FF", "#39B8FF"],
+};
+
+// Payment Transactions Chart Data
+export const paymentTransactionsData = [
+  {
+    name: "Successful Payments",
+    data: [45, 52, 38, 67, 58, 72, 65, 78, 82, 75, 88, 95],
+  },
+  {
+    name: "Failed Payments",
+    data: [3, 5, 2, 8, 4, 6, 3, 9, 5, 7, 4, 6],
+  },
+];
+
+export const paymentTransactionsOptions = {
+  chart: {
+    toolbar: {
+      show: false,
+    },
+    dropShadow: {
+      enabled: true,
+      top: 13,
+      left: 0,
+      blur: 10,
+      opacity: 0.1,
+      color: "#E53E3E",
+    },
+  },
+  colors: ["#38A169", "#E53E3E"],
+  markers: {
+    size: 0,
+    colors: "white",
+    strokeColors: "#38A169",
+    strokeWidth: 3,
+    strokeOpacity: 0.9,
+    strokeDashArray: 0,
+    fillOpacity: 1,
+    discrete: [],
+    shape: "circle",
+    radius: 2,
+    offsetX: 0,
+    offsetY: 0,
+    showNullDataPoints: true,
+  },
+  tooltip: {
+    theme: "dark",
+  },
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    curve: "smooth",
+    type: "line",
+  },
+  xaxis: {
+    type: "category",
+    categories: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+    labels: {
+      style: {
+        colors: "#A3AED0",
+        fontSize: "12px",
+        fontWeight: "500",
+      },
+    },
+    axisBorder: {
+      show: false,
+    },
+    axisTicks: {
+      show: false,
+    },
+  },
+  yaxis: {
+    show: false,
+  },
+  legend: {
+    show: false,
+  },
+  grid: {
+    show: false,
+    column: {
+      color: ["#38A169", "#E53E3E"],
+      opacity: 0.5,
+    },
+  },
+  color: ["#38A169", "#E53E3E"],
+};
+
+// Revenue Chart Data
+export const revenueData = [
+  {
+    name: "Monthly Revenue",
+    data: [12500, 15800, 14200, 18900, 16500, 22400, 19800, 25600, 28900, 26500, 31200, 34500],
+  },
+  {
+    name: "Annual Revenue",
+    data: [12500, 28300, 42500, 61400, 77900, 100300, 120100, 145700, 174600, 201100, 232300, 266800],
+  },
+];
+
+export const revenueOptions = {
+  chart: {
+    toolbar: {
+      show: false,
+    },
+    dropShadow: {
+      enabled: true,
+      top: 13,
+      left: 0,
+      blur: 10,
+      opacity: 0.1,
+      color: "#D69E2E",
+    },
+  },
+  colors: ["#D69E2E", "#805AD5"],
+  markers: {
+    size: 0,
+    colors: "white",
+    strokeColors: "#D69E2E",
+    strokeWidth: 3,
+    strokeOpacity: 0.9,
+    strokeDashArray: 0,
+    fillOpacity: 1,
+    discrete: [],
+    shape: "circle",
+    radius: 2,
+    offsetX: 0,
+    offsetY: 0,
+    showNullDataPoints: true,
+  },
+  tooltip: {
+    theme: "dark",
+  },
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    curve: "smooth",
+    type: "line",
+  },
+  xaxis: {
+    type: "category",
+    categories: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+    labels: {
+      style: {
+        colors: "#A3AED0",
+        fontSize: "12px",
+        fontWeight: "500",
+      },
+    },
+    axisBorder: {
+      show: false,
+    },
+    axisTicks: {
+      show: false,
+    },
+  },
+  yaxis: {
+    show: false,
+  },
+  legend: {
+    show: false,
+  },
+  grid: {
+    show: false,
+    column: {
+      color: ["#D69E2E", "#805AD5"],
+      opacity: 0.5,
+    },
+  },
+  color: ["#D69E2E", "#805AD5"],
+};

@@ -23,7 +23,7 @@ import { RiEyeCloseLine } from "react-icons/ri";
 import { useLoginUserMutation } from "api/userSlice";
 import Swal from "sweetalert2";
 import { LanguageContext } from "../../../components/auth/LanguageContext"; // Adjust the path accordingly
-import Logo from "../../../assets/img/bio-logo.png";
+import Logo from "../../../assets/img/logo.png";
 function SignIn() {
   const { language, toggleLanguage } = useContext(LanguageContext);
   const textColor = useColorModeValue("navy.700", "white");
@@ -106,7 +106,7 @@ function SignIn() {
           <Heading color={textColor} fontSize="36px" mb="10px">
             {translations[language].welcome}
           </Heading>
-
+{/* 
           <Button
           onClick={toggleLanguage}
           variant='darkBrand'
@@ -116,7 +116,7 @@ function SignIn() {
           borderRadius='70px'
           mb="20px">
           {language === "en" ? "العربية" : "English"}
-        </Button>
+        </Button> */}
 
           </Flex>
           <Text

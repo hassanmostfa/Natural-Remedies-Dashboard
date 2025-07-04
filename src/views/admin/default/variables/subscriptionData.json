@@ -1,0 +1,23 @@
+[
+  {
+    "plan": "Rookie",
+    "subscribers": 856,
+    "revenue": "$0",
+    "growth": "+12%",
+    "status": "active"
+  },
+  {
+    "plan": "Skilled",
+    "subscribers": 324,
+    "revenue": "$32,400",
+    "growth": "+18%",
+    "status": "active"
+  },
+  {
+    "plan": "Master",
+    "subscribers": 67,
+    "revenue": "$234,400",
+    "growth": "+25%",
+    "status": "active"
+  }
+] 
