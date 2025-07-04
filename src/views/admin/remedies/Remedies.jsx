@@ -49,6 +49,7 @@ const Remedies = () => {
       id: 1,
       disease: 'Common Cold',
       remedyType: 'Herbal Tea',
+      bodySystem: 'Respiratory',
       image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=100&h=100&fit=crop',
       title: 'Ginger Honey Tea',
       description: 'A soothing herbal tea to relieve cold symptoms and boost immunity',
@@ -77,6 +78,7 @@ const Remedies = () => {
       id: 2,
       disease: 'Headache',
       remedyType: 'Essential Oil',
+      bodySystem: 'Nervous',
       image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=100&fit=crop',
       title: 'Lavender Oil Massage',
       description: 'Natural headache relief using lavender essential oil',
@@ -103,6 +105,7 @@ const Remedies = () => {
       id: 3,
       disease: 'Digestive Issues',
       remedyType: 'Herbal Supplement',
+      bodySystem: 'Digestive',
       image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&h=100&fit=crop',
       title: 'Peppermint Capsules',
       description: 'Natural digestive aid using peppermint extract',
@@ -215,6 +218,30 @@ const Remedies = () => {
       cell: (info) => (
         <Badge 
           colorScheme="green"
+          px="2"
+          py="1"
+          borderRadius="full"
+          fontSize="xs"
+        >
+          {info.getValue()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor('bodySystem', {
+      id: 'bodySystem',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Body System
+        </Text>
+      ),
+      cell: (info) => (
+        <Badge 
+          colorScheme="purple"
           px="2"
           py="1"
           borderRadius="full"

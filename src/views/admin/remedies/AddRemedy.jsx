@@ -35,6 +35,7 @@ const AddRemedy = () => {
   const [formData, setFormData] = React.useState({
     disease: '',
     remedyType: '',
+    bodySystem: '',
     image: '',
     title: '',
     description: '',
@@ -65,6 +66,19 @@ const AddRemedy = () => {
     { value: 'Tincture', label: 'Tincture' },
     { value: 'Salve', label: 'Salve' },
     { value: 'Fresh Herb', label: 'Fresh Herb' },
+  ];
+
+  const bodySystemOptions = [
+    { value: 'Respiratory', label: 'Respiratory' },
+    { value: 'Digestive', label: 'Digestive' },
+    { value: 'Nervous', label: 'Nervous' },
+    { value: 'Cardiovascular', label: 'Cardiovascular' },
+    { value: 'Musculoskeletal', label: 'Musculoskeletal' },
+    { value: 'Immune', label: 'Immune' },
+    { value: 'Endocrine', label: 'Endocrine' },
+    { value: 'Integumentary', label: 'Integumentary' },
+    { value: 'Urinary', label: 'Urinary' },
+    { value: 'Reproductive', label: 'Reproductive' },
   ];
 
   const statusOptions = [
@@ -145,6 +159,17 @@ const AddRemedy = () => {
         toast({
           title: 'Error',
           description: 'Remedy type is required',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (!formData.bodySystem) {
+        toast({
+          title: 'Error',
+          description: 'Body system is required',
           status: 'error',
           duration: 3000,
           isClosable: true,
@@ -333,6 +358,27 @@ const AddRemedy = () => {
                         placeholder="Select remedy type"
                       >
                         {remedyTypeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </HStack>
+
+                  <HStack spacing="4">
+                    <FormControl isRequired>
+                      <FormLabel color={textColor} fontWeight="600">Body System</FormLabel>
+                      <Select
+                        value={formData.bodySystem}
+                        onChange={(e) => handleInputChange('bodySystem', e.target.value)}
+                        bg={useColorModeValue('white', 'gray.700')}
+                        border="1px solid"
+                        borderColor={borderColor}
+                        borderRadius="lg"
+                        placeholder="Select body system"
+                      >
+                        {bodySystemOptions.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>

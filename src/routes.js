@@ -15,6 +15,9 @@ import { GiTakeMyMoney } from "react-icons/gi";
 import { FaLeaf } from "react-icons/fa";
 import { FaTags } from "react-icons/fa";
 import { FaBell } from "react-icons/fa";
+import { FaSkull } from "react-icons/fa";
+import { GiStomach } from "react-icons/gi";
+
 // Admin Imports
 import MainDashboard from 'views/admin/default';
 import Admins from 'views/admin/admins/Admins';
@@ -88,15 +91,15 @@ const routes = [
   },
 
   {
-    name: 'Categories',
+    name: 'Body Systems',
     layout: '/admin',
     path: '/categories',
-    icon: <Icon as={FaTags} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={GiStomach} width="20px" height="20px" color="inherit" />,
     component: <Categories />,
     showInSidebar: true,
   },
   {
-    name: 'Categories',
+    name: 'Body System',
     layout: '/admin',
     path: '/add-category',
     component: <AddCategory />,
