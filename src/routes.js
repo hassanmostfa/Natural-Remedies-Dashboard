@@ -17,6 +17,7 @@ import { FaTags } from "react-icons/fa";
 import { FaBell } from "react-icons/fa";
 import { FaSkull } from "react-icons/fa";
 import { GiStomach } from "react-icons/gi";
+import { FaBook, FaPlay , FaFile , FaStar } from "react-icons/fa";
 
 // Admin Imports
 import MainDashboard from 'views/admin/default';
@@ -37,6 +38,21 @@ import Remedies from 'views/admin/remedies/Remedies';
 import AddRemedy from 'views/admin/remedies/AddRemedy';
 import { GiGrassMushroom } from "react-icons/gi";
 import Notifications from 'views/admin/notifications/Notifications';
+import Courses from 'views/admin/courses/Courses';
+import AddCourse from 'views/admin/courses/AddCourse';
+import Videos from 'views/admin/videos/Videos';
+import AddVideo from 'views/admin/videos/AddVideo';
+import Articles from 'views/admin/articles/Articles';
+import AddArticle from 'views/admin/articles/AddArticle';
+import Reviews from 'views/admin/reviews/Reviews';
+import Disease from 'views/admin/disease/Disease';
+import AddDisease from 'views/admin/disease/AddDisease';
+import Faqs from 'views/admin/faqs/Faqs';
+import AddFaq from 'views/admin/faqs/AddFaq';
+import PrivacyAndTerms from 'views/admin/privacyAndTerms/PrivacyAndTerms';
+import AddPrivacyAndTerms from 'views/admin/privacyAndTerms/AddPrivacyAndTerms';
+import ContactUs from 'views/admin/contactUs/ContactUs';
+import About from 'views/admin/about/About';
 
 
 const routes = [
@@ -148,6 +164,75 @@ const routes = [
     component: <Notifications />,
     showInSidebar: true,
   },
+  {
+    name: 'Courses',
+    layout: '/admin',
+    path: '/courses',
+    icon: <Icon as={FaBook} width="20px" height="20px" color="inherit" />,
+    component: <Courses />,
+    showInSidebar: true,
+  },
+
+  {
+    name: 'Courses',
+    layout: '/admin',
+    path: '/add-course',
+    component: <AddCourse />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Videos',
+    layout: '/admin',
+    path: '/videos',
+    icon: <Icon as={FaPlay} width="20px" height="20px" color="inherit" />,
+    component: <Videos />,
+    showInSidebar: true,
+  },
+  {
+    name: 'Videos',
+    layout: '/admin',
+    path: '/add-video',
+    component: <AddVideo />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Articles',
+    layout: '/admin',
+    path: '/articles',
+    icon: <Icon as={FaFile} width="20px" height="20px" color="inherit" />,
+    component: <Articles />,
+    showInSidebar: true,
+  },
+  {
+    name: 'Articles',
+    layout: '/admin',
+    path: '/add-article',
+    component: <AddArticle />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Reviews',
+    layout: '/admin',
+    path: '/reviews',
+    icon: <Icon as={FaStar} width="20px" height="20px" color="inherit" />,
+    component: <Reviews />,
+    showInSidebar: true,
+  },
+  {
+    name: 'Diseases',
+    layout: '/admin',
+    path: '/disease',
+    icon: <Icon as={FaSkull} width="20px" height="20px" color="inherit" />,
+    component: <Disease />,
+    showInSidebar: true,
+  },
+  {
+    name: 'Diseases',
+    layout: '/admin',
+    path: '/add-disease',
+    component: <AddDisease />,
+    showInSidebar: false,
+  },
   /* End Admin Routes */
   {
     name: 'Users',
@@ -181,6 +266,69 @@ const routes = [
     showInSidebar: false,
   },
   
+
+  {
+    name: 'Help Center',
+    layout: '/admin',
+    icon: (
+      <Icon
+      as={MdAdminPanelSettings}
+      width="20px"
+      height="20px"
+      color="#8f9bba"
+      />
+    ),
+    component: null,
+    showInSidebar: true,
+    subRoutes: [
+      {
+        name:'FAQ',
+        path: '/faqs',
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+        component: <Faqs />,
+        showInSidebar: true,
+      },
+      {
+        name:'Privacy & Terms',
+        path: '/privacy-and-terms',
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+        component: <PrivacyAndTerms />,
+        showInSidebar: true,
+      },
+      {
+        name:'Contact Us',
+        path: '/contact-us',
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+        component: <ContactUs />,
+        showInSidebar: true,
+      },
+      {
+        name:'About Us',
+        path: '/about-us',
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+        component: <About />,
+        showInSidebar: true,
+      },
+    ],
+  },
+  {
+    name: 'FAQ',
+    layout: '/admin',
+    path: '/add-faq',
+    component: <AddFaq />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Privacy & Terms',
+    layout: '/admin',
+    path: '/add-policy',
+    component: <AddPrivacyAndTerms />,
+    showInSidebar: false,
+  },
+
+
+
+
   {
     name: "Logout",
     path: "/logout",
@@ -188,6 +336,8 @@ const routes = [
     layout: "/admin", // Adjust the layout as needed
     showInSidebar: true,
   },
+
+
   
 ];
 

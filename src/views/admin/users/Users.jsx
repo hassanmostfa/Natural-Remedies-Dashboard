@@ -28,9 +28,32 @@ import {
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { ChevronLeftIcon, ChevronRightIcon, EditIcon, SearchIcon } from '@chakra-ui/icons';
-import { FaEye, FaTrash } from 'react-icons/fa6';
+import { FaEye, FaTrash, FaDownload } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
+
+// Function to export data to Excel
+const exportToExcel = (data, filename) => {
+  // Prepare data for export
+  const exportData = data.map(user => ({
+    'ID': user.id,
+    'Name': user.name,
+    'Email': user.email,
+    'Subscription Plan': user.subscriptionPlan,
+    'Status': user.status
+  }));
+
+  // Create workbook and worksheet
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+  // Add worksheet to workbook
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
+
+  // Generate Excel file and download
+  XLSX.writeFile(workbook, filename);
+};
 
 const columnHelper = createColumnHelper();
 
@@ -274,6 +297,25 @@ const Users = () => {
     }
   };
 
+  // Export function
+  const handleExportUsers = () => {
+    try {
+      const filename = `users_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      exportToExcel(filteredData, filename);
+      
+      Swal.fire({
+        title: 'Success!',
+        text: 'Users data has been exported successfully.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Failed to export users:', error);
+      Swal.fire('Error!', 'Failed to export users data.', 'error');
+    }
+  };
+
   return (
     <div className="container">
       <Card
@@ -323,19 +365,35 @@ const Users = () => {
               />
             </InputGroup>
           </div>
-          <Button
-            variant='darkBrand'
-            color='white'
-            fontSize='sm'
-            fontWeight='500'
-            borderRadius='70px'
-            px='24px'
-            py='5px'
-            onClick={() => navigate('/admin/add-user')}
-            width={'200px'}
-          >
-            Add New User
-          </Button>
+          <Flex gap={3}>
+            <Button
+              leftIcon={<FaDownload />}
+              variant='outline'
+              colorScheme='green'
+              fontSize='sm'
+              fontWeight='500'
+              borderRadius='70px'
+              px='24px'
+              py='5px'
+              onClick={handleExportUsers}
+              width={'180px'}
+            >
+              Export Excel
+            </Button>
+            <Button
+              variant='darkBrand'
+              color='white'
+              fontSize='sm'
+              fontWeight='500'
+              borderRadius='70px'
+              px='24px'
+              py='5px'
+              onClick={() => navigate('/admin/add-user')}
+              width={'200px'}
+            >
+              Add New User
+            </Button>
+          </Flex>
         </Flex>
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
