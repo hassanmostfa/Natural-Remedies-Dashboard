@@ -39,7 +39,6 @@ const Faqs = () => {
   const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [categoryFilter, setCategoryFilter] = React.useState('all');
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
@@ -96,14 +95,9 @@ const Faqs = () => {
     },
   ];
 
-  // Filter data based on search query and category filter
+  // Filter data based on search query
   const filteredData = React.useMemo(() => {
     let filtered = staticData;
-    
-    // Filter by category
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(item => item.category === categoryFilter);
-    }
     
     // Filter by search query
     if (searchQuery) {
@@ -115,7 +109,7 @@ const Faqs = () => {
     }
     
     return filtered;
-  }, [searchQuery, categoryFilter]);
+  }, [searchQuery]);
 
   const columns = [
     columnHelper.accessor('order', {
@@ -160,41 +154,7 @@ const Faqs = () => {
       ),
     }),
     
-    columnHelper.accessor('category', {
-      id: 'category',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Category
-        </Text>
-      ),
-      cell: (info) => {
-        const categoryColors = {
-          safety: 'red',
-          benefits: 'green',
-          usage: 'blue',
-          education: 'purple',
-          storage: 'orange'
-        };
-        
-        return (
-          <Badge 
-            colorScheme={categoryColors[info.getValue()] || 'gray'}
-            px="2"
-            py="1"
-            borderRadius="full"
-            fontSize="xs"
-            textTransform="capitalize"
-          >
-            {info.getValue()}
-          </Badge>
-        );
-      },
-    }),
+
     
     columnHelper.accessor('status', {
       id: 'status',
@@ -375,18 +335,7 @@ const Faqs = () => {
               />
             </InputGroup>
 
-            <Select
-              maxW="200px"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              <option value="all">All Categories</option>
-              <option value="safety">Safety</option>
-              <option value="benefits">Benefits</option>
-              <option value="usage">Usage</option>
-              <option value="education">Education</option>
-              <option value="storage">Storage</option>
-            </Select>
+
           </Flex>
 
           <Box overflowX="auto">

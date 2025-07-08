@@ -53,6 +53,7 @@ const AddArticle = () => {
     title: '',
     image: '',
     description: '',
+    visiblePlans: 'all',
     status: 'active',
   });
 
@@ -66,6 +67,13 @@ const AddArticle = () => {
     { value: 'active', label: 'Active' },
     { value: 'inactive', label: 'Inactive' },
     { value: 'draft', label: 'Draft' },
+  ];
+
+  const visiblePlansOptions = [
+    { value: 'all', label: 'All Plans' },
+    { value: 'Rookie', label: 'Rookie' },
+    { value: 'Skilled', label: 'Skilled' },
+    { value: 'Master', label: 'Master' },
   ];
 
   // Basic info handlers
@@ -207,6 +215,20 @@ const AddArticle = () => {
                   onChange={(e) => handleBasicInfoChange('image', e.target.value)}
                   placeholder="Enter image URL"
                 />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel color={textColor}>Visible to Plans</FormLabel>
+                <Select
+                  value={basicInfo.visiblePlans}
+                  onChange={(e) => handleBasicInfoChange('visiblePlans', e.target.value)}
+                >
+                  {visiblePlansOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
               </FormControl>
 
               <FormControl>

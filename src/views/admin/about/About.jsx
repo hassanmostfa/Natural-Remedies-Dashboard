@@ -5,6 +5,7 @@ import {
   Text,
   useColorModeValue,
   VStack,
+  HStack,
   Input,
   Textarea,
   FormControl,
@@ -12,6 +13,8 @@ import {
   FormErrorMessage,
   Card,
 } from '@chakra-ui/react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSave, FaEdit } from 'react-icons/fa';
@@ -19,14 +22,12 @@ import Swal from 'sweetalert2';
 
 const About = () => {
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const cardBg = useColorModeValue('white', 'navy.800');
 
   const [formData, setFormData] = React.useState({
-    title: 'About Natural Remedies',
     mainDescription: 'At Natural Remedies, we believe in the power of nature to heal and nurture. Our mission is to provide you with the highest quality natural remedies, backed by centuries of traditional wisdom and modern scientific research. We are committed to helping you achieve optimal health through safe, effective, and sustainable natural solutions.'
   });
 
@@ -50,9 +51,6 @@ const About = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
-    }
     if (!formData.mainDescription.trim()) {
       newErrors.mainDescription = 'Main description is required';
     }
@@ -80,8 +78,6 @@ const About = () => {
         icon: 'success',
         confirmButtonText: 'OK'
       });
-
-      setIsEditing(false);
     } catch (error) {
       console.error('Failed to update about information:', error);
       Swal.fire({
@@ -98,11 +94,9 @@ const About = () => {
   const handleCancel = () => {
     // Reset form data to original values
     setFormData({
-      title: 'About Natural Remedies',
       mainDescription: 'At Natural Remedies, we believe in the power of nature to heal and nurture. Our mission is to provide you with the highest quality natural remedies, backed by centuries of traditional wisdom and modern scientific research. We are committed to helping you achieve optimal health through safe, effective, and sustainable natural solutions.'
     });
     setErrors({});
-    setIsEditing(false);
   };
 
   return (
@@ -118,57 +112,55 @@ const About = () => {
                 Manage your about page information
               </Text>
             </Box>
-            <Button
-              leftIcon={isEditing ? <FaSave /> : <FaEdit />}
-              colorScheme={isEditing ? "green" : "blue"}
-              onClick={isEditing ? handleSave : () => setIsEditing(true)}
-              isLoading={isLoading}
-            >
-              {isEditing ? 'Save Changes' : 'Edit'}
-            </Button>
           </Flex>
 
           <VStack spacing={6} align="stretch">
-            {/* Title */}
-            <FormControl isInvalid={!!errors.title}>
-              <FormLabel color={textColor} fontWeight="bold">
-                Title
-              </FormLabel>
-              <Input
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                isReadOnly={!isEditing}
-                bg={isEditing ? 'white' : 'gray.50'}
-              />
-              <FormErrorMessage>{errors.title}</FormErrorMessage>
-            </FormControl>
-
             {/* Main Description */}
             <FormControl isInvalid={!!errors.mainDescription}>
               <FormLabel color={textColor} fontWeight="bold">
                 Main Description
               </FormLabel>
-              <Textarea
-                value={formData.mainDescription}
-                onChange={(e) => handleInputChange('mainDescription', e.target.value)}
-                isReadOnly={!isEditing}
-                bg={isEditing ? 'white' : 'gray.50'}
-                rows={6}
-              />
+              <Box border="1px" borderColor="gray.200" borderRadius="md">
+                <ReactQuill
+                  theme="snow"
+                  value={formData.mainDescription}
+                  onChange={(value) => handleInputChange('mainDescription', value)}
+                  placeholder="Enter the about page content..."
+                  style={{ height: '300px' }}
+                  modules={{
+                    toolbar: [
+                      [{ 'header': [1, 2, 3, false] }],
+                      ['bold', 'italic', 'underline', 'strike'],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      [{ 'color': [] }, { 'background': [] }],
+                      [{ 'align': [] }],
+                      ['link', 'blockquote', 'code-block'],
+                      ['clean']
+                    ],
+                  }}
+                />
+              </Box>
               <FormErrorMessage>{errors.mainDescription}</FormErrorMessage>
             </FormControl>
           </VStack>
 
-          {isEditing && (
+          <HStack justify="flex-end" spacing={4}>
             <Button
               onClick={handleCancel}
               variant="outline"
               colorScheme="gray"
-              mt={4}
             >
               Cancel
             </Button>
-          )}
+            <Button
+              onClick={handleSave}
+              colorScheme="green"
+              leftIcon={<FaSave />}
+              isLoading={isLoading}
+            >
+              Save Changes
+            </Button>
+          </HStack>
         </VStack>
       </Card>
     </Box>

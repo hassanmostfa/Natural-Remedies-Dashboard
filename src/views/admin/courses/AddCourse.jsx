@@ -108,10 +108,12 @@ const AddCourse = () => {
   ];
 
   const planOptions = [
-    { value: 'Basic Plan', label: 'Basic Plan' },
-    { value: 'Premium Plan', label: 'Premium Plan' },
-    { value: 'Master Plan', label: 'Master Plan' },
+    { value: 'Rookie', label: 'Rookie' },
+    { value: 'Skilled', label: 'Skilled' },
+    { value: 'Master', label: 'Master' },
   ];
+
+
 
   // Available remedies for selection
   const availableRemedies = [

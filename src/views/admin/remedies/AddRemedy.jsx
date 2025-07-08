@@ -39,6 +39,7 @@ const AddRemedy = () => {
     image: '',
     title: '',
     description: '',
+    visiblePlans: 'all',
     ingredients: [{ image: '', name: '' }],
     instructions: [{ image: '', name: '' }],
     benefits: [{ image: '', name: '' }],
@@ -84,6 +85,13 @@ const AddRemedy = () => {
   const statusOptions = [
     { value: 'active', label: 'Active' },
     { value: 'inactive', label: 'Inactive' },
+  ];
+
+  const visiblePlansOptions = [
+    { value: 'all', label: 'All Plans' },
+    { value: 'Rookie', label: 'Rookie' },
+    { value: 'Skilled', label: 'Skilled' },
+    { value: 'Master', label: 'Master' },
   ];
 
   const handleInputChange = (field, value) => {
@@ -212,6 +220,51 @@ const AddRemedy = () => {
     navigate('/admin/remedies');
   };
 
+  const handleAutoFill = () => {
+    setFormData({
+      disease: 'Common Cold',
+      remedyType: 'Herbal Tea',
+      bodySystem: 'Respiratory',
+      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500',
+      title: 'Ginger Honey Tea',
+      description: 'A soothing herbal tea made with fresh ginger root and natural honey. This remedy helps relieve cold symptoms, soothes sore throat, and boosts the immune system. The combination of ginger\'s anti-inflammatory properties and honey\'s natural antibacterial effects makes this an effective natural remedy for respiratory issues.',
+      visiblePlans: 'all',
+      ingredients: [
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Fresh Ginger Root' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Natural Honey' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Lemon Juice' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Hot Water' }
+      ],
+      instructions: [
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Peel and slice fresh ginger root' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Boil water and add ginger slices' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Steep for 10-15 minutes' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Add honey and lemon juice' }
+      ],
+      benefits: [
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Relieves cold symptoms' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Soothes sore throat' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Boosts immune system' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Reduces inflammation' }
+      ],
+      precautions: [
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Not recommended for children under 1 year' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Avoid if allergic to ginger' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Consult doctor if pregnant' },
+        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Limit consumption if diabetic' }
+      ],
+      status: 'active',
+    });
+
+    toast({
+      title: 'Auto Fill Complete',
+      description: 'Form has been populated with sample data for testing.',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
   const ListSection = ({ title, listName, items }) => (
     <Box>
       <Flex justify="space-between" align="center" mb="4">
@@ -291,6 +344,22 @@ const AddRemedy = () => {
           >
             Add New Remedy
           </Text>
+          <Button
+            type="button"
+            variant="outline"
+            colorScheme="purple"
+            fontSize="sm"
+            fontWeight="500"
+            borderRadius="70px"
+            px="24px"
+            py="5px"
+            onClick={handleAutoFill}
+            _hover={{
+              bg: 'purple.100',
+            }}
+          >
+            Auto Fill
+          </Button>
         </Flex>
         
         <Box px="25px" pb="25px">
@@ -399,6 +468,24 @@ const AddRemedy = () => {
                       borderColor={borderColor}
                       borderRadius="lg"
                     />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel color={textColor} fontWeight="600">Visible to Plans</FormLabel>
+                    <Select
+                      value={formData.visiblePlans}
+                      onChange={(e) => handleInputChange('visiblePlans', e.target.value)}
+                      bg={useColorModeValue('white', 'gray.700')}
+                      border="1px solid"
+                      borderColor={borderColor}
+                      borderRadius="lg"
+                    >
+                      {visiblePlansOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Select>
                   </FormControl>
 
                   <FormControl>

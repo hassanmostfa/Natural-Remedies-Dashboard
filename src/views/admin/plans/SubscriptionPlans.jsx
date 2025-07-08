@@ -335,30 +335,7 @@ const SubscriptionPlans = () => {
         </Badge>
       ),
     }),
-    columnHelper.accessor('autoRenew', {
-      id: 'autoRenew',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Auto Renew
-        </Text>
-      ),
-      cell: (info) => (
-        <Badge 
-          colorScheme={info.getValue() ? 'green' : 'gray'}
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-        >
-          {info.getValue() ? 'Yes' : 'No'}
-        </Badge>
-      ),
-    }),
+
     columnHelper.accessor('id', {
       id: 'actions',
       header: () => (
@@ -524,14 +501,6 @@ const SubscriptionPlans = () => {
             <Text color={textColor} fontSize="xl" fontWeight="600">
               Subscription Transactions
             </Text>
-            <Button
-              leftIcon={<FaDownload />}
-              colorScheme="green"
-              variant="outline"
-              onClick={handleExportSubscriptions}
-            >
-              Export Excel
-            </Button>
           </Flex>
 
           <Flex
