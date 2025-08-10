@@ -14,13 +14,19 @@ import {
  } from '@chakra-ui/react';
  import * as React from 'react';
  import Card from 'components/card/Card';
- import { useNavigate } from 'react-router-dom';
- import { useCreateRemedyTypeMutation } from 'api/remediesTypesSlice';
+ import { useNavigate, useParams } from 'react-router-dom';
+ import { 
+   useGetRemedyTypeQuery,
+   useUpdateRemedyTypeMutation 
+ } from 'api/remediesTypesSlice';
  import Swal from 'sweetalert2';
  
- const AddRemedyType = () => {
+ import { useEffect } from 'react';
+ const EditRemedyType = () => {
+   const { id } = useParams();
    const navigate = useNavigate();
-   const [createRemedyType, { isLoading }] = useCreateRemedyTypeMutation();
+   const { data: remedyType, isLoading: isFetching, isError , refetch} = useGetRemedyTypeQuery(id);
+   const [updateRemedyType, { isLoading: isUpdating }] = useUpdateRemedyTypeMutation();
    
    // Color mode values
    const textColor = useColorModeValue('secondaryGray.900', 'white');
@@ -34,6 +40,23 @@ import {
      status: 'active',
    });
  
+   useEffect(() => {
+    refetch();
+   }, [refetch]);
+
+
+   // Set form data when remedy type data is loaded
+   React.useEffect(() => {
+     if (remedyType?.data) {
+       console.log('Initial data loaded:', remedyType.data);
+       setFormData({
+         name: remedyType.data.name || '',
+         description: remedyType.data.description || '',
+         status: remedyType.data.status || 'active',
+       });
+     }
+   }, [remedyType]);
+
    const statusOptions = [
      { value: 'active', label: 'Active' },
      { value: 'inactive', label: 'Inactive' },
@@ -51,7 +74,7 @@ import {
    const showSuccessAlert = () => {
      Swal.fire({
        title: 'Success!',
-       text: 'Remedy type created successfully',
+       text: 'Remedy type updated successfully',
        icon: 'success',
        confirmButtonText: 'OK',
      }).then((result) => {
@@ -82,18 +105,30 @@ import {
      }
  
      try {
-       const response = await createRemedyType(formData).unwrap();
+       console.log('Submitting data:', { id, data: formData });
        
-       console.log('Create successful:', response);
+       // Create payload with only changed fields if you want partial updates
+       const payload = {
+         name: formData.name,
+         description: formData.description,
+         status: formData.status,
+       };
+ 
+       const response = await updateRemedyType({
+         id,
+         remedyType: payload
+       }).unwrap();
+ 
+       console.log('Update response:', response);
        
        if (response.success) {
          showSuccessAlert();
        } else {
-         showErrorAlert(response.message || 'Creation failed');
+         showErrorAlert(response.message || 'Update failed');
        }
      } catch (error) {
-       console.error('Failed to create remedy type:', error);
-       let errorMessage = 'Failed to create remedy type. Please try again.';
+       console.error('Failed to update remedy type:', error);
+       let errorMessage = 'Failed to update remedy type. Please try again.';
        
        if (error.data) {
          console.error('Error details:', error.data);
@@ -124,6 +159,22 @@ import {
      });
    };
  
+   if (isFetching) {
+     return (
+       <Flex justify="center" align="center" height="100vh">
+         <Spinner size="xl" />
+       </Flex>
+     );
+   }
+ 
+   if (isError) {
+     return (
+       <Flex justify="center" align="center" height="100vh">
+         <Text>Error loading remedy type data</Text>
+       </Flex>
+     );
+   }
+ 
    return (
      <Box mt="80px">
        <Card
@@ -139,7 +190,7 @@ import {
              fontWeight="700"
              lineHeight="100%"
            >
-             Add New Remedy Type
+             Edit Remedy Type
            </Text>
          </Flex>
          
@@ -219,13 +270,13 @@ import {
                    borderRadius="70px"
                    px="24px"
                    py="5px"
-                   isLoading={isLoading}
-                   loadingText="Creating..."
+                   isLoading={isUpdating}
+                   loadingText="Updating..."
                    _hover={{
                      bg: 'blue.600',
                    }}
                  >
-                   Create Remedy Type
+                   Update Remedy Type
                  </Button>
                  <Button
                    type="button"
@@ -252,4 +303,4 @@ import {
    );
  };
  
- export default AddRemedyType;
+ export default EditRemedyType;

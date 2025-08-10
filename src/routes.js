@@ -17,7 +17,7 @@ import { FaTags } from "react-icons/fa";
 import { FaBell } from "react-icons/fa";
 import { FaSkull } from "react-icons/fa";
 import { GiStomach } from "react-icons/gi";
-import { FaBook, FaPlay , FaFile , FaStar } from "react-icons/fa";
+import { FaBook, FaPlay , FaFile , FaStar , FaAd } from "react-icons/fa";
 
 // Admin Imports
 import MainDashboard from 'views/admin/default';
@@ -28,31 +28,45 @@ import EditAdmin from 'views/admin/admins/EditAdmin';
 import ShowAdmin from 'views/admin/admins/ShowAdmin';
 import Users from 'views/admin/users/Users';
 import AddUser from 'views/admin/users/AddUser';
+import EditUser from 'views/admin/users/EditUser';
 import SubscriptionPlans from 'views/admin/plans/SubscriptionPlans';
 import AddPlan from 'views/admin/plans/AddPlan';
 import Types from 'views/admin/remedies/Types';
 import AddRemedyType from 'views/admin/remedies/AddType';
+import EditRemedyType from 'views/admin/remedies/EditType';
 import Categories from 'views/admin/categories/Categories';
 import AddCategory from 'views/admin/categories/AddCategory';
+import EditBodySystem from 'views/admin/categories/EditBodySystem';
 import Remedies from 'views/admin/remedies/Remedies';
 import AddRemedy from 'views/admin/remedies/AddRemedy';
-import { GiGrassMushroom } from "react-icons/gi";
+import EditRemedy from 'views/admin/remedies/EditRemedy';
+import ShowRemedy from 'views/admin/remedies/ShowRemedy';
 import Notifications from 'views/admin/notifications/Notifications';
 import Courses from 'views/admin/courses/Courses';
 import AddCourse from 'views/admin/courses/AddCourse';
 import Videos from 'views/admin/videos/Videos';
 import AddVideo from 'views/admin/videos/AddVideo';
+import EditVideo from 'views/admin/videos/EditVideo ';
 import Articles from 'views/admin/articles/Articles';
 import AddArticle from 'views/admin/articles/AddArticle';
+import EditArticle from 'views/admin/articles/EditArticle';
 import Reviews from 'views/admin/reviews/Reviews';
 import Disease from 'views/admin/disease/Disease';
 import AddDisease from 'views/admin/disease/AddDisease';
+import EditDisease from 'views/admin/disease/EditDisease';
 import Faqs from 'views/admin/faqs/Faqs';
 import AddFaq from 'views/admin/faqs/AddFaq';
+import EditFaq from 'views/admin/faqs/EditFaq';
 import PrivacyAndTerms from 'views/admin/privacyAndTerms/PrivacyAndTerms';
 import AddPrivacyAndTerms from 'views/admin/privacyAndTerms/AddPrivacyAndTerms';
+import EditPrivacyAndTerms from 'views/admin/privacyAndTerms/EditPrivacyAndTerms';
 import ContactUs from 'views/admin/contactUs/ContactUs';
 import About from 'views/admin/about/About';
+import Ads from 'views/admin/ads/Ads';
+import AddAd from 'views/admin/ads/AddAd';
+import EditAd from 'views/admin/ads/EditAd';
+
+import { GiGrassMushroom } from "react-icons/gi";
 
 
 const routes = [
@@ -121,7 +135,13 @@ const routes = [
     component: <AddCategory />,
     showInSidebar: false,
   },
-
+  {
+    name: 'Body System',
+    layout: '/admin',
+    path: '/edit-body-system/:id',
+    component: <EditBodySystem />,
+    showInSidebar: false,
+  },
   {
     name: 'Remedies Types',
     layout: '/admin',
@@ -140,6 +160,13 @@ const routes = [
   },
 
   {
+    name: 'Remedies Types',
+    layout: '/admin',
+    path: '/edit-remedy-type/:id',
+    component: <EditRemedyType />,
+    showInSidebar: false,
+  },
+  {
     name: 'Remedies',
     layout: '/admin',
     path: '/remedies',
@@ -155,7 +182,22 @@ const routes = [
     component: <AddRemedy />,
     showInSidebar: false,
   },
+  {
+    name: 'Remedies',
+    layout: '/admin',
+    path: '/edit-remedy/:id',
+    component: <EditRemedy />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Remedies',
+    layout: '/admin',
+    path: '/remedy/:id',
+    component: <ShowRemedy />,
+    showInSidebar: false,
+  },
 
+  
   {
     name: 'Notifications',
     layout: '/admin',
@@ -196,6 +238,13 @@ const routes = [
     showInSidebar: false,
   },
   {
+    name: 'Videos',
+    layout: '/admin',
+    path: '/edit-video/:id',
+    component: <EditVideo />,
+    showInSidebar: false,
+  },
+  {
     name: 'Articles',
     layout: '/admin',
     path: '/articles',
@@ -210,6 +259,15 @@ const routes = [
     component: <AddArticle />,
     showInSidebar: false,
   },
+  
+  {
+    name: 'Articles',
+    layout: '/admin',
+    path: '/edit-article/:id',
+    component: <EditArticle />,
+    showInSidebar: false,
+  },
+
   {
     name: 'Reviews',
     layout: '/admin',
@@ -233,6 +291,35 @@ const routes = [
     component: <AddDisease />,
     showInSidebar: false,
   },
+  {
+    name: 'Diseases',
+    layout: '/admin',
+    path: '/edit-disease/:id',
+    component: <EditDisease />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Ads',
+    layout: '/admin',
+    path: '/ads',
+    icon: <Icon as={FaAd} width="20px" height="20px" color="inherit" />,
+    component: <Ads />,
+    showInSidebar: true,
+  },
+  {
+    name: 'Ads',
+    layout: '/admin',
+    path: '/add-ad',
+    component: <AddAd />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Ads',
+    layout: '/admin',
+    path: '/edit-ad/:id',
+    component: <EditAd />,
+    showInSidebar: false,
+  },
   /* End Admin Routes */
   {
     name: 'Users',
@@ -247,6 +334,13 @@ const routes = [
     layout: '/admin',
     path: '/add-user',
     component: <AddUser />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Users',
+    layout: '/admin',
+    path: '/edit-user/:id',
+    component: <EditUser />,
     showInSidebar: false,
   },
   {
@@ -319,13 +413,26 @@ const routes = [
     showInSidebar: false,
   },
   {
+    name: 'FAQ',
+    layout: '/admin',
+    path: '/edit-faq/:id',
+    component: <EditFaq />,
+    showInSidebar: false,
+  },
+  {
     name: 'Privacy & Terms',
     layout: '/admin',
     path: '/add-policy',
     component: <AddPrivacyAndTerms />,
     showInSidebar: false,
   },
-
+  {
+    name: 'Privacy & Terms',
+    layout: '/admin',
+    path: '/edit-policy/:id',
+    component: <EditPrivacyAndTerms />,
+    showInSidebar: false,
+  },
 
 
 

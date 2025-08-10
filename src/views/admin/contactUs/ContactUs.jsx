@@ -9,6 +9,7 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  IconButton,
   Table,
   Tbody,
   Td,
@@ -20,6 +21,17 @@ import {
   Badge,
   Select,
   Avatar,
+  Spinner,
+  useToast,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Divider,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -30,122 +42,68 @@ import {
 } from '@tanstack/react-table';
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaSave, FaEdit, FaEye, FaTrash, FaSearch, FaReply } from 'react-icons/fa';
+import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from '@chakra-ui/icons';
+import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaSave, FaEdit, FaEye, FaTrash, FaReply } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+import { 
+  useGetContactUsMessagesQuery, 
+  useDeleteContactUsMessageMutation 
+} from 'api/contactUsSlice';
 
 const columnHelper = createColumnHelper();
 
 const ContactUs = () => {
   const navigate = useNavigate();
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState('all');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(15);
+  const [selectedMessage, setSelectedMessage] = React.useState(null);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const searchBg = useColorModeValue('secondaryGray.300', 'gray.700');
+  const searchColor = useColorModeValue('gray.700', 'white');
 
-  // Static contact messages data
-  const staticData = [
-    {
-      id: 1,
-      user: {
-        name: 'Sarah Johnson',
-        email: 'sarah.j@example.com',
-        phone: '+1 (555) 123-4567',
-        avatar: 'https://randomuser.me/api/portraits/women/32.jpg'
-      },
-      subject: 'Question about herbal remedies',
-      message: 'Hi, I have a question about the ginger tea remedy for colds. Can you tell me more about the dosage and how long I should take it?',
-      status: 'unread',
-      priority: 'medium',
-      date: '2024-01-15T10:30:00Z',
-      category: 'general'
-    },
-    {
-      id: 2,
-      user: {
-        name: 'Mohammed Ali',
-        email: 'mohammed.ali@example.com',
-        phone: '+1 (555) 987-6543',
-        avatar: 'https://randomuser.me/api/portraits/men/44.jpg'
-      },
-      subject: 'Allergy to chamomile tea',
-      message: 'I tried the chamomile tea for sleep but I think I might be allergic. I got a rash after drinking it. What should I do?',
-      status: 'read',
-      priority: 'high',
-      date: '2024-01-14T16:45:00Z',
-      category: 'medical'
-    },
-    {
-      id: 3,
-      user: {
-        name: 'Emily Chen',
-        email: 'emily.chen@example.com',
-        phone: '+1 (555) 456-7890',
-        avatar: 'https://randomuser.me/api/portraits/women/67.jpg'
-      },
-      subject: 'Subscription inquiry',
-      message: 'I would like to upgrade my subscription to the premium plan. Can you help me with the process?',
-      status: 'replied',
-      priority: 'low',
-      date: '2024-01-13T09:15:00Z',
-      category: 'billing'
-    },
-    {
-      id: 4,
-      user: {
-        name: 'David Wilson',
-        email: 'david.wilson@example.com',
-        phone: '+1 (555) 321-0987',
-        avatar: 'https://randomuser.me/api/portraits/men/89.jpg'
-      },
-      subject: 'App not working properly',
-      message: 'The app keeps crashing when I try to view the remedies. I\'ve tried restarting it but the issue persists.',
-      status: 'unread',
-      priority: 'high',
-      date: '2024-01-12T14:20:00Z',
-      category: 'technical'
-    },
-    {
-      id: 5,
-      user: {
-        name: 'Lisa Rodriguez',
-        email: 'lisa.rodriguez@example.com',
-        phone: '+1 (555) 654-3210',
-        avatar: 'https://randomuser.me/api/portraits/women/23.jpg'
-      },
-      subject: 'Thank you for the help',
-      message: 'The lavender oil remedy worked perfectly for my headache. Thank you so much for the recommendation!',
-      status: 'replied',
-      priority: 'low',
-      date: '2024-01-11T11:30:00Z',
-      category: 'feedback'
-    },
-  ];
-
-  // Filter data based on search query and status filter
-  const filteredData = React.useMemo(() => {
-    let filtered = staticData;
+  // API query parameters
+  const queryParams = React.useMemo(() => {
+    const params = {
+      page: currentPage,
+      per_page: perPage,
+    };
     
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(item => item.status === statusFilter);
+    if (searchQuery.trim()) {
+      params.name = searchQuery.trim();
     }
     
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter((item) =>
-        Object.values(item).some((value) =>
-          String(value).toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    }
-    
-    return filtered;
-  }, [searchQuery, statusFilter]);
+    return params;
+  }, [currentPage, perPage, searchQuery]);
+
+  // API hooks
+  const { data: contactUsResponse, isLoading, isError, refetch } = useGetContactUsMessagesQuery(queryParams, { refetchOnMountOrArgChange: true });
+  const [deleteContactUsMessage, { isLoading: isDeleting }] = useDeleteContactUsMessageMutation();
+
+  const contactUsData = contactUsResponse?.data || [];
+  const pagination = contactUsResponse?.pagination || null;
+
+  // Effect to reset to first page when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Effect to refetch when search or pagination changes
+  React.useEffect(() => {
+    refetch();
+  }, [searchQuery, currentPage, perPage, refetch]);
 
   const handleViewMessage = (id) => {
-    navigate(`/admin/message/details/${id}`);
+    const message = contactUsData.find(msg => msg.id === id);
+    if (message) {
+      setSelectedMessage(message);
+      onOpen();
+    }
   };
 
   const handleReplyMessage = (id) => {
@@ -153,45 +111,63 @@ const ContactUs = () => {
   };
 
   const handleDeleteMessage = async (id) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    });
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+      });
 
-    if (result.isConfirmed) {
-      try {
-        // In a real app, you would call your API here
-        // await api.delete(`/messages/${id}`);
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (result.isConfirmed) {
+        await deleteContactUsMessage(id).unwrap();
 
-        Swal.fire(
-          'Deleted!',
-          'Message has been deleted.',
-          'success'
-        );
+        toast({
+          title: 'Message Deleted',
+          description: 'The contact message has been successfully deleted.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
 
-        // Refresh the data or remove from state
-        // setMessages(messages.filter(msg => msg.id !== id));
-      } catch (error) {
-        console.error('Failed to delete message:', error);
-        Swal.fire(
-          'Error!',
-          'Failed to delete message.',
-          'error'
-        );
+        // Refetch the data to get updated list
+        refetch();
       }
+    } catch (error) {
+      console.error('Failed to delete message:', error);
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to delete message.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
   const columns = [
-    columnHelper.accessor('user.name', {
+    columnHelper.accessor('id', {
+      id: 'id',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          ID
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor} fontWeight="bold" fontSize="sm">
+          {info.getValue()}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor('name', {
       id: 'user',
       header: () => (
         <Text
@@ -204,21 +180,19 @@ const ContactUs = () => {
         </Text>
       ),
       cell: (info) => (
-        <HStack spacing={3}>
-          <Avatar
-            src={info.row.original.user.avatar}
-            size="sm"
-            name={info.getValue()}
-          />
-          <VStack align="start" spacing={0}>
-            <Text color={textColor} fontWeight="bold" fontSize="sm">
-              {info.getValue()}
-            </Text>
+        <VStack align="start" spacing={1}>
+          <Text color={textColor} fontWeight="bold" fontSize="sm">
+            {info.getValue()}
+          </Text>
+          <Text color="gray.500" fontSize="xs">
+            {info.row.original.email}
+          </Text>
+          {info.row.original.phone && (
             <Text color="gray.500" fontSize="xs">
-              {info.row.original.user.email}
+              {info.row.original.phone}
             </Text>
-          </VStack>
-        </HStack>
+          )}
+        </VStack>
       ),
     }),
     columnHelper.accessor('subject', {
@@ -244,39 +218,6 @@ const ContactUs = () => {
         </VStack>
       ),
     }),
-    columnHelper.accessor('priority', {
-      id: 'priority',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Priority
-        </Text>
-      ),
-      cell: (info) => {
-        const priorityColors = {
-          high: 'red',
-          medium: 'orange',
-          low: 'green'
-        };
-        
-        return (
-          <Badge 
-            colorScheme={priorityColors[info.getValue()] || 'gray'}
-            px="2"
-            py="1"
-            borderRadius="full"
-            fontSize="xs"
-            textTransform="capitalize"
-          >
-            {info.getValue()}
-          </Badge>
-        );
-      },
-    }),
     columnHelper.accessor('status', {
       id: 'status',
       header: () => (
@@ -291,9 +232,9 @@ const ContactUs = () => {
       ),
       cell: (info) => {
         const statusColors = {
-          unread: 'red',
+          new: 'red',
           read: 'blue',
-          replied: 'green'
+          archived: 'green'
         };
         
         return (
@@ -310,8 +251,8 @@ const ContactUs = () => {
         );
       },
     }),
-    columnHelper.accessor('date', {
-      id: 'date',
+    columnHelper.accessor('created_at', {
+      id: 'created_at',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -366,7 +307,7 @@ const ContactUs = () => {
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: contactUsData,
     columns,
     state: {
       sorting,
@@ -376,67 +317,117 @@ const ContactUs = () => {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  return (
-    <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
-      <Card>
-        <Flex
-          direction="column"
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box mt="80px">
+        <Card
+          flexDirection="column"
           w="100%"
+          px="0px"
           overflowX={{ sm: 'scroll', lg: 'hidden' }}
         >
-          <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
-            justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
-            mb="10px"
-            boxShadow="0px 2px 5.5px rgba(0, 0, 0, 0.06)"
-          >
-            <Text color={textColor} fontSize="xl" fontWeight="600">
-              Contact Messages
-            </Text>
+          <Flex justify="center" align="center" h="200px">
+            <VStack spacing={4}>
+              <Spinner size="xl" color="#422afb" thickness="4px" />
+              <Text color={textColor}>Loading contact messages...</Text>
+            </VStack>
           </Flex>
+        </Card>
+      </Box>
+    );
+  }
 
-          <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
-            justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
-            gap={4}
+  // Error state
+  if (isError) {
+    return (
+      <Box mt="80px">
+        <Card
+          flexDirection="column"
+          w="100%"
+          px="0px"
+          overflowX={{ sm: 'scroll', lg: 'hidden' }}
+        >
+          <Flex justify="center" align="center" h="200px">
+            <Text color="red.500">Error loading contact messages. Please try again.</Text>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
+  return (
+    <Box mt="80px" py="20px">
+      <Card
+        flexDirection="column"
+        w="100%"
+        px="0px"
+        overflowX={{ sm: 'scroll', lg: 'hidden' }}
+      >
+        <Flex
+          px={{ base: "16px", md: "25px" }}
+          py="30px"
+          mb="8px"
+          direction={{ base: "column", md: "row" }}
+          justifyContent="space-between"
+          align={{ base: "stretch", md: "center" }}
+          gap={{ base: 4, md: 0 }}
+        >
+          <Text
+            color={textColor}
+            fontSize="22px"
+            fontWeight="700"
+            lineHeight="100%"
           >
-            <InputGroup maxW="400px">
-              <InputLeftElement pointerEvents="none">
-                <FaSearch color="gray.400" />
+            Contact Messages Management
+          </Text>
+
+          <Box w={{ base: "100%", md: "auto" }}>
+            <InputGroup w={{ base: "100%", md: "400px" }}>
+              <InputLeftElement>
+                <IconButton
+                  bg="inherit"
+                  borderRadius="inherit"
+                  _hover="none"
+                  _active={{
+                    bg: "inherit",
+                    transform: "none",
+                    borderColor: "transparent",
+                  }}
+                  _focus={{
+                    boxShadow: "none",
+                  }}
+                  icon={<SearchIcon w="15px" h="15px" />}
+                />
               </InputLeftElement>
               <Input
-                placeholder="Search messages..."
+                variant="search"
+                fontSize="sm"
+                bg={searchBg}
+                color={searchColor}
+                fontWeight="500"
+                _placeholder={{ color: "gray.400", fontSize: "14px" }}
+                borderRadius="30px"
+                placeholder="Search by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </InputGroup>
+          </Box>
 
-            <Select
-              maxW="200px"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All Status</option>
-              <option value="unread">Unread</option>
-              <option value="read">Read</option>
-              <option value="replied">Replied</option>
-            </Select>
-          </Flex>
 
-          <Box overflowX="auto">
-            <Table variant="simple" color="gray.500" mb="24px">
-              <Thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <Tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
+        </Flex>
+
+        <Box p="20px">
+          <Table variant="simple" color="gray.500" mb="24px" mt="12px">
+            <Thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <Tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
                       <Th
                         key={header.id}
+                        colSpan={header.colSpan}
                         pe="10px"
                         borderColor={borderColor}
                         cursor="pointer"
@@ -450,36 +441,280 @@ const ContactUs = () => {
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
+                          {{
+                            asc: ' 🔼',
+                            desc: ' 🔽',
+                          }[header.column.getIsSorted()] ?? null}
                         </Flex>
                       </Th>
-                    ))}
-                  </Tr>
-                ))}
-              </Thead>
-              <Tbody>
-                {table.getRowModel().rows.map((row) => (
+                    );
+                  })}
+                </Tr>
+              ))}
+            </Thead>
+            <Tbody>
+              {table.getRowModel().rows.map((row) => {
+                return (
                   <Tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <Td
-                        key={cell.id}
-                        fontSize={{ sm: '14px' }}
-                        minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                        borderColor="transparent"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </Td>
-                    ))}
+                    {row.getVisibleCells().map((cell) => {
+                      return (
+                        <Td
+                          key={cell.id}
+                          fontSize={{ sm: '14px' }}
+                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                          borderColor="transparent"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </Td>
+                      );
+                    })}
                   </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </Box>
-        </Flex>
+                );
+              })}
+            </Tbody>
+          </Table>
+        </Box>
+
+        {/* Pagination Controls */}
+        {pagination && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="20px"
+            justify="space-between"
+            align="center"
+            borderTop="1px solid"
+            borderColor={borderColor}
+            direction={{ base: "column", md: "row" }}
+            gap={{ base: 4, md: 0 }}
+          >
+            {/* Page Info */}
+            <Text color={textColor} fontSize="sm">
+              Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} results
+            </Text>
+
+            {/* Pagination Controls */}
+            <HStack spacing="3">
+              {/* Page Size Selector */}
+              <HStack spacing="2">
+                <Text fontSize="sm" color={textColor}>
+                  Show:
+                </Text>
+                <Select
+                  size="sm"
+                  value={perPage}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  w="70px"
+                  bg={searchBg}
+                  color={searchColor}
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </Select>
+              </HStack>
+
+              {/* Page Navigation */}
+              <HStack spacing="2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  isDisabled={currentPage <= 1}
+                  leftIcon={<ChevronLeftIcon />}
+                >
+                  Previous
+                </Button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, pagination.last_page || 1) }, (_, i) => {
+                  const pageNum = i + 1;
+                  const isCurrentPage = pageNum === currentPage;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      size="sm"
+                      variant={isCurrentPage ? "solid" : "outline"}
+                      colorScheme={isCurrentPage ? "blue" : "gray"}
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  isDisabled={currentPage >= (pagination.last_page || 1)}
+                  rightIcon={<ChevronRightIcon />}
+                >
+                  Next
+                </Button>
+              </HStack>
+            </HStack>
+          </Flex>
+        )}
+
+        {/* No data message */}
+        {(!contactUsData || contactUsData.length === 0) && !isLoading && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="40px"
+            justify="center"
+            align="center"
+          >
+            <Text color={textColor} fontSize="md">
+              No contact messages found with the current search.
+            </Text>
+          </Flex>
+        )}
+
+        {/* View Message Modal */}
+        <Modal isOpen={isOpen} onClose={onClose} size="xl">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>
+              <Text color={textColor} fontSize="xl" fontWeight="bold">
+                Contact Message Details
+              </Text>
+            </ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              {selectedMessage && (
+                <VStack spacing={4} align="stretch">
+                  {/* Message ID */}
+                  <Box>
+                    <Text fontSize="sm" color="gray.500" mb={1}>
+                      Message ID:
+                    </Text>
+                    <Text color={textColor} fontWeight="bold">
+                      #{selectedMessage.id}
+                    </Text>
+                  </Box>
+
+                  <Divider />
+
+                  {/* User Information */}
+                  <Box>
+                    <Text fontSize="sm" color="gray.500" mb={2}>
+                      Contact Information:
+                    </Text>
+                    <VStack spacing={2} align="stretch">
+                      <HStack>
+                        <Text fontSize="sm" fontWeight="bold" color={textColor} minW="80px">
+                          Name:
+                        </Text>
+                        <Text fontSize="sm" color={textColor}>
+                          {selectedMessage.name}
+                        </Text>
+                      </HStack>
+                      <HStack>
+                        <Text fontSize="sm" fontWeight="bold" color={textColor} minW="80px">
+                          Email:
+                        </Text>
+                        <Text fontSize="sm" color={textColor}>
+                          {selectedMessage.email}
+                        </Text>
+                      </HStack>
+                      {selectedMessage.phone && (
+                        <HStack>
+                          <Text fontSize="sm" fontWeight="bold" color={textColor} minW="80px">
+                            Phone:
+                          </Text>
+                          <Text fontSize="sm" color={textColor}>
+                            {selectedMessage.phone}
+                          </Text>
+                        </HStack>
+                      )}
+                    </VStack>
+                  </Box>
+
+                  <Divider />
+
+                  {/* Subject */}
+                  <Box>
+                    <Text fontSize="sm" color="gray.500" mb={1}>
+                      Subject:
+                    </Text>
+                    <Text color={textColor} fontWeight="bold">
+                      {selectedMessage.subject}
+                    </Text>
+                  </Box>
+
+                  <Divider />
+
+                  {/* Message Content */}
+                  <Box>
+                    <Text fontSize="sm" color="gray.500" mb={2}>
+                      Message:
+                    </Text>
+                    <Box
+                      p={4}
+                      bg="gray.50"
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor={borderColor}
+                    >
+                      <Text color={textColor} lineHeight="1.6" whiteSpace="pre-wrap">
+                        {selectedMessage.message}
+                      </Text>
+                    </Box>
+                  </Box>
+
+                  <Divider />
+
+                  {/* Status and Dates */}
+                  <HStack spacing={6}>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Status:
+                      </Text>
+                      <Badge 
+                        colorScheme={
+                          selectedMessage.status === 'new' ? 'red' :
+                          selectedMessage.status === 'read' ? 'blue' :
+                          selectedMessage.status === 'archived' ? 'green' : 'gray'
+                        }
+                        px="2"
+                        py="1"
+                        borderRadius="full"
+                        fontSize="xs"
+                        textTransform="capitalize"
+                      >
+                        {selectedMessage.status}
+                      </Badge>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Received:
+                      </Text>
+                      <Text fontSize="sm" color={textColor}>
+                        {new Date(selectedMessage.created_at).toLocaleString()}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </VStack>
+              )}
+            </ModalBody>
+
+            <ModalFooter>
+              <Button colorScheme="blue" onClick={onClose}>
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </Card>
     </Box>
   );

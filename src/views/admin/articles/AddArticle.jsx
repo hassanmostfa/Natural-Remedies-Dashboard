@@ -19,17 +19,26 @@ import {
   StepIcon,
   StepIndicator,
   StepNumber,
-  StepSeparator,
   StepStatus,
   StepTitle,
+  StepSeparator,
   useSteps,
   Grid,
   GridItem,
+  Image,
+  Icon,
+  Spinner,
+  Avatar,
+  Checkbox,
+  CheckboxGroup,
 } from '@chakra-ui/react';
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { useNavigate } from 'react-router-dom';
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
+import { FaLeaf, FaUpload } from 'react-icons/fa6';
+import { useCreateArticleMutation } from 'api/articlesSlice';
+import { useUploadImageMutation } from 'api/fileUploadSlice';
 
 const AddArticle = () => {
   const navigate = useNavigate();
@@ -37,6 +46,12 @@ const AddArticle = () => {
   
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const inputBg = useColorModeValue('white', 'gray.700');
+  const cardBg = useColorModeValue('white', 'gray.800');
+
+  // API mutations
+  const [createArticle, { isLoading: isCreating }] = useCreateArticleMutation();
+  const [uploadImage] = useUploadImageMutation();
 
   const steps = [
     { title: 'Basic Information' },
@@ -53,7 +68,7 @@ const AddArticle = () => {
     title: '',
     image: '',
     description: '',
-    visiblePlans: 'all',
+    plans: ['rookie'], // Changed to match API expected values
     status: 'active',
   });
 
@@ -61,7 +76,41 @@ const AddArticle = () => {
     { id: 1, title: '', image: '', description: '' }
   ]);
 
+  // Image handling states
+  const [isDragging, setIsDragging] = React.useState({
+    main_image: false,
+    plants: [false]
+  });
+
+  const [uploading, setUploading] = React.useState({
+    main_image: false,
+    plants: [false]
+  });
+
+  const [imagePreviews, setImagePreviews] = React.useState({
+    main_image: null,
+    plants: [null]
+  });
+
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // Cleanup object URLs on unmount
+  React.useEffect(() => {
+    return () => {
+      // Clean up object URLs to prevent memory leaks
+      Object.values(imagePreviews).forEach(url => {
+        if (url && typeof url === 'string' && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      // Clean up plants array URLs
+      imagePreviews.plants.forEach(url => {
+        if (url && typeof url === 'string' && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [imagePreviews]);
 
   const statusOptions = [
     { value: 'active', label: 'Active' },
@@ -69,11 +118,10 @@ const AddArticle = () => {
     { value: 'draft', label: 'Draft' },
   ];
 
-  const visiblePlansOptions = [
-    { value: 'all', label: 'All Plans' },
-    { value: 'Rookie', label: 'Rookie' },
-    { value: 'Skilled', label: 'Skilled' },
-    { value: 'Master', label: 'Master' },
+  const planOptions = [
+    { value: 'rookie', label: 'Rookie' },
+    { value: 'skilled', label: 'Skilled' },
+    { value: 'master', label: 'Master' },
   ];
 
   // Basic info handlers
@@ -81,6 +129,14 @@ const AddArticle = () => {
     setBasicInfo(prev => ({
       ...prev,
       [field]: value
+    }));
+  }, []);
+
+  // Handle plan selection changes
+  const handlePlansChange = React.useCallback((selectedPlans) => {
+    setBasicInfo(prev => ({
+      ...prev,
+      plans: selectedPlans
     }));
   }, []);
 
@@ -93,16 +149,186 @@ const AddArticle = () => {
     );
   }, []);
 
-  const addPlant = React.useCallback(() => {
-    setPlants(prev => [
-      ...prev, 
-      { id: Math.max(...prev.map(item => item.id), 0) + 1, title: '', image: '', description: '' }
-    ]);
+  // Update plant image field specifically
+  const updatePlantImage = React.useCallback((plantIndex, imageUrl) => {
+    setPlants(prev => 
+      prev.map((item, index) => 
+        index === plantIndex ? { ...item, image: imageUrl } : item
+      )
+    );
   }, []);
 
+  // Image handling functions
+  const handleImageUpload = (files, field, index = null) => {
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      
+      if (!selectedFile.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'Please select an image file (JPEG, PNG, etc.)',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'Error',
+          description: 'Image size should be less than 5MB',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      handleImageUploadToServer(selectedFile, field, index);
+    }
+  };
+
+  const handleDragOver = (e, field, index = null) => {
+    e.preventDefault();
+    if (index !== null) {
+      setIsDragging(prev => ({
+        ...prev,
+        [field]: prev[field].map((item, i) => i === index ? true : item)
+      }));
+    } else {
+      setIsDragging(prev => ({ ...prev, [field]: true }));
+    }
+  };
+
+  const handleDragLeave = (field, index = null) => {
+    if (index !== null) {
+      setIsDragging(prev => ({
+        ...prev,
+        [field]: prev[field].map((item, i) => i === index ? false : item)
+      }));
+    } else {
+      setIsDragging(prev => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleDrop = (e, field, index = null) => {
+    e.preventDefault();
+    if (index !== null) {
+      setIsDragging(prev => ({
+        ...prev,
+        [field]: prev[field].map((item, i) => i === index ? false : item)
+      }));
+    } else {
+      setIsDragging(prev => ({ ...prev, [field]: false }));
+    }
+    const files = e.dataTransfer.files;
+    handleImageUpload(files, field, index);
+  };
+
+  const handleFileInputChange = (e, field, index = null) => {
+    const files = e.target.files;
+    handleImageUpload(files, field, index);
+  };
+
+  const handleImageUploadToServer = async (file, field, index = null) => {
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      
+      if (index !== null) {
+        setImagePreviews(prev => ({
+          ...prev,
+          [field]: prev[field].map((item, i) => i === index ? previewUrl : item)
+        }));
+        setUploading(prev => ({
+          ...prev,
+          [field]: prev[field].map((item, i) => i === index ? true : item)
+        }));
+      } else {
+        setImagePreviews(prev => ({ ...prev, [field]: previewUrl }));
+        setUploading(prev => ({ ...prev, [field]: true }));
+      }
+
+      const response = await uploadImage(file).unwrap();
+      
+      if (response.success && response.url) {
+        if (index !== null) {
+          updatePlantImage(index, response.url);
+        } else {
+          handleBasicInfoChange('image', response.url);
+        }
+
+        toast({
+          title: 'Success',
+          description: 'Image uploaded successfully',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to upload image. Please try again.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      if (index !== null) {
+        setUploading(prev => ({
+          ...prev,
+          [field]: prev[field].map((item, i) => i === index ? false : item)
+        }));
+      } else {
+        setUploading(prev => ({ ...prev, [field]: false }));
+      }
+    }
+  };
+
+  const handleRemoveImage = (field, index = null) => {
+    if (index !== null) {
+      setImagePreviews(prev => ({
+        ...prev,
+        [field]: prev[field].map((item, i) => i === index ? null : item)
+      }));
+      updatePlantImage(index, '');
+    } else {
+      setImagePreviews(prev => ({ ...prev, [field]: null }));
+      handleBasicInfoChange('image', '');
+    }
+  };
+
+  const addPlant = React.useCallback(() => {
+    const newId = Math.max(...plants.map(item => item.id), 0) + 1;
+    setPlants(prev => [
+      ...prev, 
+      { id: newId, title: '', image: '', description: '' }
+    ]);
+    setIsDragging(prev => ({ ...prev, plants: [...prev.plants, false] }));
+    setUploading(prev => ({ ...prev, plants: [...prev.plants, false] }));
+    setImagePreviews(prev => ({ ...prev, plants: [...prev.plants, null] }));
+  }, [plants]);
+
   const removePlant = React.useCallback((id) => {
-    setPlants(prev => prev.filter(item => item.id !== id));
-  }, []);
+    const index = plants.findIndex(item => item.id === id);
+    if (index !== -1) {
+      setPlants(prev => prev.filter(item => item.id !== id));
+      setIsDragging(prev => ({
+        ...prev,
+        plants: prev.plants.filter((_, i) => i !== index)
+      }));
+      setUploading(prev => ({
+        ...prev,
+        plants: prev.plants.filter((_, i) => i !== index)
+      }));
+      setImagePreviews(prev => ({
+        ...prev,
+        plants: prev.plants.filter((_, i) => i !== index)
+      }));
+    }
+  }, [plants]);
 
   const validateStep = (step) => {
     switch (step) {
@@ -127,6 +353,26 @@ const AddArticle = () => {
           });
           return false;
         }
+        if (!basicInfo.image.trim()) {
+          toast({
+            title: 'Error',
+            description: 'Article image is required',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
+          return false;
+        }
+        if (basicInfo.plans.length === 0) {
+          toast({
+            title: 'Error',
+            description: 'At least one plan must be selected',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
+          return false;
+        }
         return true;
       case 1: // Plants
         if (plants.length === 0 || !plants[0].title.trim()) {
@@ -138,6 +384,20 @@ const AddArticle = () => {
             isClosable: true,
           });
           return false;
+        }
+        // Check if all plants have required fields
+        for (let i = 0; i < plants.length; i++) {
+          const plant = plants[i];
+          if (!plant.title.trim() || !plant.description.trim()) {
+            toast({
+              title: 'Error',
+              description: `Plant ${i + 1} must have both title and description`,
+              status: 'error',
+              duration: 3000,
+              isClosable: true,
+            });
+            return false;
+          }
         }
         return true;
       default:
@@ -160,34 +420,43 @@ const AddArticle = () => {
     setIsSubmitting(true);
 
     try {
-      // Combine all data
-      const formData = {
-        ...basicInfo,
-        plants,
+      // Prepare the data for API submission
+      const submissionData = {
+        title: basicInfo.title,
+        image: basicInfo.image,
+        description: basicInfo.description,
+        plans: basicInfo.plans,
+        status: basicInfo.status,
+        plants: plants.map(plant => ({
+          title: plant.title,
+          image: plant.image,
+          description: plant.description
+        }))
       };
 
-      // In a real app, you would call your API here
-      // const response = await api.post('/articles', formData);
+      // Call the API to create the article
+      const response = await createArticle(submissionData).unwrap();
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: 'Article created successfully',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
 
-      toast({
-        title: 'Success',
-        description: 'Article added successfully',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-
-      // Navigate back to articles list
-      navigate('/admin/articles');
+        // Navigate back to articles list
+        navigate('/admin/articles');
+      } else {
+        throw new Error(response.message || 'Failed to create article');
+      }
       
     } catch (error) {
-      console.error('Failed to add article:', error);
+      console.error('Failed to create article:', error);
       toast({
         title: 'Error',
-        description: 'Failed to add article. Please try again.',
+        description: error.data?.message || 'Failed to create article. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -209,26 +478,166 @@ const AddArticle = () => {
             <Heading size="md" color={textColor} mb={4}>Basic Information</Heading>
             <Grid templateColumns="repeat(2, 1fr)" gap={6}>
               <FormControl>
-                <FormLabel color={textColor}>Article Image URL</FormLabel>
-                <Input
-                  value={basicInfo.image}
-                  onChange={(e) => handleBasicInfoChange('image', e.target.value)}
-                  placeholder="Enter image URL"
-                />
+                <FormLabel color={textColor}>Article Image</FormLabel>
+                <Box
+                  border="1px dashed"
+                  borderColor={isDragging.main_image ? 'brand.500' : 'gray.300'}
+                  borderRadius="md"
+                  p={4}
+                  textAlign="center"
+                  backgroundColor={isDragging.main_image ? 'brand.50' : inputBg}
+                  cursor="pointer"
+                  onDragOver={(e) => handleDragOver(e, 'main_image')}
+                  onDragLeave={() => handleDragLeave('main_image')}
+                  onDrop={(e) => handleDrop(e, 'main_image')}
+                  mb={4}
+                  position="relative"
+                >
+                  {imagePreviews.main_image || basicInfo.image ? (
+                    <Flex direction="column" align="center">
+                      <Image
+                        src={imagePreviews.main_image || basicInfo.image}
+                        alt="Article Image"
+                        maxH="200px"
+                        mb={2}
+                        borderRadius="md"
+                        fallback={<Icon as={FaLeaf} color="green.500" boxSize="100px" />}
+                      />
+                      <Button
+                        variant="outline"
+                        colorScheme="red"
+                        size="sm"
+                        onClick={() => handleRemoveImage('main_image')}
+                      >
+                        Remove Image
+                      </Button>
+                    </Flex>
+                  ) : (
+                    <>
+                      {uploading.main_image && (
+                        <Box
+                          position="absolute"
+                          top="0"
+                          left="0"
+                          right="0"
+                          bottom="0"
+                          backgroundColor="rgba(0, 0, 0, 0.8)"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          borderRadius="md"
+                          zIndex="50"
+                          backdropFilter="blur(5px)"
+                          border="2px solid #422afb"
+                        >
+                          <VStack spacing="4">
+                            <Spinner size="xl" color="white" thickness="8px" speed="0.6s" />
+                            <Text color="white" fontSize="lg" fontWeight="bold">Uploading Image...</Text>
+                            <Text color="white" fontSize="sm" opacity="0.9">Please wait while we upload your image</Text>
+                          </VStack>
+                        </Box>
+                      )}
+                      
+                      {uploading.main_image ? (
+                        <VStack spacing="3">
+                          <Spinner size="lg" color="#422afb" thickness="6px" speed="0.6s" />
+                          <Text color="#422afb" fontSize="md" fontWeight="bold">Uploading...</Text>
+                          <Text color="#422afb" fontSize="sm" opacity="0.8">Please wait</Text>
+                        </VStack>
+                      ) : (
+                        <>
+                          <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={3} />
+                          <Text color="gray.500" mb={2} fontSize="sm">
+                            Drag & Drop Image Here
+                          </Text>
+                          <Text color="gray.500" mb={3} fontSize="sm">
+                            or
+                          </Text>
+                        </>
+                      )}
+                      
+                      <Button
+                        variant="outline"
+                        border="none"
+                        onClick={() => document.getElementById('main-image-file-input').click()}
+                        isLoading={uploading.main_image}
+                        loadingText="Uploading..."
+                        leftIcon={uploading.main_image ? <Spinner size="sm" color="white" /> : undefined}
+                        disabled={uploading.main_image}
+                        _disabled={{
+                          opacity: 0.6,
+                          cursor: 'not-allowed'
+                        }}
+                        bg={uploading.main_image ? "blue.500" : "transparent"}
+                        color={uploading.main_image ? "white" : "#422afb"}
+                        _hover={{
+                          bg: uploading.main_image ? "blue.600" : "brand.50",
+                          borderColor: "brand.400"
+                        }}
+                        transition="all 0.2s"
+                      >
+                        {uploading.main_image ? '🔄 Uploading...' : 'Upload Image'}
+                        <input
+                          type="file"
+                          id="main-image-file-input"
+                          hidden
+                          accept="image/*"
+                          onChange={(e) => handleFileInputChange(e, 'main_image')}
+                          disabled={uploading.main_image}
+                        />
+                      </Button>
+                    </>
+                  )}
+                </Box>
               </FormControl>
 
               <FormControl>
                 <FormLabel color={textColor}>Visible to Plans</FormLabel>
-                <Select
-                  value={basicInfo.visiblePlans}
-                  onChange={(e) => handleBasicInfoChange('visiblePlans', e.target.value)}
+                <Box
+                  border="1px solid"
+                  borderColor={borderColor}
+                  borderRadius="md"
+                  p={4}
+                  bg={inputBg}
                 >
-                  {visiblePlansOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
+                  <CheckboxGroup value={basicInfo.plans} onChange={handlePlansChange}>
+                    <Grid templateColumns="repeat(3, 1fr)" gap={4}>
+                      {planOptions.map(option => (
+                        <Box
+                          key={option.value}
+                          p={3}
+                          border="2px solid"
+                          borderColor={basicInfo.plans.includes(option.value) ? 'brand.500' : borderColor}
+                          borderRadius="lg"
+                          bg={basicInfo.plans.includes(option.value) ? 'brand.50' : 'transparent'}
+                          transition="all 0.2s"
+                          _hover={{
+                            borderColor: 'brand.300',
+                            bg: basicInfo.plans.includes(option.value) ? 'brand.100' : 'gray.50'
+                          }}
+                        >
+                          <Checkbox 
+                            value={option.value}
+                            colorScheme="brand"
+                            size="lg"
+                            fontWeight="semibold"
+                          >
+                            <VStack align="start" spacing={1}>
+                              <Text fontWeight="bold" color={textColor}>
+                                {option.label}
+                              </Text>
+                              <Text fontSize="xs" color="gray.500">
+                                {option.value === 'rookie' && 'Essential content for beginners'}
+                                {option.value === 'skilled' && 'Advanced features and detailed guides'}
+                                {option.value === 'master' && 'Complete access to all resources'}
+                              </Text>
+                            </VStack>
+                          </Checkbox>
+                        </Box>
+                      ))}
+                    </Grid>
+                  </CheckboxGroup>
+                </Box>
               </FormControl>
 
               <FormControl>
@@ -288,7 +697,7 @@ const AddArticle = () => {
               </Button>
             </Flex>
             <VStack spacing={4} align="stretch">
-              {plants.map((item) => (
+              {plants.map((item, index) => (
                 <Box key={item.id} p={4} border="1px" borderColor={borderColor} borderRadius="lg">
                   <Flex justify="space-between" align="center" mb={3}>
                     <Text fontWeight="medium" color={textColor}>
@@ -316,12 +725,120 @@ const AddArticle = () => {
                     </FormControl>
                     <FormControl>
                       <FormLabel fontSize="sm" color={textColor}>Image</FormLabel>
-                      <Input
-                        value={item.image}
-                        onChange={(e) => handlePlantChange(item.id, 'image', e.target.value)}
-                        placeholder="Enter image URL"
-                        size="sm"
-                      />
+                      <Box
+                        border="1px dashed"
+                        borderColor={isDragging.plants[index] ? 'brand.500' : 'gray.300'}
+                        borderRadius="md"
+                        p={3}
+                        textAlign="center"
+                        backgroundColor={isDragging.plants[index] ? 'brand.50' : inputBg}
+                        cursor="pointer"
+                        onDragOver={(e) => handleDragOver(e, 'plants', index)}
+                        onDragLeave={() => handleDragLeave('plants', index)}
+                        onDrop={(e) => handleDrop(e, 'plants', index)}
+                        position="relative"
+                        minH="120px"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        transition="all 0.2s"
+                        _hover={{
+                          borderColor: 'brand.400',
+                          backgroundColor: isDragging.plants[index] ? 'brand.100' : 'gray.50'
+                        }}
+                      >
+                        {imagePreviews.plants[index] || item.image ? (
+                          <Flex direction="column" align="center">
+                            <Image
+                              src={imagePreviews.plants[index] || item.image}
+                              alt={`Plant ${item.id} Image`}
+                              maxH="100px"
+                              mb={2}
+                              borderRadius="md"
+                              fallback={<Icon as={FaLeaf} color="green.500" boxSize="50px" />}
+                            />
+                            <Button
+                              variant="outline"
+                              colorScheme="red"
+                              size="xs"
+                              onClick={() => handleRemoveImage('plants', index)}
+                            >
+                              Remove
+                            </Button>
+                          </Flex>
+                        ) : (
+                          <>
+                            {uploading.plants[index] && (
+                              <Box
+                                position="absolute"
+                                top="0"
+                                left="0"
+                                right="0"
+                                bottom="0"
+                                backgroundColor="rgba(0, 0, 0, 0.8)"
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="center"
+                                borderRadius="md"
+                                zIndex="50"
+                                backdropFilter="blur(5px)"
+                                border="2px solid #422afb"
+                              >
+                                <VStack spacing="3">
+                                  <Spinner size="lg" color="white" thickness="6px" speed="0.6s" />
+                                  <Text color="white" fontSize="sm" fontWeight="bold">Uploading Image...</Text>
+                                  <Text color="white" fontSize="xs" opacity="0.9">Please wait</Text>
+                                </VStack>
+                              </Box>
+                            )}
+                            
+                            {uploading.plants[index] ? (
+                              <VStack spacing="2">
+                                <Spinner size="md" color="#422afb" thickness="4px" speed="0.6s" />
+                                <Text color="#422afb" fontSize="sm" fontWeight="bold">Uploading...</Text>
+                              </VStack>
+                            ) : (
+                              <>
+                                <Icon as={FaUpload} w={6} h={6} color="#422afb" mb={2} />
+                                <Text color="gray.500" fontSize="xs" mb={2}>
+                                  Drag & Drop Image
+                                </Text>
+                                <Text color="gray.500" fontSize="xs" mb={2}>
+                                  or
+                                </Text>
+                                <Button
+                                  variant="outline"
+                                  size="xs"
+                                  onClick={() => document.getElementById(`plant-image-file-input-${item.id}`).click()}
+                                  isLoading={uploading.plants[index]}
+                                  loadingText="Uploading..."
+                                  disabled={uploading.plants[index]}
+                                  _disabled={{
+                                    opacity: 0.6,
+                                    cursor: 'not-allowed'
+                                  }}
+                                  bg={uploading.plants[index] ? "blue.500" : "transparent"}
+                                  color={uploading.plants[index] ? "white" : "#422afb"}
+                                  _hover={{
+                                    bg: uploading.plants[index] ? "blue.600" : "brand.50",
+                                    borderColor: "brand.400"
+                                  }}
+                                >
+                                  {uploading.plants[index] ? '🔄 Uploading...' : 'Upload Image'}
+                                  <input
+                                    type="file"
+                                    id={`plant-image-file-input-${item.id}`}
+                                    hidden
+                                    accept="image/*"
+                                    onChange={(e) => handleFileInputChange(e, 'plants', index)}
+                                    disabled={uploading.plants[index]}
+                                  />
+                                </Button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </Box>
                     </FormControl>
                     <GridItem colSpan={2}>
                       <FormControl>
@@ -331,7 +848,8 @@ const AddArticle = () => {
                           onChange={(e) => handlePlantChange(item.id, 'description', e.target.value)}
                           placeholder="Enter plant description"
                           size="sm"
-                          rows={2}
+                          rows={3}
+                          resize="vertical"
                         />
                       </FormControl>
                     </GridItem>
@@ -415,10 +933,10 @@ const AddArticle = () => {
                     <Button
                       onClick={handleSubmit}
                       colorScheme="green"
-                      isLoading={isSubmitting}
-                      loadingText="Adding Article"
+                      isLoading={isSubmitting || isCreating}
+                      loadingText="Creating Article"
                     >
-                      Add Article
+                      Create Article
                     </Button>
                   )}
                 </HStack>

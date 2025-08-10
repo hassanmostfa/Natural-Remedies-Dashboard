@@ -11,9 +11,6 @@ import {
   Thead,
   Tr,
   useColorModeValue,
-  Input,
-  InputGroup,
-  InputLeftElement,
   Avatar,
   HStack,
   VStack,
@@ -30,10 +27,15 @@ import {
 } from '@tanstack/react-table';
 import * as React from 'react';
 import Card from 'components/card/Card';
-import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from '@chakra-ui/icons';
+import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { FaCheck, FaTimes, FaStar, FaUser, FaEye, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { 
+  useGetReviewsQuery, 
+  useUpdateReviewMutation, 
+  useDeleteReviewMutation 
+} from 'api/reviewsSlice';
 
 const columnHelper = createColumnHelper();
 
@@ -41,116 +43,61 @@ const Reviews = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const [sorting, setSorting] = React.useState([]);
-  const [searchQuery, setSearchQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
+  const [typeFilter, setTypeFilter] = React.useState('all');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(15);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
-  // Static reviews data
-  const staticData = [
-    {
-      id: 1,
-      user: {
-        name: 'Ahmed Hassan',
-        image: 'https://randomuser.me/api/portraits/men/32.jpg',
-        email: 'ahmed.h@example.com'
-      },
-      rating: 5,
-      title: 'Excellent Natural Remedies',
-      comment: 'This app has been a lifesaver! The natural remedies are effective and easy to follow. Highly recommend for anyone looking for alternative health solutions.',
-      itemType: 'remedy',
-      itemName: 'Ginger Tea for Digestion',
-      status: 'pending', // pending, approved, rejected
-      createdAt: '2024-01-15T10:30:00Z',
-      helpfulCount: 12,
-    },
-    {
-      id: 2,
-      user: {
-        name: 'Fatima Mahmoud',
-        image: 'https://randomuser.me/api/portraits/women/44.jpg',
-        email: 'fatima.m@example.com'
-      },
-      rating: 4,
-      title: 'Great Course Content',
-      comment: 'The herbal medicine course was very informative. Learned a lot about different herbs and their properties. Would love to see more advanced courses.',
-      itemType: 'course',
-      itemName: 'Herbal Medicine Basics',
-      status: 'approved',
-      createdAt: '2024-01-14T15:45:00Z',
-      helpfulCount: 8,
-    },
-    {
-      id: 3,
-      user: {
-        name: 'Omar Khalid',
-        image: 'https://randomuser.me/api/portraits/men/75.jpg',
-        email: 'omar.k@example.com'
-      },
-      rating: 3,
-      title: 'Decent but could be better',
-      comment: 'The remedies work but the instructions could be clearer. Some ingredients are hard to find locally. Overall okay experience.',
-      itemType: 'remedy',
-      itemName: 'Lavender Oil for Sleep',
-      status: 'rejected',
-      createdAt: '2024-01-13T09:20:00Z',
-      helpfulCount: 3,
-    },
-    {
-      id: 4,
-      user: {
-        name: 'Sarah Johnson',
-        image: 'https://randomuser.me/api/portraits/women/63.jpg',
-        email: 'sarah.j@example.com'
-      },
-      rating: 5,
-      title: 'Amazing Video Tutorials',
-      comment: 'The video tutorials are so well made! Clear instructions and professional quality. The peppermint tea recipe helped with my headaches immediately.',
-      itemType: 'video',
-      itemName: 'Peppermint Tea Preparation',
-      status: 'approved',
-      createdAt: '2024-01-12T14:15:00Z',
-      helpfulCount: 25,
-    },
-    {
-      id: 5,
-      user: {
-        name: 'Mohammed Ali',
-        image: 'https://randomuser.me/api/portraits/men/81.jpg',
-        email: 'mohammed.ali@example.com'
-      },
-      rating: 2,
-      title: 'Not what I expected',
-      comment: 'The remedy didn\'t work for me at all. Waste of time and money. Would not recommend.',
-      itemType: 'remedy',
-      itemName: 'Chamomile for Anxiety',
-      status: 'pending',
-      createdAt: '2024-01-11T11:30:00Z',
-      helpfulCount: 1,
-    },
-  ];
+  // API hooks with proper query parameters
+  const { data: reviewsResponse, isLoading, isError, refetch } = useGetReviewsQuery({
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    type: typeFilter !== 'all' ? typeFilter : undefined,
+    page: currentPage,
+    per_page: perPage
+  }, { refetchOnMountOrArgChange: true });
 
-  // Filter data based on search query and status filter
-  const filteredData = React.useMemo(() => {
-    let filtered = staticData;
+  const [updateReview, { isLoading: isUpdating }] = useUpdateReviewMutation();
+  const [deleteReview, { isLoading: isDeleting }] = useDeleteReviewMutation();
+
+  // Extract data and pagination from response
+  const reviewsData = reviewsResponse?.data || [];
+
+  // Transform API data to match component structure
+  const reviews = React.useMemo(() => {
+    if (!reviewsData || !Array.isArray(reviewsData)) return [];
     
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(item => item.status === statusFilter);
-    }
-    
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter((item) =>
-        Object.values(item).some((value) =>
-          String(value).toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    }
-    
-    return filtered;
-  }, [searchQuery, statusFilter]);
+    return reviewsData.map(review => ({
+      id: review.id,
+      user: {
+        name: review.user?.name || 'Unknown User',
+        image: review.user?.profile_image || null,
+        email: review.user?.email || 'No email'
+      },
+      rating: review.rate || 0,
+      title: review.message ? (review.message.substring(0, 50) + (review.message.length > 50 ? '...' : '')) : 'No title',
+      comment: review.message || 'No comment',
+      itemType: review.type || 'unknown',
+      itemName: review.type && review.element_id ? 
+        `${review.type.charAt(0).toUpperCase() + review.type.slice(1)} #${review.element_id}` : 
+        'Unknown Item',
+      status: review.status === 'accepted' ? 'approved' : review.status === 'rejected' ? 'rejected' : 'pending',
+      createdAt: review.created_at || new Date().toISOString(),
+      helpfulCount: review.likes_count || 0,
+    }));
+  }, [reviewsData]);
+
+  // Effect to reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, typeFilter]);
+
+  // Effect to refetch when filters or pagination changes
+  React.useEffect(() => {
+    refetch();
+  }, [statusFilter, typeFilter, currentPage, perPage, refetch]);
 
   const columns = [
     columnHelper.accessor('user.image', {
@@ -262,24 +209,6 @@ const Reviews = () => {
         </Badge>
       ),
     }),
-    columnHelper.accessor('helpfulCount', {
-      id: 'helpful',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Helpful
-        </Text>
-      ),
-      cell: (info) => (
-        <Text color={textColor} fontSize="sm">
-          {info.getValue()}
-        </Text>
-      ),
-    }),
     columnHelper.accessor('id', {
       id: 'actions',
       header: () => (
@@ -295,55 +224,49 @@ const Reviews = () => {
       cell: (info) => {
         const review = info.row.original;
         return (
-          <Flex align="center" gap={2}>
-            {review.status === 'pending' && (
+          <HStack spacing={2}>
+            {review.status === 'pending' ? (
               <>
-                <Icon
-                  w="18px"
-                  h="18px"
-                  color="green.500"
-                  as={FaCheck}
-                  cursor="pointer"
+                <Button
+                  size="sm"
+                  bg="green.100"
+                  color="green.700"
+                  borderColor="green.300"
+                  variant="outline"
                   onClick={() => handleApproveReview(review.id)}
-                  title="Approve Review"
-                />
-                <Icon
-                  w="18px"
-                  h="18px"
-                  color="red.500"
-                  as={FaTimes}
-                  cursor="pointer"
+                  leftIcon={<Icon as={FaCheck} />}
+                  isLoading={isUpdating}
+                  _hover={{ bg: "green.200", borderColor: "green.400" }}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  bg="red.100"
+                  color="red.700"
+                  borderColor="red.300"
+                  variant="outline"
                   onClick={() => handleRejectReview(review.id)}
-                  title="Reject Review"
-                />
+                  leftIcon={<Icon as={FaTimes} />}
+                  isLoading={isUpdating}
+                  _hover={{ bg: "red.200", borderColor: "red.400" }}
+                >
+                  Reject
+                </Button>
               </>
+            ) : (
+              <Text color="gray.400" fontSize="sm">
+                —
+              </Text>
             )}
-            <Icon
-              w="18px"
-              h="18px"
-              color="blue.500"
-              as={FaEye}
-              cursor="pointer"
-              onClick={() => handleViewReview(review.id)}
-              title="View Details"
-            />
-            <Icon
-              w="18px"
-              h="18px"
-              color="red.500"
-              as={FaTrash}
-              cursor="pointer"
-              onClick={() => handleDeleteReview(review.id)}
-              title="Delete Review"
-            />
-          </Flex>
+          </HStack>
         );
       },
     }),
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: reviews,
     columns,
     state: {
       sorting,
@@ -366,11 +289,10 @@ const Reviews = () => {
       });
 
       if (result.isConfirmed) {
-        // In a real app, you would call your API here
-        // await api.patch(`/reviews/${id}`, { status: 'approved' });
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await updateReview({ 
+          id, 
+          submissionData: { status: 'accepted' } 
+        }).unwrap();
 
         toast({
           title: 'Review Approved',
@@ -380,16 +302,14 @@ const Reviews = () => {
           isClosable: true,
         });
 
-        // Update local state (in real app, you'd refresh from API)
-        // setReviews(reviews.map(review => 
-        //   review.id === id ? { ...review, status: 'approved' } : review
-        // ));
+        // Refetch the data to get updated status
+        refetch();
       }
     } catch (error) {
       console.error('Failed to approve review:', error);
       toast({
         title: 'Error',
-        description: 'Failed to approve review.',
+        description: error.data?.message || 'Failed to approve review.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -410,11 +330,10 @@ const Reviews = () => {
       });
 
       if (result.isConfirmed) {
-        // In a real app, you would call your API here
-        // await api.patch(`/reviews/${id}`, { status: 'rejected' });
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await updateReview({ 
+          id, 
+          submissionData: { status: 'rejected' } 
+        }).unwrap();
 
         toast({
           title: 'Review Rejected',
@@ -424,16 +343,14 @@ const Reviews = () => {
           isClosable: true,
         });
 
-        // Update local state (in real app, you'd refresh from API)
-        // setReviews(reviews.map(review => 
-        //   review.id === id ? { ...review, status: 'rejected' } : review
-        // ));
+        // Refetch the data to get updated status
+        refetch();
       }
     } catch (error) {
       console.error('Failed to reject review:', error);
       toast({
         title: 'Error',
-        description: 'Failed to reject review.',
+        description: error.data?.message || 'Failed to reject review.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -458,11 +375,7 @@ const Reviews = () => {
       });
 
       if (result.isConfirmed) {
-        // In a real app, you would call your API here
-        // await api.delete(`/reviews/${id}`);
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await deleteReview(id).unwrap();
 
         toast({
           title: 'Review Deleted',
@@ -472,14 +385,14 @@ const Reviews = () => {
           isClosable: true,
         });
 
-        // Update local state (in real app, you'd refresh from API)
-        // setReviews(reviews.filter(review => review.id !== id));
+        // Refetch the data to get updated list
+        refetch();
       }
     } catch (error) {
       console.error('Failed to delete review:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete review.',
+        description: error.data?.message || 'Failed to delete review.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -487,110 +400,241 @@ const Reviews = () => {
     }
   };
 
-  return (
-    <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
-      <Card>
-        <Flex
-          direction="column"
-          w="100%"
-          overflowX={{ sm: 'scroll', lg: 'hidden' }}
-        >
-          <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
-            justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
-            mb="10px"
-            boxShadow="0px 2px 5.5px rgba(0, 0, 0, 0.06)"
-          >
-            <Text color={textColor} fontSize="xl" fontWeight="600">
-              Reviews Management
-            </Text>
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Flex justify="center" align="center" h="200px">
+            <Text color={textColor}>Loading reviews...</Text>
           </Flex>
+        </Card>
+      </Box>
+    );
+  }
 
-          <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
-            justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
-            gap={4}
+  // Error state
+  if (isError) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Flex justify="center" align="center" h="200px">
+            <Text color="red.500">Error loading reviews. Please try again.</Text>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
+  return (
+    <Box mt="90px">
+      <Card
+        flexDirection="column"
+        w="100%"
+        px="0px"
+        overflowX={{ sm: 'scroll', lg: 'hidden' }}
+      >
+        <Flex
+          px={{ base: "16px", md: "25px" }}
+          mb="8px"
+          direction={{ base: "column", md: "row" }}
+          justifyContent="space-between"
+          align={{ base: "stretch", md: "center" }}
+          gap={{ base: 4, md: 0 }}
+        >
+          <Text
+            color={textColor}
+            fontSize="22px"
+            fontWeight="700"
+            lineHeight="100%"
           >
-            <InputGroup maxW="400px">
-              <InputLeftElement pointerEvents="none">
-                <SearchIcon color="gray.400" />
-              </InputLeftElement>
-              <Input
-                placeholder="Search reviews..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </InputGroup>
+            Reviews Management
+          </Text>
+
+          {/* Filters moved to the right */}
+          <HStack spacing={4}>
+            <Select
+              size="sm"
+              w={{ base: "200px", md: "180px" }}
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              bg="white"
+              borderColor="gray.300"
+              _hover={{ borderColor: "gray.400" }}
+            >
+              <option value="all">All Types</option>
+              <option value="remedy">Remedies</option>
+              <option value="course">Courses</option>
+              <option value="video">Videos</option>
+              <option value="article">Articles</option>
+            </Select>
 
             <Select
-              maxW="200px"
+              size="sm"
+              w="200px"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
+              bg="white"
+              borderColor="gray.300"
+              _hover={{ borderColor: "gray.400" }}
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
+              <option value="accepted">Accepted</option>
               <option value="rejected">Rejected</option>
             </Select>
-          </Flex>
+          </HStack>
+        </Flex>
 
-          <Box overflowX="auto">
-            <Table variant="simple" color="gray.500" mb="24px">
-              <Thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <Tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <Th
-                        key={header.id}
-                        pe="10px"
-                        borderColor={borderColor}
-                        cursor="pointer"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        <Flex
-                          justifyContent="space-between"
-                          align="center"
-                          fontSize={{ sm: '10px', lg: '12px' }}
-                          color="gray.400"
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                        </Flex>
-                      </Th>
-                    ))}
-                  </Tr>
-                ))}
-              </Thead>
-              <Tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <Tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <Td
-                        key={cell.id}
-                        fontSize={{ sm: '14px' }}
-                        minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                        borderColor="transparent"
+        {/* Table */}
+        <Box>
+          <Table variant="simple" color="gray.500" mb="24px" mt="12px">
+            <Thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <Tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <Th
+                      key={header.id}
+                      pe="10px"
+                      borderColor={borderColor}
+                      cursor="pointer"
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      <Flex
+                        justifyContent="space-between"
+                        align="center"
+                        fontSize={{ sm: '10px', lg: '12px' }}
+                        color="gray.400"
                       >
                         {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
+                          header.column.columnDef.header,
+                          header.getContext()
                         )}
-                      </Td>
-                    ))}
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </Box>
-        </Flex>
+                      </Flex>
+                    </Th>
+                  ))}
+                </Tr>
+              ))}
+            </Thead>
+            <Tbody>
+              {table.getRowModel().rows.map((row) => (
+                <Tr key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <Td
+                      key={cell.id}
+                      fontSize={{ sm: '14px' }}
+                      minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                      borderColor="transparent"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </Td>
+                  ))}
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </Box>
+
+        {/* Pagination Controls */}
+        {reviewsResponse?.pagination && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="20px"
+            justify="space-between"
+            align="center"
+            borderTop="1px solid"
+            borderColor={borderColor}
+            direction={{ base: "column", md: "row" }}
+            gap={{ base: 4, md: 0 }}
+          >
+            {/* Page Info */}
+            <Text color={textColor} fontSize="sm">
+              Showing {reviewsResponse.pagination?.from || 0} to {reviewsResponse.pagination?.to || 0} of {reviewsResponse.pagination?.total || 0} results
+            </Text>
+
+            {/* Pagination Controls */}
+            <HStack spacing="3">
+              {/* Page Size Selector */}
+              <HStack spacing="2">
+                <Text fontSize="sm" color={textColor}>
+                  Show:
+                </Text>
+                <Select
+                  size="sm"
+                  value={perPage}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  w="70px"
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </Select>
+              </HStack>
+
+              {/* Page Navigation */}
+              <HStack spacing="2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  isDisabled={currentPage <= 1}
+                  leftIcon={<ChevronLeftIcon />}
+                >
+                  Previous
+                </Button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, reviewsResponse.pagination?.last_page || 1) }, (_, i) => {
+                  const pageNum = i + 1;
+                  const isCurrentPage = pageNum === currentPage;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      size="sm"
+                      variant={isCurrentPage ? "solid" : "outline"}
+                      colorScheme={isCurrentPage ? "blue" : "gray"}
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  isDisabled={currentPage >= (reviewsResponse.pagination?.last_page || 1)}
+                  rightIcon={<ChevronRightIcon />}
+                >
+                  Next
+                </Button>
+              </HStack>
+            </HStack>
+          </Flex>
+        )}
+
+        {/* No data message */}
+        {(!reviews || reviews.length === 0) && !isLoading && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="40px"
+            justify="center"
+            align="center"
+          >
+            <Text color={textColor} fontSize="md">
+              No reviews found with the current filters.
+            </Text>
+          </Flex>
+        )}
       </Card>
     </Box>
   );

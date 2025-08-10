@@ -14,23 +14,27 @@ import {
   Badge,
   Icon,
   useToast,
+  Spinner,
 } from '@chakra-ui/react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FaSave, FaEdit } from 'react-icons/fa';
-import { useCreatePolicyMutation } from 'api/policiesSlice';
-const AddPrivacyAndTerms = () => {
+import { useGetPolicyQuery, useUpdatePolicyMutation } from 'api/policiesSlice';
+
+const EditPrivacyAndTerms = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const toast = useToast();
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const cardBg = useColorModeValue('white', 'navy.800');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
-  // API hook
-  const [createPolicy, { isLoading }] = useCreatePolicyMutation();
+  // API hooks
+  const { data: policyResponse, isLoading: isLoadingPolicy, isError: isErrorLoadingPolicy} = useGetPolicyQuery(id);
+  const [updatePolicy, { isLoading: isUpdating }] = useUpdatePolicyMutation();
 
   const [formData, setFormData] = React.useState({
     type: '',
@@ -39,12 +43,32 @@ const AddPrivacyAndTerms = () => {
   });
 
   const [errors, setErrors] = React.useState({});
+  const [isDataLoaded, setIsDataLoaded] = React.useState(false);
+
+  // Load policy data when fetched (only once)
+  React.useEffect(() => {
+    if (policyResponse?.data && !isDataLoaded) {
+      const policyData = policyResponse.data;
+      console.log('Loading policy data:', policyData);
+      setFormData({
+        type: policyData.type || '',
+        content: policyData.content || '',
+        status: policyData.status || 'active',
+      });
+      setIsDataLoaded(true);
+    }
+  }, [policyResponse?.data, isDataLoaded]);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    console.log('Input change:', field, value);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      console.log('New form data:', newData);
+      return newData;
+    });
     
     // Clear error when user starts typing
     if (errors[field]) {
@@ -82,11 +106,12 @@ const AddPrivacyAndTerms = () => {
         status: formData.status,
       };
 
-      await createPolicy(policyData).unwrap();
+      console.log('Submitting policy data:', policyData);
+      await updatePolicy({ id, policy: policyData }).unwrap();
 
       toast({
         title: 'Success',
-        description: 'Policy created successfully',
+        description: 'Policy updated successfully',
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -95,10 +120,10 @@ const AddPrivacyAndTerms = () => {
       navigate('/admin/undefined/privacy-and-terms');
       
     } catch (error) {
-      console.error('Failed to create policy:', error);
+      console.error('Failed to update policy:', error);
       toast({
         title: 'Error',
-        description: error.data?.message || 'Failed to create policy. Please try again.',
+        description: error.data?.message || 'Failed to update policy. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -168,16 +193,57 @@ const AddPrivacyAndTerms = () => {
     );
   };
 
+  // Loading state
+  if (isLoadingPolicy) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card p={6}>
+          <Flex justify="center" align="center" h="200px">
+            <VStack spacing={4}>
+              <Spinner size="xl" color="#422afb" thickness="4px" />
+              <Text color={textColor}>Loading policy details...</Text>
+            </VStack>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (isErrorLoadingPolicy) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card p={6}>
+          <Flex justify="center" align="center" h="200px">
+            <VStack spacing={4}>
+              <Text color="red.500" fontSize="lg">Error loading policy details</Text>
+              <Text color={textColor} fontSize="sm">
+                The policy you're looking for might not exist or there was an error loading it.
+              </Text>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/admin/undefined/privacy-and-terms')}
+                size="sm"
+              >
+                Back to Policies
+              </Button>
+            </VStack>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
   return (
     <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
       <Card p={6}>
         <VStack spacing={8} align="stretch">
           <Box>
             <Text color={textColor} fontSize="2xl" fontWeight="bold" mb={2}>
-              Add New Policy
+              Edit Policy
             </Text>
             <Text color="gray.500">
-              Create a new privacy policy or terms of service document
+              Update the privacy policy or terms of service document
             </Text>
           </Box>
 
@@ -197,10 +263,10 @@ const AddPrivacyAndTerms = () => {
             <Button
               onClick={handleSubmit}
               colorScheme="green"
-              isLoading={isLoading}
-              loadingText="Creating Policy"
+              isLoading={isUpdating}
+              loadingText="Updating Policy"
             >
-              Create Policy
+              Update Policy
             </Button>
           </HStack>
         </VStack>
@@ -209,4 +275,4 @@ const AddPrivacyAndTerms = () => {
   );
 };
 
-export default AddPrivacyAndTerms;
+export default EditPrivacyAndTerms;

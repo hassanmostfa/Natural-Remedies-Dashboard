@@ -17,6 +17,11 @@ import {
   InputLeftElement,
   IconButton,
   Badge,
+  Avatar,
+  HStack,
+  VStack,
+  useToast,
+  Select,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -28,10 +33,15 @@ import {
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { ChevronLeftIcon, ChevronRightIcon, EditIcon, SearchIcon } from '@chakra-ui/icons';
-import { FaEye, FaTrash, FaDownload } from 'react-icons/fa6';
+import { FaEye, FaTrash, FaDownload, FaUser } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
+import { 
+  useGetUsersQuery, 
+  useDeleteUserMutation,
+  useUpdateUserStatusMutation 
+} from 'api/usersSlice';
 
 // Function to export data to Excel
 const exportToExcel = (data, filename) => {
@@ -39,9 +49,13 @@ const exportToExcel = (data, filename) => {
   const exportData = data.map(user => ({
     'ID': user.id,
     'Name': user.name,
+    'Full Name': user.full_name,
     'Email': user.email,
-    'Subscription Plan': user.subscriptionPlan,
-    'Status': user.status
+    'Subscription Plan': user.subscription_plan,
+    'Account Status': user.account_status,
+    'Email Verified': user.email_verified_at ? 'Yes' : 'No',
+    'Created At': new Date(user.created_at).toLocaleDateString(),
+    'Updated At': new Date(user.updated_at).toLocaleDateString(),
   }));
 
   // Create workbook and worksheet
@@ -59,68 +73,43 @@ const columnHelper = createColumnHelper();
 
 const Users = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(15);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const searchBg = useColorModeValue('secondaryGray.300', 'gray.700');
+  const searchColor = useColorModeValue('gray.700', 'white');
 
-  // Static user data
-  const staticUsers = [
-    {
-      id: 1,
-      name: 'Mohammed Ali',
-      image: 'https://randomuser.me/api/portraits/men/32.jpg',
-      email: 'mohammed.ali@example.com',
-      subscriptionPlan: 'Premium',
-      status: 'active',
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      image: 'https://randomuser.me/api/portraits/women/44.jpg',
-      email: 'sarah.j@example.com',
-      subscriptionPlan: 'Basic',
-      status: 'active',
-    },
-    {
-      id: 3,
-      name: 'Ahmed Hassan',
-      image: 'https://randomuser.me/api/portraits/men/75.jpg',
-      email: 'ahmed.h@example.com',
-      subscriptionPlan: 'Pro',
-      status: 'expired',
-    },
-    {
-      id: 4,
-      name: 'Fatima Mahmoud',
-      image: 'https://randomuser.me/api/portraits/women/63.jpg',
-      email: 'fatima.m@example.com',
-      subscriptionPlan: 'Basic',
-      status: 'active',
-    },
-    {
-      id: 5,
-      name: 'Omar Khalid',
-      image: 'https://randomuser.me/api/portraits/men/81.jpg',
-      email: 'omar.k@example.com',
-      subscriptionPlan: 'Premium',
-      status: 'suspended',
-    },
-  ];
+  // API hooks
+  const { data: usersResponse, isLoading, isError, refetch } = useGetUsersQuery({
+    name: searchQuery || undefined,
+    page: currentPage,
+    per_page: perPage
+  }, { refetchOnMountOrArgChange: true });
 
-  // Filter data based on search query
-  const filteredData = React.useMemo(() => {
-    if (!searchQuery) return staticUsers;
-    return staticUsers.filter((user) =>
-      Object.values(user).some((value) =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
+  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const [updateUserStatus, { isLoading: isUpdatingStatus }] = useUpdateUserStatusMutation();
+
+  // Extract data and pagination from response
+  const usersData = usersResponse?.data || [];
+  const pagination = usersResponse?.pagination || null;
+
+  // Effect to reset to first page when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
   }, [searchQuery]);
 
+  // Effect to refetch when search or pagination changes
+  React.useEffect(() => {
+    refetch();
+  }, [searchQuery, currentPage, perPage, refetch]);
+
   const columns = [
-    columnHelper.accessor('image', {
+    columnHelper.accessor('profile_image', {
       id: 'image',
       header: () => (
         <Text
@@ -133,12 +122,11 @@ const Users = () => {
         </Text>
       ),
       cell: (info) => (
-        <Image
+        <Avatar
           src={info.getValue()}
-          borderRadius="full"
-          boxSize="40px"
-          objectFit="cover"
-          alt="User"
+          size="md"
+          borderRadius="lg"
+          fallback={<Icon as={FaUser} color="gray.500" />}
         />
       ),
     }),
@@ -155,21 +143,24 @@ const Users = () => {
         </Text>
       ),
       cell: (info) => (
-        <Flex direction="column">
+        <VStack align="start" spacing={1}>
           <Text color={textColor} fontWeight="bold">
             {info.getValue()}
           </Text>
+          <Text color="gray.500" fontSize="xs">
+            {info.row.original.full_name}
+          </Text>
           <Badge 
             colorScheme={
-              info.row.original.status === 'active' ? 'green' : 
-              info.row.original.status === 'expired' ? 'orange' : 'red'
+              info.row.original.account_status === 'active' ? 'green' : 
+              info.row.original.account_status === 'inactive' ? 'orange' : 'red'
             }
             width="fit-content"
-            mt="1"
+            fontSize="xs"
           >
-            {info.row.original.status}
+            {info.row.original.account_status}
           </Badge>
-        </Flex>
+        </VStack>
       ),
     }),
     columnHelper.accessor('email', {
@@ -185,12 +176,21 @@ const Users = () => {
         </Text>
       ),
       cell: (info) => (
-        <Text color={textColor} fontSize="sm">
-          {info.getValue()}
-        </Text>
+        <VStack align="start" spacing={1}>
+          <Text color={textColor} fontSize="sm">
+            {info.getValue()}
+          </Text>
+          <Badge 
+            colorScheme={info.row.original.email_verified_at ? 'green' : 'gray'}
+            fontSize="xs"
+            width="fit-content"
+          >
+            {/* {info.row.original.email_verified_at ? 'Verified' : 'Not Verified'} */}
+          </Badge>
+        </VStack>
       ),
     }),
-    columnHelper.accessor('subscriptionPlan', {
+    columnHelper.accessor('subscription_plan', {
       id: 'subscription',
       header: () => (
         <Text
@@ -205,15 +205,34 @@ const Users = () => {
       cell: (info) => (
         <Badge
           colorScheme={
-            info.getValue() === 'Premium' ? 'purple' : 
-            info.getValue() === 'Pro' ? 'blue' : 'gray'
+            info.getValue() === 'master' ? 'purple' : 
+            info.getValue() === 'skilled' ? 'blue' : 'gray'
           }
           px="3"
           py="1"
           borderRadius="full"
+          textTransform="capitalize"
         >
           {info.getValue()}
         </Badge>
+      ),
+    }),
+    columnHelper.accessor('created_at', {
+      id: 'created_at',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Joined
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor} fontSize="sm">
+          {new Date(info.getValue()).toLocaleDateString()}
+        </Text>
       ),
     }),
     columnHelper.accessor('id', {
@@ -229,41 +248,41 @@ const Users = () => {
         </Text>
       ),
       cell: (info) => (
-        <Flex align="center">
+        <Flex align="center" gap={2}>
           <Icon
             w="18px"
             h="18px"
-            me="10px"
             color="red.500"
             as={FaTrash}
             cursor="pointer"
             onClick={() => handleDeleteUser(info.getValue())}
+            title="Delete User"
           />
           <Icon
             w="18px"
             h="18px"
-            me="10px"
             color="green.500"
             as={EditIcon}
             cursor="pointer"
             onClick={() => navigate(`/admin/edit-user/${info.getValue()}`)}
+            title="Edit User"
           />
-          <Icon
+          {/* <Icon
             w="18px"
             h="18px"
-            me="10px"
             color="blue.500"
             as={FaEye}
             cursor="pointer"
             onClick={() => navigate(`/admin/user/${info.getValue()}`)}
-          />
+            title="View User"
+          /> */}
         </Flex>
       ),
     }),
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: usersData,
     columns,
     state: {
       sorting,
@@ -271,7 +290,6 @@ const Users = () => {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    debugTable: true,
   });
 
   // Delete function
@@ -288,12 +306,28 @@ const Users = () => {
       });
 
       if (result.isConfirmed) {
-        // In a real app, you would call your API here
-        Swal.fire('Deleted!', 'The user has been deleted.', 'success');
+        await deleteUser(id).unwrap();
+
+        toast({
+          title: 'User Deleted',
+          description: 'The user has been successfully deleted.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+
+        // Refetch the data to get updated list
+        refetch();
       }
     } catch (error) {
       console.error('Failed to delete user:', error);
-      Swal.fire('Error!', 'Failed to delete the user.', 'error');
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to delete user.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
@@ -301,40 +335,91 @@ const Users = () => {
   const handleExportUsers = () => {
     try {
       const filename = `users_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      exportToExcel(filteredData, filename);
+      exportToExcel(usersData, filename);
       
-      Swal.fire({
+      toast({
         title: 'Success!',
-        text: 'Users data has been exported successfully.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
+        description: 'Users data has been exported successfully.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
       });
     } catch (error) {
       console.error('Failed to export users:', error);
-      Swal.fire('Error!', 'Failed to export users data.', 'error');
+      toast({
+        title: 'Error!',
+        description: 'Failed to export users data.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box mt="80px">
+        <Card
+          flexDirection="column"
+          w="100%"
+          px="0px"
+          overflowX={{ sm: 'scroll', lg: 'hidden' }}
+        >
+          <Flex justify="center" align="center" h="200px">
+            <Text color={textColor}>Loading users...</Text>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <Box mt="80px">
+        <Card
+          flexDirection="column"
+          w="100%"
+          px="0px"
+          overflowX={{ sm: 'scroll', lg: 'hidden' }}
+        >
+          <Flex justify="center" align="center" h="200px">
+            <Text color="red.500">Error loading users. Please try again.</Text>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
   return (
-    <div className="container">
+    <Box mt="80px">
       <Card
         flexDirection="column"
         w="100%"
         px="0px"
         overflowX={{ sm: 'scroll', lg: 'hidden' }}
       >
-        <Flex px="25px" mb="8px" justifyContent="space-between" align="center">
+        <Flex
+          px={{ base: "16px", md: "25px" }}
+          mb="8px"
+          direction={{ base: "column", md: "row" }}
+          justifyContent="space-between"
+          align={{ base: "stretch", md: "center" }}
+          gap={{ base: 4, md: 0 }}
+        >
           <Text
             color={textColor}
             fontSize="22px"
             fontWeight="700"
             lineHeight="100%"
           >
-            Users Management
+            Users
           </Text>
-          <div className="search-container d-flex align-items-center gap-2">
-            <InputGroup w={{ base: "100", md: "400px" }}>
+
+          <HStack spacing={4} w={{ base: "100%", md: "auto" }}>
+            {/* Search Input */}
+            <InputGroup w={{ base: "100%", md: "400px" }}>
               <InputLeftElement>
                 <IconButton
                   bg="inherit"
@@ -354,8 +439,8 @@ const Users = () => {
               <Input
                 variant="search"
                 fontSize="sm"
-                bg={useColorModeValue("secondaryGray.300", "gray.700")}
-                color={useColorModeValue("gray.700", "white")}
+                bg={searchBg}
+                color={searchColor}
                 fontWeight="500"
                 _placeholder={{ color: "gray.400", fontSize: "14px" }}
                 borderRadius="30px"
@@ -364,8 +449,8 @@ const Users = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </InputGroup>
-          </div>
-          <Flex gap={3}>
+
+            {/* Export Button */}
             <Button
               leftIcon={<FaDownload />}
               variant='outline'
@@ -376,10 +461,12 @@ const Users = () => {
               px='24px'
               py='5px'
               onClick={handleExportUsers}
-              width={'180px'}
+              w={{ base: "100%", md: "180px" }}
             >
               Export Excel
             </Button>
+
+            {/* Add User Button */}
             <Button
               variant='darkBrand'
               color='white'
@@ -389,12 +476,13 @@ const Users = () => {
               px='24px'
               py='5px'
               onClick={() => navigate('/admin/add-user')}
-              width={'200px'}
+              w={{ base: "100%", md: "200px" }}
             >
               Add New User
             </Button>
-          </Flex>
+          </HStack>
         </Flex>
+
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
             <Thead>
@@ -456,8 +544,111 @@ const Users = () => {
             </Tbody>
           </Table>
         </Box>
+
+        {/* Pagination Controls */}
+        {pagination && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="20px"
+            justify="space-between"
+            align="center"
+            borderTop="1px solid"
+            borderColor={borderColor}
+            direction={{ base: "column", md: "row" }}
+            gap={{ base: 4, md: 0 }}
+          >
+            {/* Page Info */}
+            <Text color={textColor} fontSize="sm">
+              Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} results
+            </Text>
+
+            {/* Pagination Controls */}
+            <HStack spacing="3">
+              {/* Page Size Selector */}
+              <HStack spacing="2">
+                <Text fontSize="sm" color={textColor}>
+                  Show:
+                </Text>
+                <select
+                  size="sm"
+                  value={perPage}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </HStack>
+
+              {/* Page Navigation */}
+              <HStack spacing="2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  isDisabled={currentPage <= 1}
+                  leftIcon={<ChevronLeftIcon />}
+                >
+                  Previous
+                </Button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, pagination.last_page || 1) }, (_, i) => {
+                  const pageNum = i + 1;
+                  const isCurrentPage = pageNum === currentPage;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      size="sm"
+                      variant={isCurrentPage ? "solid" : "outline"}
+                      colorScheme={isCurrentPage ? "blue" : "gray"}
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  isDisabled={currentPage >= (pagination.last_page || 1)}
+                  rightIcon={<ChevronRightIcon />}
+                >
+                  Next
+                </Button>
+              </HStack>
+            </HStack>
+          </Flex>
+        )}
+
+        {/* No data message */}
+        {(!usersData || usersData.length === 0) && !isLoading && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="40px"
+            justify="center"
+            align="center"
+          >
+            <Text color={textColor} fontSize="md">
+              No users found with the current search.
+            </Text>
+          </Flex>
+        )}
       </Card>
-    </div>
+    </Box>
   );
 };
 

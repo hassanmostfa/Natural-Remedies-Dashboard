@@ -13,73 +13,397 @@ import {
   useToast,
   HStack,
   IconButton,
-  Image,
   Avatar,
   Divider,
   Heading,
   Icon,
+  Image,
+  Stepper,
+  Step,
+  StepIcon,
+  StepIndicator,
+  StepNumber,
+  StepStatus,
+  StepTitle,
+  StepDescription,
+  StepSeparator,
+  Spinner,
 } from '@chakra-ui/react';
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { useNavigate } from 'react-router-dom';
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
-import { FaLeaf } from 'react-icons/fa6';
+import { FaLeaf, FaUpload } from 'react-icons/fa6';
+import { useCreateRemedyMutation } from 'api/remediesSlice';
+import { useGetDiseasesQuery } from 'api/diseasesSlice';
+import { useGetRemedyTypesQuery } from 'api/remediesTypesSlice';
+import { useGetBodySystemsQuery } from 'api/bodySystemsSlice';
+import { useUploadImageMutation } from 'api/fileUploadSlice';
+
+// Custom hook for stable input handling
+const useStableInput = (initialValue, onChange) => {
+  const [value, setValue] = React.useState(initialValue);
+  const [isFocused, setIsFocused] = React.useState(false);
+  
+  React.useEffect(() => {
+    if (!isFocused) {
+      setValue(initialValue);
+    }
+  }, [initialValue, isFocused]);
+  
+  const handleChange = React.useCallback((e) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+    onChange(e);
+  }, [onChange]);
+  
+  const handleFocus = React.useCallback(() => {
+    setIsFocused(true);
+  }, []);
+  
+  const handleBlur = React.useCallback(() => {
+    setIsFocused(false);
+  }, []);
+  
+  return {
+    value,
+    onChange: handleChange,
+    onFocus: handleFocus,
+    onBlur: handleBlur
+  };
+};
+
+// Top-level stable input component
+const StableInput = React.memo(({ value, onChange, placeholder, size, bg, borderColor, borderRadius }) => {
+  const inputProps = useStableInput(value, onChange);
+  
+  return (
+    <Input
+      placeholder={placeholder}
+      size={size}
+      bg={bg}
+      border="1px solid"
+      borderColor={borderColor}
+      borderRadius={borderRadius}
+      autoComplete="off"
+      spellCheck="false"
+      {...inputProps}
+    />
+  );
+});
+
+// Top-level memoized list item to keep component identity stable across renders
+const ListItem = React.memo(({ 
+  item, 
+  index, 
+  listName, 
+  textColor,
+  borderColor,
+  inputBg,
+  cardBg,
+  isDragging, 
+  uploading, 
+  imagePreviews,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onFileInputChange,
+  onListChange,
+  onRemoveImage,
+  onRemoveItem
+}) => {
+  const handleInputChange = React.useCallback((e) => {
+    onListChange(listName, index, 'name', e.target.value);
+  }, [onListChange, listName, index]);
+
+  const handleRemoveItemClick = React.useCallback(() => {
+    onRemoveItem(listName, index);
+  }, [onRemoveItem, listName, index]);
+
+  const handleRemoveImageClick = React.useCallback(() => {
+    onRemoveImage(listName, index);
+  }, [onRemoveImage, listName, index]);
+
+  const handleDragOverLocal = React.useCallback((e) => {
+    onDragOver(e, listName, index);
+  }, [onDragOver, listName, index]);
+
+  const handleDragLeaveLocal = React.useCallback(() => {
+    onDragLeave(listName, index);
+  }, [onDragLeave, listName, index]);
+
+  const handleDropLocal = React.useCallback((e) => {
+    onDrop(e, listName, index);
+  }, [onDrop, listName, index]);
+
+  const handleFileInputChangeLocal = React.useCallback((e) => {
+    onFileInputChange(e, listName, index);
+  }, [onFileInputChange, listName, index]);
+
+  const handleUploadClick = React.useCallback(() => {
+    document.getElementById(`${listName}-${item.id}-file-input`).click();
+  }, [listName, item.id]);
+
+  return (
+    <Box p="4" border="1px solid" borderColor={borderColor} borderRadius="lg">
+      <Flex justify="space-between" align="center" mb="3">
+        <Text fontWeight="600" color={textColor}>Item {index + 1}</Text>
+        <IconButton
+          size="sm"
+          icon={<CloseIcon />}
+          onClick={handleRemoveItemClick}
+          colorScheme="red"
+          variant="ghost"
+        />
+      </Flex>
+      <HStack spacing="4">
+        <FormControl>
+          <FormLabel fontSize="sm" color={textColor}>Image</FormLabel>
+                     <Box
+             border="1px dashed"
+             borderColor={isDragging ? 'brand.500' : 'gray.300'}
+             borderRadius="md"
+             p={3}
+             textAlign="center"
+             backgroundColor={isDragging ? 'brand.50' : inputBg}
+             cursor="pointer"
+             onDragOver={handleDragOverLocal}
+             onDragLeave={handleDragLeaveLocal}
+             onDrop={handleDropLocal}
+             minH="120px"
+             display="flex"
+             alignItems="center"
+             justifyContent="center"
+             position="relative"
+           >
+                                      {(imagePreviews || item.image_url) ? (
+               <Flex direction="column" align="center">
+                 <Image
+                   src={imagePreviews || item.image_url}
+                   alt="Item Image"
+                   maxH="80px"
+                   mb={2}
+                   borderRadius="md"
+                   fallback={<Icon as={FaLeaf} color="green.500" boxSize="40px" />}
+                 />
+                 <Button
+                   variant="outline"
+                   colorScheme="red"
+                   size="xs"
+                   onClick={handleRemoveImageClick}
+                 >
+                   Remove
+                 </Button>
+               </Flex>
+             ) : (
+               <>
+                                   {uploading && (
+                    <Box
+                      position="absolute"
+                      top="0"
+                      left="0"
+                      right="0"
+                      bottom="0"
+                      backgroundColor="rgba(0, 0, 0, 0.7)"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      borderRadius="md"
+                      zIndex="10"
+                      backdropFilter="blur(2px)"
+                    >
+                      <VStack spacing="3">
+                        <Spinner size="lg" color="white" thickness="4px" />
+                        <Text color="white" fontSize="sm" fontWeight="bold">Uploading...</Text>
+                        <Text color="white" fontSize="xs" opacity="0.8">Please wait</Text>
+                      </VStack>
+                    </Box>
+                  )}
+                 <Icon as={FaUpload} w={6} h={6} color="#422afb" mb={2} />
+                 <Text color="gray.500" fontSize="xs" mb={2}>
+                   Drag & Drop
+                 </Text>
+                 <Button
+                   variant="outline"
+                   color="#422afb"
+                   border="none"
+                   size="xs"
+                   onClick={handleUploadClick}
+                   isLoading={uploading}
+                   loadingText="Uploading..."
+                   leftIcon={uploading ? <Spinner size="xs" /> : undefined}
+                 >
+                   {uploading ? 'Uploading...' : 'Upload'}
+                   <input
+                     type="file"
+                     id={`${listName}-${item.id}-file-input`}
+                     hidden
+                     accept="image/*"
+                     onChange={handleFileInputChangeLocal}
+                   />
+                 </Button>
+               </>
+             )}
+          </Box>
+        </FormControl>
+        <FormControl>
+          <FormLabel fontSize="sm" color={textColor}>Name</FormLabel>
+          <StableInput
+            value={item.name}
+            onChange={handleInputChange}
+            placeholder="Enter name"
+            size="sm"
+            bg={cardBg}
+            borderColor={borderColor}
+            borderRadius="lg"
+          />
+        </FormControl>
+      </HStack>
+    </Box>
+  );
+});
+
+// Top-level memoized section wrapper
+const ListSection = React.memo(({ 
+  title, 
+  listName, 
+  items,
+  textColor,
+  borderColor,
+  inputBg,
+  cardBg,
+  isDraggingMap,
+  uploadingMap,
+  imagePreviewsMap,
+  onAddItem,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onFileInputChange,
+  onListChange,
+  onRemoveImage,
+  onRemoveItem
+}) => {
+  const handleAddItem = React.useCallback(() => {
+    onAddItem(listName);
+  }, [onAddItem, listName]);
+
+  return (
+    <Box>
+      <Flex justify="space-between" align="center" mb="4">
+        <Heading size="md" color={textColor}>{title}</Heading>
+        <Button
+          size="sm"
+          leftIcon={<AddIcon />}
+          onClick={handleAddItem}
+          colorScheme="blue"
+          variant="outline"
+        >
+          Add Item
+        </Button>
+      </Flex>
+      <VStack spacing="4" align="stretch">
+        {items.map((item, index) => (
+          <ListItem
+            key={`${listName}-${item.id}`}
+            item={item}
+            index={index}
+            listName={listName}
+            textColor={textColor}
+            borderColor={borderColor}
+            inputBg={inputBg}
+            cardBg={cardBg}
+            isDragging={isDraggingMap[listName]?.[index]}
+            uploading={uploadingMap[listName]?.[index]}
+            imagePreviews={imagePreviewsMap[listName]?.[index]}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+            onFileInputChange={onFileInputChange}
+            onListChange={onListChange}
+            onRemoveImage={onRemoveImage}
+            onRemoveItem={onRemoveItem}
+          />
+        ))}
+      </VStack>
+    </Box>
+  );
+});
 
 const AddRemedy = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const [addRemedy, { isLoading: isAdding }] = useCreateRemedyMutation();
+  const [uploadImage] = useUploadImageMutation();
   
+  // Fetch options from API
+  const { data: diseasesData } = useGetDiseasesQuery();
+  const { data: remedyTypesData } = useGetRemedyTypesQuery();
+  const { data: bodySystemsData } = useGetBodySystemsQuery();
+
+  // Color mode values
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const inputBg = useColorModeValue('gray.100', 'gray.700');
+  const cardBg = useColorModeValue('white', 'navy.700');
+
+  // Memoize the color values
+  const memoizedColors = React.useMemo(() => ({
+    textColor,
+    borderColor,
+    inputBg,
+    cardBg
+  }), [textColor, borderColor, inputBg, cardBg]);
 
   const [formData, setFormData] = React.useState({
-    disease: '',
-    remedyType: '',
-    bodySystem: '',
-    image: '',
     title: '',
+    disease_id: '',
+    remedy_type_id: '',
+    body_system_id: '',
+    main_image_url: '',
     description: '',
-    visiblePlans: 'all',
-    ingredients: [{ image: '', name: '' }],
-    instructions: [{ image: '', name: '' }],
-    benefits: [{ image: '', name: '' }],
-    precautions: [{ image: '', name: '' }],
+    visible_to_plan: 'all',
     status: 'active',
+    product_link: '',
+    ingredients: [{ id: 1, image_url: '', name: '' }],
+    instructions: [{ id: 1, image_url: '', name: '' }],
+    benefits: [{ id: 1, image_url: '', name: '' }],
+    precautions: [{ id: 1, image_url: '', name: '' }],
   });
 
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [uploading, setUploading] = React.useState({
+    main_image: false,
+    ingredients: [false], // Initialize with one false for the first item
+    instructions: [false],
+    benefits: [false],
+    precautions: [false],
+  });
 
-  const diseaseOptions = [
-    { value: 'Common Cold', label: 'Common Cold' },
-    { value: 'Headache', label: 'Headache' },
-    { value: 'Digestive Issues', label: 'Digestive Issues' },
-    { value: 'Insomnia', label: 'Insomnia' },
-    { value: 'Anxiety', label: 'Anxiety' },
-    { value: 'Skin Problems', label: 'Skin Problems' },
-    { value: 'Joint Pain', label: 'Joint Pain' },
-    { value: 'Respiratory Issues', label: 'Respiratory Issues' },
-  ];
+  const [imagePreviews, setImagePreviews] = React.useState({
+    main_image: null,
+    ingredients: [],
+    instructions: [],
+    benefits: [],
+    precautions: [],
+  });
 
-  const remedyTypeOptions = [
-    { value: 'Herbal Tea', label: 'Herbal Tea' },
-    { value: 'Essential Oil', label: 'Essential Oil' },
-    { value: 'Herbal Supplement', label: 'Herbal Supplement' },
-    { value: 'Tincture', label: 'Tincture' },
-    { value: 'Salve', label: 'Salve' },
-    { value: 'Fresh Herb', label: 'Fresh Herb' },
-  ];
+  const [isDragging, setIsDragging] = React.useState({
+    main_image: false,
+    ingredients: [],
+    instructions: [],
+    benefits: [],
+    precautions: [],
+  });
 
-  const bodySystemOptions = [
-    { value: 'Respiratory', label: 'Respiratory' },
-    { value: 'Digestive', label: 'Digestive' },
-    { value: 'Nervous', label: 'Nervous' },
-    { value: 'Cardiovascular', label: 'Cardiovascular' },
-    { value: 'Musculoskeletal', label: 'Musculoskeletal' },
-    { value: 'Immune', label: 'Immune' },
-    { value: 'Endocrine', label: 'Endocrine' },
-    { value: 'Integumentary', label: 'Integumentary' },
-    { value: 'Urinary', label: 'Urinary' },
-    { value: 'Reproductive', label: 'Reproductive' },
+  const [activeStep, setActiveStep] = React.useState(0);
+  const [completedSteps, setCompletedSteps] = React.useState([]);
+  const [nextId, setNextId] = React.useState(2);
+
+  const visiblePlansOptions = [
+    { value: 'all', label: 'All Plans' },
+    { value: 'rookie', label: 'Rookie' },
+    { value: 'skilled', label: 'Skilled' },
+    { value: 'master', label: 'Master' },
   ];
 
   const statusOptions = [
@@ -87,49 +411,251 @@ const AddRemedy = () => {
     { value: 'inactive', label: 'Inactive' },
   ];
 
-  const visiblePlansOptions = [
-    { value: 'all', label: 'All Plans' },
-    { value: 'Rookie', label: 'Rookie' },
-    { value: 'Skilled', label: 'Skilled' },
-    { value: 'Master', label: 'Master' },
-  ];
-
-  const handleInputChange = (field, value) => {
+  const handleInputChange = React.useCallback((field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-  };
+  }, []);
 
-  const handleListChange = (listName, index, field, value) => {
+  const handleListChange = React.useCallback((listName, index, field, value) => {
+    setFormData(prev => {
+      const updatedList = [...prev[listName]];
+      updatedList[index] = { ...updatedList[index], [field]: value };
+      return {
+        ...prev,
+        [listName]: updatedList
+      };
+    });
+  }, []);
+
+  const addListItem = React.useCallback((listName) => {
+    const newId = nextId;
+    setNextId(prev => prev + 1);
+    
     setFormData(prev => ({
       ...prev,
-      [listName]: prev[listName].map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
+      [listName]: [...prev[listName], { id: newId, image_url: '', name: '' }]
     }));
-  };
-
-  const addListItem = (listName) => {
-    setFormData(prev => ({
+    
+    setUploading(prev => ({
       ...prev,
-      [listName]: [...prev[listName], { image: '', name: '' }]
+      [listName]: [...(prev[listName] || []), false]
     }));
-  };
+    
+    setImagePreviews(prev => ({
+      ...prev,
+      [listName]: [...(prev[listName] || []), null]
+    }));
+  }, [nextId]);
 
-  const removeListItem = (listName, index) => {
+  const removeListItem = React.useCallback((listName, index) => {
     setFormData(prev => ({
       ...prev,
       [listName]: prev[listName].filter((_, i) => i !== index)
     }));
+    
+    setUploading(prev => ({
+      ...prev,
+      [listName]: (prev[listName] || []).filter((_, i) => i !== index)
+    }));
+    
+    setImagePreviews(prev => ({
+      ...prev,
+      [listName]: (prev[listName] || []).filter((_, i) => i !== index)
+    }));
+  }, []);
+
+  const handleImageUpload = (files, field, index = null) => {
+    console.log('handleImageUpload called with:', { files: files?.length, field, index });
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      console.log('Selected file:', selectedFile.name, 'type:', selectedFile.type, 'size:', selectedFile.size);
+      
+      if (!selectedFile.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'Please select an image file (JPEG, PNG, etc.)',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'Error',
+          description: 'Image size should be less than 5MB',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      console.log('Calling handleImageUploadToServer with field:', field);
+      handleImageUploadToServer(selectedFile, field, index);
+    }
   };
+
+  const handleDragOver = (e, field, index = null) => {
+    e.preventDefault();
+    if (index !== null) {
+      setIsDragging(prev => ({
+        ...prev,
+        [field]: prev[field].map((item, i) => i === index ? true : item)
+      }));
+    } else {
+      setIsDragging(prev => ({ ...prev, [field]: true }));
+    }
+  };
+
+  const handleDragLeave = (field, index = null) => {
+    if (index !== null) {
+      setIsDragging(prev => ({
+        ...prev,
+        [field]: prev[field].map((item, i) => i === index ? false : item)
+      }));
+    } else {
+      setIsDragging(prev => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleDrop = (e, field, index = null) => {
+    e.preventDefault();
+    if (index !== null) {
+      setIsDragging(prev => ({
+        ...prev,
+        [field]: prev[field].map((item, i) => i === index ? false : item)
+      }));
+    } else {
+      setIsDragging(prev => ({ ...prev, [field]: false }));
+    }
+    const files = e.dataTransfer.files;
+    handleImageUpload(files, field, index);
+  };
+
+  const handleFileInputChange = (e, field, index = null) => {
+    const files = e.target.files;
+    handleImageUpload(files, field, index);
+  };
+
+  const handleImageUploadToServer = async (file, field, index = null) => {
+    console.log('Starting upload for:', field, index, file.name);
+    
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      
+      if (index !== null) {
+        console.log('Setting upload state for item:', field, index);
+        setImagePreviews(prev => ({
+          ...prev,
+          [field]: prev[field].map((item, i) => i === index ? previewUrl : item)
+        }));
+        setUploading(prev => ({
+          ...prev,
+          [field]: prev[field].map((item, i) => i === index ? true : item)
+        }));
+      } else {
+        console.log('Setting upload state for main image, field:', field);
+        setImagePreviews(prev => ({ ...prev, [field]: previewUrl }));
+        setUploading(prev => {
+          console.log('Previous uploading state:', prev);
+          const newState = { ...prev, [field]: true };
+          console.log('New uploading state:', newState);
+          return newState;
+        });
+        
+        // Add a small delay to ensure state is set before upload starts
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+  
+      console.log('Uploading to server...');
+      // Add a minimum loading time to make the loading state more visible
+      const uploadStartTime = Date.now();
+      const response = await uploadImage(file).unwrap();
+      const uploadTime = Date.now() - uploadStartTime;
+      
+      // Ensure loading state is visible for at least 1 second
+      if (uploadTime < 1000) {
+        await new Promise(resolve => setTimeout(resolve, 1000 - uploadTime));
+      }
+      console.log('Upload response:', response);
+      
+      if (response.success && response.url) {
+        if (index !== null) {
+          handleListChange(field, index, 'image_url', response.url);
+        } else {
+          // For main image, we need to update main_image_url in formData
+          if (field === 'main_image') {
+            handleInputChange('main_image_url', response.url);
+          } else {
+            handleInputChange(field, response.url);
+          }
+        }
+  
+        toast({
+          title: 'Success',
+          description: 'Image uploaded successfully',
+          status: 'success',
+          duration: 2000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      let errorMessage = 'Failed to upload image';
+      
+      if (error?.data?.includes('<!DOCTYPE html>')) {
+        errorMessage = 'Server returned HTML. Check API endpoint.';
+      } else if (error?.status === 'PARSING_ERROR') {
+        errorMessage = 'Invalid server response.';
+      } else if (error?.error) {
+        errorMessage = error.error;
+      }
+  
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      console.log('Clearing upload state for:', field, index);
+      if (index !== null) {
+        setUploading(prev => ({
+          ...prev,
+          [field]: prev[field].map((item, i) => i === index ? false : item)
+        }));
+      } else {
+        setUploading(prev => {
+          console.log('Clearing main image upload state. Previous state:', prev);
+          const newState = { ...prev, [field]: false };
+          console.log('New state after clearing:', newState);
+          return newState;
+        });
+      }
+    }
+  };
+
+  React.useEffect(() => {
+    return () => {
+      Object.values(imagePreviews).forEach(previews => {
+        if (Array.isArray(previews)) {
+          previews.forEach(url => url && URL.revokeObjectURL(url));
+        } else if (previews) {
+          URL.revokeObjectURL(previews);
+        }
+      });
+    };
+  }, [imagePreviews]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
     try {
-      // Validate form data
       if (!formData.title.trim()) {
         toast({
           title: 'Error',
@@ -152,7 +678,7 @@ const AddRemedy = () => {
         return;
       }
 
-      if (!formData.disease) {
+      if (!formData.disease_id) {
         toast({
           title: 'Error',
           description: 'Disease is required',
@@ -163,7 +689,7 @@ const AddRemedy = () => {
         return;
       }
 
-      if (!formData.remedyType) {
+      if (!formData.remedy_type_id) {
         toast({
           title: 'Error',
           description: 'Remedy type is required',
@@ -174,7 +700,7 @@ const AddRemedy = () => {
         return;
       }
 
-      if (!formData.bodySystem) {
+      if (!formData.body_system_id) {
         toast({
           title: 'Error',
           description: 'Body system is required',
@@ -185,34 +711,63 @@ const AddRemedy = () => {
         return;
       }
 
-      // In a real app, you would call your API here
-      // const response = await api.post('/remedies', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const isUploading = uploading.main_image || 
+                         uploading.ingredients.some(Boolean) || 
+                         uploading.instructions.some(Boolean) || 
+                         uploading.benefits.some(Boolean) || 
+                         uploading.precautions.some(Boolean);
+
+      if (isUploading) {
+        toast({
+          title: 'Error',
+          description: 'Please wait for all images to finish uploading',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      const selectedDisease = diseasesData?.data?.find(d => d.id == formData.disease_id);
+      const submissionData = {
+        title: formData.title,
+        disease_id: formData.disease_id,
+        disease: selectedDisease?.name || '',
+        disease_data: selectedDisease || null,
+        remedy_type_id: formData.remedy_type_id,
+        body_system_id: formData.body_system_id,
+        main_image_url: formData.main_image_url,
+        description: formData.description,
+        visible_to_plan: formData.visible_to_plan,
+        status: formData.status,
+        product_link: formData.product_link,
+        ingredients: formData.ingredients.map(({ id, ...item }) => item),
+        instructions: formData.instructions.map(({ id, ...item }) => item),
+        benefits: formData.benefits.map(({ id, ...item }) => item),
+        precautions: formData.precautions.map(({ id, ...item }) => item),
+      };
+
+      const response = await addRemedy(submissionData).unwrap();
 
       toast({
         title: 'Success',
-        description: 'Remedy added successfully',
+        description: response.message || 'Remedy added successfully',
         status: 'success',
         duration: 3000,
         isClosable: true,
       });
 
-      // Navigate back to remedies list
       navigate('/admin/remedies');
       
     } catch (error) {
       console.error('Failed to add remedy:', error);
       toast({
         title: 'Error',
-        description: 'Failed to add remedy. Please try again.',
+        description: error?.data?.message || 'Failed to add remedy. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -220,41 +775,98 @@ const AddRemedy = () => {
     navigate('/admin/remedies');
   };
 
+  const handleNext = () => {
+    setActiveStep((prevStep) => prevStep + 1);
+    setCompletedSteps((prev) => [...prev, activeStep]);
+  };
+
+  const handlePrevious = () => {
+    setActiveStep((prevStep) => prevStep - 1);
+  };
+
+  const handleStepClick = (stepIndex) => {
+    if (completedSteps.includes(stepIndex) || stepIndex <= activeStep) {
+      setActiveStep(stepIndex);
+    }
+  };
+
+  const isStepComplete = (stepIndex) => {
+    return completedSteps.includes(stepIndex);
+  };
+
+  const canProceedToNext = () => {
+    switch (activeStep) {
+      case 0:
+        return formData.title.trim() && 
+               formData.disease_id && 
+               formData.remedy_type_id && 
+               formData.body_system_id && 
+               formData.description.trim();
+      case 1:
+        return formData.ingredients.length > 0 && 
+               formData.ingredients.every(item => item.name.trim());
+      case 2:
+        return formData.instructions.length > 0 && 
+               formData.instructions.every(item => item.name.trim());
+      case 3:
+        return formData.benefits.length > 0 && 
+               formData.benefits.every(item => item.name.trim());
+      case 4:
+        return formData.precautions.length > 0 && 
+               formData.precautions.every(item => item.name.trim());
+      default:
+        return true;
+    }
+  };
+
   const handleAutoFill = () => {
+    if (!diseasesData?.data || !remedyTypesData?.data || !bodySystemsData?.data) {
+      toast({
+        title: 'Error',
+        description: 'Cannot auto-fill until options are loaded',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const sampleDisease = diseasesData.data[0];
+    const sampleRemedyType = remedyTypesData.data[0];
+    const sampleBodySystem = bodySystemsData.data[0];
+
     setFormData({
-      disease: 'Common Cold',
-      remedyType: 'Herbal Tea',
-      bodySystem: 'Respiratory',
-      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500',
       title: 'Ginger Honey Tea',
-      description: 'A soothing herbal tea made with fresh ginger root and natural honey. This remedy helps relieve cold symptoms, soothes sore throat, and boosts the immune system. The combination of ginger\'s anti-inflammatory properties and honey\'s natural antibacterial effects makes this an effective natural remedy for respiratory issues.',
-      visiblePlans: 'all',
+      disease_id: sampleDisease.id,
+      remedy_type_id: sampleRemedyType.id,
+      body_system_id: sampleBodySystem.id,
+      main_image_url: '',
+      description: 'A soothing herbal tea made with fresh ginger root and natural honey. This remedy helps relieve cold symptoms, soothes sore throat, and boosts the immune system.',
+      visible_to_plan: 'all',
+      status: 'active',
+      product_link: 'https://amazon.com/ginger-honey-tea-product',
       ingredients: [
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Fresh Ginger Root' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Natural Honey' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Lemon Juice' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Hot Water' }
+        { id: 1, image_url: '', name: 'Fresh Ginger Root' },
+        { id: 2, image_url: '', name: 'Natural Honey' },
+        { id: 3, image_url: '', name: 'Lemon Juice' }
       ],
       instructions: [
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Peel and slice fresh ginger root' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Boil water and add ginger slices' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Steep for 10-15 minutes' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Add honey and lemon juice' }
+        { id: 1, image_url: '', name: 'Peel and slice fresh ginger root' },
+        { id: 2, image_url: '', name: 'Boil water and add ginger slices' },
+        { id: 3, image_url: '', name: 'Add honey and lemon juice' }
       ],
       benefits: [
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Relieves cold symptoms' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Soothes sore throat' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Boosts immune system' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Reduces inflammation' }
+        { id: 1, image_url: '', name: 'Relieves cold symptoms' },
+        { id: 2, image_url: '', name: 'Soothes sore throat' },
+        { id: 3, image_url: '', name: 'Boosts immune system' }
       ],
       precautions: [
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Not recommended for children under 1 year' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Avoid if allergic to ginger' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Consult doctor if pregnant' },
-        { image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200', name: 'Limit consumption if diabetic' }
+        { id: 1, image_url: '', name: 'Not for children under 1' },
+        { id: 2, image_url: '', name: 'Avoid if allergic to ginger' }
       ],
-      status: 'active',
     });
+
+    setNextId(4);
 
     toast({
       title: 'Auto Fill Complete',
@@ -265,79 +877,396 @@ const AddRemedy = () => {
     });
   };
 
-  const ListSection = ({ title, listName, items }) => (
-    <Box>
-      <Flex justify="space-between" align="center" mb="4">
-        <Heading size="md" color={textColor}>{title}</Heading>
-        <Button
-          size="sm"
-          leftIcon={<AddIcon />}
-          onClick={() => addListItem(listName)}
-          colorScheme="blue"
-          variant="outline"
-        >
-          Add Item
-        </Button>
-      </Flex>
-      <VStack spacing="4" align="stretch">
-        {items.map((item, index) => (
-          <Box key={index} p="4" border="1px solid" borderColor={borderColor} borderRadius="lg">
-            <Flex justify="space-between" align="center" mb="3">
-              <Text fontWeight="600" color={textColor}>Item {index + 1}</Text>
-              <IconButton
-                size="sm"
-                icon={<CloseIcon />}
-                onClick={() => removeListItem(listName, index)}
-                colorScheme="red"
-                variant="ghost"
-                isDisabled={items.length === 1}
-              />
-            </Flex>
-            <HStack spacing="4">
+
+  const handleRemoveImage = React.useCallback((listName, index) => {
+    setImagePreviews(prev => ({
+      ...prev,
+      [listName]: prev[listName].map((item, i) => i === index ? null : item)
+    }));
+    handleListChange(listName, index, 'image_url', '');
+  }, []);
+
+
+  const steps = [
+    { title: 'Basic Information', description: 'Remedy details' },
+    { title: 'Ingredients', description: 'Required ingredients' },
+    { title: 'Instructions', description: 'Step-by-step guide' },
+    { title: 'Benefits', description: 'Health benefits' },
+    { title: 'Precautions', description: 'Safety warnings' },
+  ];
+
+  const renderStepContent = () => {
+    switch (activeStep) {
+      case 0:
+        return (
+          <Box>
+            <Heading size="md" color={memoizedColors.textColor} mb="4">Basic Information</Heading>
+            <VStack spacing="4" align="stretch">
               <FormControl>
-                <FormLabel fontSize="sm" color={textColor}>Image URL</FormLabel>
+                <FormLabel color={memoizedColors.textColor} fontWeight="600">Main Image</FormLabel>
+                                 <Box
+                   border="1px dashed"
+                   borderColor={isDragging.main_image ? 'brand.500' : 'gray.300'}
+                   borderRadius="md"
+                   p={4}
+                   textAlign="center"
+                   backgroundColor={isDragging.main_image ? 'brand.50' : memoizedColors.inputBg}
+                   cursor="pointer"
+                   onDragOver={(e) => handleDragOver(e, 'main_image')}
+                   onDragLeave={() => handleDragLeave('main_image')}
+                   onDrop={(e) => handleDrop(e, 'main_image')}
+                   mb={4}
+                   position="relative"
+                 >
+                  {imagePreviews.main_image || formData.main_image_url ? (
+                    <Flex direction="column" align="center">
+                      <Image
+                        src={imagePreviews.main_image || formData.main_image_url}
+                        alt="Main Image"
+                        maxH="200px"
+                        mb={2}
+                        borderRadius="md"
+                        fallback={<Icon as={FaLeaf} color="green.500" boxSize="100px" />}
+                      />
+                      <Button
+                        variant="outline"
+                        colorScheme="red"
+                        size="sm"
+                        onClick={() => {
+                          setImagePreviews(prev => ({ ...prev, main_image: null }));
+                          handleInputChange('main_image_url', '');
+                        }}
+                      >
+                        Remove Image
+                      </Button>
+                    </Flex>
+                                     ) : (
+                     <>
+                                               {uploading.main_image && (
+                          <Box
+                            position="absolute"
+                            top="0"
+                            left="0"
+                            right="0"
+                            bottom="0"
+                            backgroundColor="rgba(0, 0, 0, 0.9)"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            borderRadius="md"
+                            zIndex="50"
+                            backdropFilter="blur(5px)"
+                            border="2px solid #422afb"
+                          >
+                            <VStack spacing="4">
+                              <Spinner size="xl" color="white" thickness="8px" speed="0.6s" />
+                              <Text color="white" fontSize="lg" fontWeight="bold">Uploading Image...</Text>
+                              <Text color="white" fontSize="sm" opacity="0.9">Please wait while we upload your image</Text>
+                              <Box bg="rgba(255,255,255,0.1)" p="2" borderRadius="md">
+                                <Text color="white" fontSize="xs">State: {JSON.stringify(uploading.main_image)}</Text>
+                              </Box>
+                            </VStack>
+                          </Box>
+                        )}
+                                               {uploading.main_image ? (
+                          <VStack spacing="2">
+                            <Spinner size="lg" color="#422afb" thickness="6px" speed="0.6s" />
+                            <Text color="#422afb" fontSize="sm" fontWeight="bold">Uploading...</Text>
+                            <Text color="#422afb" fontSize="xs" opacity="0.8">Please wait</Text>
+                            <Box bg="blue.100" p="1" borderRadius="md" border="1px solid #422afb">
+                              <Text color="#422afb" fontSize="xs">Loading...</Text>
+                            </Box>
+                          </VStack>
+                        ) : (
+                          <>
+                            <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
+                            <Text color="gray.500" mb={2}>
+                              Drag & Drop Image Here
+                            </Text>
+                            <Text color="gray.500" mb={2}>
+                              or
+                            </Text>
+                          </>
+                        )}
+                       <Button
+                         variant="outline"
+                         border="none"
+                         onClick={() => document.getElementById('main-image-file-input').click()}
+                         isLoading={uploading.main_image}
+                         loadingText="Uploading..."
+                         leftIcon={uploading.main_image ? <Spinner size="sm" color="white" /> : undefined}
+                         disabled={uploading.main_image}
+                         _disabled={{
+                           opacity: 0.6,
+                           cursor: 'not-allowed'
+                         }}
+                         bg={uploading.main_image ? "blue.500" : "transparent"}
+                         color={uploading.main_image ? "white" : "#422afb"}
+                       >
+                         {uploading.main_image ? '🔄 Uploading...' : 'Upload Image'}
+                         <input
+                           type="file"
+                           id="main-image-file-input"
+                           hidden
+                           accept="image/*"
+                           onChange={(e) => handleFileInputChange(e, 'main_image')}
+                           disabled={uploading.main_image}
+                         />
+                       </Button>
+                     </>
+                   )}
+                </Box>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel color={memoizedColors.textColor} fontWeight="600">Title</FormLabel>
                 <Input
-                  placeholder="Enter image URL"
-                  value={item.image}
-                  onChange={(e) => handleListChange(listName, index, 'image', e.target.value)}
-                  size="sm"
+                  placeholder="Enter remedy title"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  bg={memoizedColors.cardBg}
+                  border="1px solid"
+                  borderColor={memoizedColors.borderColor}
+                  borderRadius="lg"
                 />
               </FormControl>
-              <FormControl>
-                <FormLabel fontSize="sm" color={textColor}>Name</FormLabel>
-                <Input
-                  placeholder="Enter name"
-                  value={item.name}
-                  onChange={(e) => handleListChange(listName, index, 'name', e.target.value)}
-                  size="sm"
+
+              <HStack spacing="4">
+                <FormControl isRequired>
+                  <FormLabel color={memoizedColors.textColor} fontWeight="600">Disease</FormLabel>
+                  <Select
+                    value={formData.disease_id}
+                    onChange={(e) => handleInputChange('disease_id', e.target.value)}
+                    bg={memoizedColors.cardBg}
+                    border="1px solid"
+                    borderColor={memoizedColors.borderColor}
+                    borderRadius="lg"
+                    placeholder="Select disease"
+                  >
+                    {diseasesData?.data?.map((disease) => (
+                      <option key={disease.id} value={disease.id}>
+                        {disease.name}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel color={memoizedColors.textColor} fontWeight="600">Remedy Type</FormLabel>
+                  <Select
+                    value={formData.remedy_type_id}
+                    onChange={(e) => handleInputChange('remedy_type_id', e.target.value)}
+                    bg={memoizedColors.cardBg}
+                    border="1px solid"
+                    borderColor={memoizedColors.borderColor}
+                    borderRadius="lg"
+                    placeholder="Select remedy type"
+                  >
+                    {remedyTypesData?.data?.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel color={memoizedColors.textColor} fontWeight="600">Body System</FormLabel>
+                  <Select
+                    value={formData.body_system_id}
+                    onChange={(e) => handleInputChange('body_system_id', e.target.value)}
+                    bg={memoizedColors.cardBg}
+                    border="1px solid"
+                    borderColor={memoizedColors.borderColor}
+                    borderRadius="lg"
+                    placeholder="Select body system"
+                  >
+                    {bodySystemsData?.data?.map((system) => (
+                      <option key={system.id} value={system.id}>
+                        {system.title}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+              </HStack>
+
+              <FormControl isRequired>
+                <FormLabel color={memoizedColors.textColor} fontWeight="600">Description</FormLabel>
+                <Textarea
+                  placeholder="Enter detailed description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  rows={4}
+                  bg={memoizedColors.cardBg}
+                  border="1px solid"
+                  borderColor={memoizedColors.borderColor}
+                  borderRadius="lg"
                 />
               </FormControl>
-              <Box>
-                <FormLabel fontSize="sm" color={textColor}>Preview</FormLabel>
-                <Avatar
-                  src={item.image}
-                  size="md"
-                  fallback={<Icon as={FaLeaf} color="green.500" />}
+
+              <HStack spacing="4">
+                <FormControl>
+                  <FormLabel color={memoizedColors.textColor} fontWeight="600">Visible to Plans</FormLabel>
+                  <Select
+                    value={formData.visible_to_plan}
+                    onChange={(e) => handleInputChange('visible_to_plan', e.target.value)}
+                    bg={memoizedColors.cardBg}
+                    border="1px solid"
+                    borderColor={memoizedColors.borderColor}
+                    borderRadius="lg"
+                  >
+                    {visiblePlansOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl>
+                  <FormLabel color={memoizedColors.textColor} fontWeight="600">Status</FormLabel>
+                  <Select
+                    value={formData.status}
+                    onChange={(e) => handleInputChange('status', e.target.value)}
+                    bg={memoizedColors.cardBg}
+                    border="1px solid"
+                    borderColor={memoizedColors.borderColor}
+                    borderRadius="lg"
+                  >
+                    {statusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+              </HStack>
+
+              <FormControl>
+                <FormLabel color={memoizedColors.textColor} fontWeight="600">Product Link</FormLabel>
+                <Input
+                  placeholder="Enter product link (e.g., Amazon URL)"
+                  value={formData.product_link}
+                  onChange={(e) => handleInputChange('product_link', e.target.value)}
+                  bg={memoizedColors.cardBg}
+                  border="1px solid"
+                  borderColor={memoizedColors.borderColor}
+                  borderRadius="lg"
                 />
-              </Box>
-            </HStack>
+              </FormControl>
+            </VStack>
           </Box>
-        ))}
-      </VStack>
-    </Box>
-  );
+        );
+      case 1:
+        return (
+          <ListSection 
+            title="Ingredients" 
+            listName="ingredients" 
+            items={formData.ingredients}
+            textColor={memoizedColors.textColor}
+            borderColor={memoizedColors.borderColor}
+            inputBg={memoizedColors.inputBg}
+            cardBg={memoizedColors.cardBg}
+            isDraggingMap={isDragging}
+            uploadingMap={uploading}
+            imagePreviewsMap={imagePreviews}
+            onAddItem={addListItem}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onFileInputChange={handleFileInputChange}
+            onListChange={handleListChange}
+            onRemoveImage={handleRemoveImage}
+            onRemoveItem={removeListItem}
+          />
+        );
+      case 2:
+        return (
+          <ListSection 
+            title="Instructions" 
+            listName="instructions" 
+            items={formData.instructions}
+            textColor={memoizedColors.textColor}
+            borderColor={memoizedColors.borderColor}
+            inputBg={memoizedColors.inputBg}
+            cardBg={memoizedColors.cardBg}
+            isDraggingMap={isDragging}
+            uploadingMap={uploading}
+            imagePreviewsMap={imagePreviews}
+            onAddItem={addListItem}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onFileInputChange={handleFileInputChange}
+            onListChange={handleListChange}
+            onRemoveImage={handleRemoveImage}
+            onRemoveItem={removeListItem}
+          />
+        );
+      case 3:
+        return (
+          <ListSection 
+            title="Benefits" 
+            listName="benefits" 
+            items={formData.benefits}
+            textColor={memoizedColors.textColor}
+            borderColor={memoizedColors.borderColor}
+            inputBg={memoizedColors.inputBg}
+            cardBg={memoizedColors.cardBg}
+            isDraggingMap={isDragging}
+            uploadingMap={uploading}
+            imagePreviewsMap={imagePreviews}
+            onAddItem={addListItem}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onFileInputChange={handleFileInputChange}
+            onListChange={handleListChange}
+            onRemoveImage={handleRemoveImage}
+            onRemoveItem={removeListItem}
+          />
+        );
+      case 4:
+        return (
+          <ListSection 
+            title="Precautions" 
+            listName="precautions" 
+            items={formData.precautions}
+            textColor={memoizedColors.textColor}
+            borderColor={memoizedColors.borderColor}
+            inputBg={memoizedColors.inputBg}
+            cardBg={memoizedColors.cardBg}
+            isDraggingMap={isDragging}
+            uploadingMap={uploading}
+            imagePreviewsMap={imagePreviews}
+            onAddItem={addListItem}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onFileInputChange={handleFileInputChange}
+            onListChange={handleListChange}
+            onRemoveImage={handleRemoveImage}
+            onRemoveItem={removeListItem}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Debug: Log upload state
+  React.useEffect(() => {
+    console.log('Upload state changed:', uploading);
+  }, [uploading]);
 
   return (
-    <div className="container">
+    <Box mt="80px">
       <Card
         flexDirection="column"
         w="100%"
         px="0px"
         overflowX={{ sm: 'scroll', lg: 'hidden' }}
       >
-        <Flex px="25px" mb="8px" justifyContent="space-between" align="center">
+        <Flex px="25px" mb="20px" justifyContent="space-between" align="center">
           <Text
-            color={textColor}
+            color={memoizedColors.textColor}
             fontSize="22px"
             fontWeight="700"
             lineHeight="100%"
@@ -364,209 +1293,35 @@ const AddRemedy = () => {
         
         <Box px="25px" pb="25px">
           <form onSubmit={handleSubmit}>
-            <VStack spacing="8" align="stretch" maxW="800px">
-              {/* Basic Information */}
+            <VStack spacing="8" align="stretch" w="100%">
+              <Stepper index={activeStep} colorScheme="blue" size="sm">
+                {steps.map((step, index) => (
+                  <Step key={index} onClick={() => handleStepClick(index)} cursor="pointer">
+                    <StepIndicator>
+                      <StepStatus
+                        complete={<StepIcon />}
+                        incomplete={<StepNumber />}
+                        active={<StepNumber />}
+                      />
+                    </StepIndicator>
+                    <Box flexShrink="0">
+                      <StepTitle>{step.title}</StepTitle>
+                      <StepDescription>{step.description}</StepDescription>
+                    </Box>
+                    <StepSeparator />
+                  </Step>
+                ))}
+              </Stepper>
+
               <Box>
-                <Heading size="md" color={textColor} mb="4">Basic Information</Heading>
-                <VStack spacing="4" align="stretch">
-                  <HStack spacing="4">
-                    <FormControl isRequired>
-                      <FormLabel color={textColor} fontWeight="600">Title</FormLabel>
-                      <Input
-                        placeholder="Enter remedy title"
-                        value={formData.title}
-                        onChange={(e) => handleInputChange('title', e.target.value)}
-                        bg={useColorModeValue('white', 'gray.700')}
-                        border="1px solid"
-                        borderColor={borderColor}
-                        borderRadius="lg"
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel color={textColor} fontWeight="600">Main Image URL</FormLabel>
-                      <Input
-                        placeholder="Enter main image URL"
-                        value={formData.image}
-                        onChange={(e) => handleInputChange('image', e.target.value)}
-                        bg={useColorModeValue('white', 'gray.700')}
-                        border="1px solid"
-                        borderColor={borderColor}
-                        borderRadius="lg"
-                      />
-                    </FormControl>
-                  </HStack>
-
-                  <HStack spacing="4">
-                    <FormControl isRequired>
-                      <FormLabel color={textColor} fontWeight="600">Disease</FormLabel>
-                      <Select
-                        value={formData.disease}
-                        onChange={(e) => handleInputChange('disease', e.target.value)}
-                        bg={useColorModeValue('white', 'gray.700')}
-                        border="1px solid"
-                        borderColor={borderColor}
-                        borderRadius="lg"
-                        placeholder="Select disease"
-                      >
-                        {diseaseOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl isRequired>
-                      <FormLabel color={textColor} fontWeight="600">Remedy Type</FormLabel>
-                      <Select
-                        value={formData.remedyType}
-                        onChange={(e) => handleInputChange('remedyType', e.target.value)}
-                        bg={useColorModeValue('white', 'gray.700')}
-                        border="1px solid"
-                        borderColor={borderColor}
-                        borderRadius="lg"
-                        placeholder="Select remedy type"
-                      >
-                        {remedyTypeOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </HStack>
-
-                  <HStack spacing="4">
-                    <FormControl isRequired>
-                      <FormLabel color={textColor} fontWeight="600">Body System</FormLabel>
-                      <Select
-                        value={formData.bodySystem}
-                        onChange={(e) => handleInputChange('bodySystem', e.target.value)}
-                        bg={useColorModeValue('white', 'gray.700')}
-                        border="1px solid"
-                        borderColor={borderColor}
-                        borderRadius="lg"
-                        placeholder="Select body system"
-                      >
-                        {bodySystemOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </HStack>
-
-                  <FormControl isRequired>
-                    <FormLabel color={textColor} fontWeight="600">Description</FormLabel>
-                    <Textarea
-                      placeholder="Enter detailed description"
-                      value={formData.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      rows={4}
-                      bg={useColorModeValue('white', 'gray.700')}
-                      border="1px solid"
-                      borderColor={borderColor}
-                      borderRadius="lg"
-                    />
-                  </FormControl>
-
-                  <FormControl>
-                    <FormLabel color={textColor} fontWeight="600">Visible to Plans</FormLabel>
-                    <Select
-                      value={formData.visiblePlans}
-                      onChange={(e) => handleInputChange('visiblePlans', e.target.value)}
-                      bg={useColorModeValue('white', 'gray.700')}
-                      border="1px solid"
-                      borderColor={borderColor}
-                      borderRadius="lg"
-                    >
-                      {visiblePlansOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl>
-                    <FormLabel color={textColor} fontWeight="600">Status</FormLabel>
-                    <Select
-                      value={formData.status}
-                      onChange={(e) => handleInputChange('status', e.target.value)}
-                      bg={useColorModeValue('white', 'gray.700')}
-                      border="1px solid"
-                      borderColor={borderColor}
-                      borderRadius="lg"
-                    >
-                      {statusOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </VStack>
+                {renderStepContent()}
               </Box>
 
-              <Divider />
-
-              {/* Ingredients */}
-              <ListSection 
-                title="Ingredients" 
-                listName="ingredients" 
-                items={formData.ingredients} 
-              />
-
-              <Divider />
-
-              {/* Instructions */}
-              <ListSection 
-                title="Instructions" 
-                listName="instructions" 
-                items={formData.instructions} 
-              />
-
-              <Divider />
-
-              {/* Benefits */}
-              <ListSection 
-                title="Benefits" 
-                listName="benefits" 
-                items={formData.benefits} 
-              />
-
-              <Divider />
-
-              {/* Precautions */}
-              <ListSection 
-                title="Precautions" 
-                listName="precautions" 
-                items={formData.precautions} 
-              />
-
-              {/* Action Buttons */}
-              <Flex gap="4" pt="4">
-                <Button
-                  type="submit"
-                  variant="darkBrand"
-                  color="white"
-                  fontSize="sm"
-                  fontWeight="500"
-                  borderRadius="70px"
-                  px="24px"
-                  py="5px"
-                  isLoading={isSubmitting}
-                  loadingText="Adding..."
-                  _hover={{
-                    bg: 'blue.600',
-                  }}
-                >
-                  Add Remedy
-                </Button>
+              <Flex gap="4" pt="4" justify="space-between">
                 <Button
                   type="button"
                   variant="outline"
-                  color={textColor}
+                  color={memoizedColors.textColor}
                   fontSize="sm"
                   fontWeight="500"
                   borderRadius="70px"
@@ -574,17 +1329,77 @@ const AddRemedy = () => {
                   py="5px"
                   onClick={handleCancel}
                   _hover={{
-                    bg: useColorModeValue('gray.100', 'gray.600'),
+                    bg: memoizedColors.inputBg,
                   }}
                 >
                   Cancel
                 </Button>
+
+                <HStack spacing="4">
+                  {activeStep > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      color={memoizedColors.textColor}
+                      fontSize="sm"
+                      fontWeight="500"
+                      borderRadius="70px"
+                      px="24px"
+                      py="5px"
+                      onClick={handlePrevious}
+                      _hover={{
+                        bg: memoizedColors.inputBg,
+                      }}
+                    >
+                      Previous
+                    </Button>
+                  )}
+
+                  {activeStep < steps.length - 1 ? (
+                    <Button
+                      type="button"
+                      variant="darkBrand"
+                      color="white"
+                      fontSize="sm"
+                      fontWeight="500"
+                      borderRadius="70px"
+                      px="24px"
+                      py="5px"
+                      onClick={handleNext}
+                      isDisabled={!canProceedToNext()}
+                      _hover={{
+                        bg: 'blue.600',
+                      }}
+                    >
+                      Next
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      variant="darkBrand"
+                      color="white"
+                      fontSize="sm"
+                      fontWeight="500"
+                      borderRadius="70px"
+                      px="24px"
+                      py="5px"
+                      isLoading={isAdding}
+                      loadingText="Adding..."
+                      isDisabled={!canProceedToNext()}
+                      _hover={{
+                        bg: 'blue.600',
+                      }}
+                    >
+                      Add Remedy
+                    </Button>
+                  )}
+                </HStack>
               </Flex>
             </VStack>
           </form>
         </Box>
       </Card>
-    </div>
+    </Box>
   );
 };
 

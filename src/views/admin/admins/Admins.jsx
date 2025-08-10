@@ -15,6 +15,7 @@ import {
   InputGroup,
   InputLeftElement,
   IconButton,
+  Spinner,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -29,61 +30,53 @@ import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon
 import { FaEye, FaTrash } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useGetAdminsQuery, useDeleteAdminMutation } from 'api/adminSlice';
 
 const columnHelper = createColumnHelper();
 
 const Admins = () => {
   const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const searchBg = useColorModeValue("secondaryGray.300", "gray.700");
+  const searchColor = useColorModeValue("gray.700", "white");
 
-  // Static data
-  const staticData = [
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+966501234567',
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '+966502345678',
-    },
-    {
-      id: 3,
-      name: 'Ahmed Ali',
-      email: 'ahmed@example.com',
-      phone: '+966503456789',
-    },
-    {
-      id: 4,
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      phone: '+966504567890',
-    },
-    {
-      id: 5,
-      name: 'Mohammed Ahmed',
-      email: 'mohammed@example.com',
-      phone: '+966505678901',
-    },
-  ];
+  // Delete admin mutation
+  const [deleteAdmin, { isLoading: isDeleting }] = useDeleteAdminMutation();
 
-  const [searchQuery, setSearchQuery] = React.useState('');
+  // API call with search parameters
+  const { data: adminsData, isLoading, error, refetch } = useGetAdminsQuery(
+    { name: searchQuery },
+    { 
+      refetchOnMountOrArgChange: true,
+      pollingInterval: 30000 // Refetch every 30 seconds
+    }
+  );
 
-  // Filter data based on search query
-  const filteredData = React.useMemo(() => {
-    if (!searchQuery) return staticData;
-    return staticData.filter((item) =>
-      Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }, [searchQuery]);
+  // Extract admins from API response
+  const admins = React.useMemo(() => {
+    if (adminsData?.data) {
+      return adminsData.data;
+    }
+    return [];
+  }, [adminsData]);
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Debounced search effect
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      refetch();
+    }, 500); // Debounce search by 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, refetch]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -162,8 +155,9 @@ const Admins = () => {
             me="10px"
             color="red.500"
             as={FaTrash}
-            cursor="pointer"
-            onClick={() => handleDeleteAdmin(info.getValue())}
+            cursor={isDeleting ? "not-allowed" : "pointer"}
+            opacity={isDeleting ? 0.5 : 1}
+            onClick={isDeleting ? undefined : () => handleDeleteAdmin(info.getValue())}
           />
           <Icon
             w="18px"
@@ -189,7 +183,7 @@ const Admins = () => {
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: admins,
     columns,
     state: {
       sorting,
@@ -214,142 +208,211 @@ const Admins = () => {
       });
 
       if (result.isConfirmed) {
-        // In a real app, you would call your API here
-        // await deleteUser(id).unwrap();
-        Swal.fire('Deleted!', 'The admin has been deleted.', 'success');
+        // Call the delete API
+        await deleteAdmin(id).unwrap();
+        
+        // Show success message
+        Swal.fire('Deleted!', 'The admin has been deleted successfully.', 'success');
+        
+        // Refetch the admins list to update the table
+        refetch();
       }
     } catch (error) {
       console.error('Failed to delete admin:', error);
-      Swal.fire('Error!', 'Failed to delete the admin.', 'error');
+      
+      let errorMessage = 'Failed to delete the admin';
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      }
+      
+      Swal.fire('Error!', errorMessage, 'error');
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container">
+        <Card
+          flexDirection="column"
+          w="100%"
+          px={{ base: "0px", md: "0px" }}
+          overflowX={{ base: 'auto', sm: 'scroll', lg: 'hidden' }}
+        >
+          <Flex justify="center" align="center" h="200px">
+            <Spinner size="lg" color="brand.500" />
+            <Text ml="4" color={textColor}>Loading admins...</Text>
+          </Flex>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="container">
+        <Card
+          flexDirection="column"
+          w="100%"
+          px={{ base: "0px", md: "0px" }}
+          overflowX={{ base: 'auto', sm: 'scroll', lg: 'hidden' }}
+        >
+          <Flex justify="center" align="center" h="200px">
+            <Text color="red.500">Error loading admins. Please try again.</Text>
+          </Flex>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="container">
+    <Box mt={"80px"}>
       <Card
         flexDirection="column"
         w="100%"
-        px="0px"
-        overflowX={{ sm: 'scroll', lg: 'hidden' }}
+        px={{ base: "0px", md: "0px" }}
+        overflowX={{ base: 'auto', sm: 'scroll', lg: 'hidden' }}
       >
-        <Flex px="25px" mb="8px" justifyContent="space-between" align="center">
-          <Text
-            color={textColor}
-            fontSize="22px"
-            fontWeight="700"
-            lineHeight="100%"
-          >
-            Admins
-          </Text>
-          <div className="search-container d-flex align-items-center gap-2">
-            <InputGroup w={{ base: "100", md: "400px" }}>
-              <InputLeftElement>
-                <IconButton
-                  bg="inherit"
-                  borderRadius="inherit"
-                  _hover="none"
-                  _active={{
-                    bg: "inherit",
-                    transform: "none",
-                    borderColor: "transparent",
-                  }}
-                  _focus={{
-                    boxShadow: "none",
-                  }}
-                  icon={<SearchIcon w="15px" h="15px" />}
-                />
-              </InputLeftElement>
-              <Input
-                variant="search"
-                fontSize="sm"
-                bg={useColorModeValue("secondaryGray.300", "gray.700")}
-                color={useColorModeValue("gray.700", "white")}
-                fontWeight="500"
-                _placeholder={{ color: "gray.400", fontSize: "14px" }}
-                borderRadius="30px"
-                placeholder="Search by name, email or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </InputGroup>
-          </div>
-          <Button
-            variant='darkBrand'
-            color='white'
-            fontSize='sm'
-            fontWeight='500'
-            borderRadius='70px'
-            px='24px'
-            py='5px'
-            onClick={() => navigate('/admin/add-admin')}
-            width={'200px'}
-          >
-            Create New Admin
-          </Button>
-        </Flex>
-        <Box>
-          <Table variant="simple" color="gray.500" mb="24px" mt="12px">
-            <Thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <Tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <Th
-                        key={header.id}
-                        colSpan={header.colSpan}
-                        pe="10px"
-                        borderColor={borderColor}
-                        cursor="pointer"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        <Flex
-                          justifyContent="space-between"
-                          align="center"
-                          fontSize={{ sm: '10px', lg: '12px' }}
-                          color="gray.400"
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          {{
-                            asc: ' 🔼',
-                            desc: ' 🔽',
-                          }[header.column.getIsSorted()] ?? null}
-                        </Flex>
-                      </Th>
-                    );
-                  })}
-                </Tr>
-              ))}
-            </Thead>
-            <Tbody>
-              {table.getRowModel().rows.map((row) => {
-                return (
-                  <Tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <Td
-                          key={cell.id}
-                          fontSize={{ sm: '14px' }}
-                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                          borderColor="transparent"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </Td>
-                      );
-                    })}
-                  </Tr>
-                );
-              })}
-            </Tbody>
-          </Table>
-        </Box>
+                 <Flex 
+           px={{ base: "15px", md: "25px" }} 
+           mb="8px" 
+           flexDirection={{ base: "column", md: "row" }}
+           justifyContent="space-between" 
+           align={{ base: "stretch", md: "center" }}
+           gap={{ base: "15px", md: "0" }}
+         >
+           <Text
+             color={textColor}
+             fontSize={{ base: "18px", md: "22px" }}
+             fontWeight="700"
+             lineHeight="100%"
+             textAlign={{ base: "center", md: "left" }}
+           >
+             Admins
+           </Text>
+           <Flex 
+             direction={{ base: "column", md: "row" }}
+             gap={{ base: "10px", md: "15px" }}
+             w={{ base: "100%", md: "auto" }}
+           >
+             <InputGroup w={{ base: "100%", md: "250px" }}>
+               <InputLeftElement>
+                 <IconButton
+                   bg="inherit"
+                   borderRadius="inherit"
+                   _hover="none"
+                   _active={{
+                     bg: "inherit",
+                     transform: "none",
+                     borderColor: "transparent",
+                   }}
+                   _focus={{
+                     boxShadow: "none",
+                   }}
+                   icon={<SearchIcon w={{ base: "12px", md: "15px" }} h={{ base: "12px", md: "15px" }} />}
+                 />
+               </InputLeftElement>
+               <Input
+                 variant="search"
+                 fontSize={{ base: "12px", md: "sm" }}
+                 bg={searchBg}
+                 color={searchColor}
+                 fontWeight="500"
+                 _placeholder={{ color: "gray.400", fontSize: { base: "12px", md: "14px" } }}
+                 borderRadius="30px"
+                 placeholder="Search by name..."
+                 value={searchQuery}
+                 onChange={handleSearchChange}
+               />
+             </InputGroup>
+             <Button
+               variant='darkBrand'
+               color='white'
+               fontSize={{ base: "xs", md: "sm" }}
+               fontWeight='500'
+               borderRadius='70px'
+               px={{ base: "16px", md: "24px" }}
+               py='5px'
+               onClick={() => navigate('/admin/add-admin')}
+               width={{ base: "100%", md: "200px" }}
+             >
+               Create New Admin
+             </Button>
+           </Flex>
+         </Flex>
+                 <Box>
+           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
+             <Thead>
+               {table.getHeaderGroups().map((headerGroup) => (
+                 <Tr key={headerGroup.id}>
+                   {headerGroup.headers.map((header) => {
+                     return (
+                       <Th
+                         key={header.id}
+                         colSpan={header.colSpan}
+                         pe="10px"
+                         borderColor={borderColor}
+                         cursor="pointer"
+                         onClick={header.column.getToggleSortingHandler()}
+                       >
+                         <Flex
+                           justifyContent="space-between"
+                           align="center"
+                           fontSize={{ sm: '10px', lg: '12px' }}
+                           color="gray.400"
+                         >
+                           {flexRender(
+                             header.column.columnDef.header,
+                             header.getContext(),
+                           )}
+                           {{
+                             asc: ' 🔼',
+                             desc: ' 🔽',
+                           }[header.column.getIsSorted()] ?? null}
+                         </Flex>
+                       </Th>
+                     );
+                   })}
+                 </Tr>
+               ))}
+             </Thead>
+             <Tbody>
+               {table.getRowModel().rows.map((row) => {
+                 return (
+                   <Tr key={row.id}>
+                     {row.getVisibleCells().map((cell) => {
+                       return (
+                         <Td
+                           key={cell.id}
+                           fontSize={{ sm: '14px' }}
+                           minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                           borderColor="transparent"
+                         >
+                           {flexRender(
+                             cell.column.columnDef.cell,
+                             cell.getContext(),
+                           )}
+                         </Td>
+                       );
+                     })}
+                   </Tr>
+                 );
+               })}
+             </Tbody>
+           </Table>
+         </Box>
+                 {admins.length === 0 && (
+           <Flex justify="center" align="center" h="100px" px={{ base: "15px", md: "25px" }}>
+             <Text color={textColor} fontSize={{ base: "sm", md: "md" }} textAlign="center">
+               {searchQuery ? 'No admins found matching your search.' : 'No admins found.'}
+             </Text>
+           </Flex>
+         )}
       </Card>
-    </div>
+    </Box>
   );
 };
 

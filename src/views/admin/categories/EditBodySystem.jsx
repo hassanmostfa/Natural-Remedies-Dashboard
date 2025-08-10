@@ -14,25 +14,41 @@ import {
  } from '@chakra-ui/react';
  import * as React from 'react';
  import Card from 'components/card/Card';
- import { useNavigate } from 'react-router-dom';
- import { useCreateRemedyTypeMutation } from 'api/remediesTypesSlice';
+ import { useNavigate, useParams } from 'react-router-dom';
+ import { 
+   useGetBodySystemQuery,
+   useUpdateBodySystemMutation 
+ } from 'api/bodySystemsSlice';
  import Swal from 'sweetalert2';
  
- const AddRemedyType = () => {
+ const UpdateBodySystem = () => {
+   const { id } = useParams();
    const navigate = useNavigate();
-   const [createRemedyType, { isLoading }] = useCreateRemedyTypeMutation();
+   const { data: bodySystem, isLoading, isError } = useGetBodySystemQuery(id);
+   const [updateBodySystem, { isLoading: isUpdating }] = useUpdateBodySystemMutation();
    
-   // Color mode values
    const textColor = useColorModeValue('secondaryGray.900', 'white');
    const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
    const inputBg = useColorModeValue('white', 'gray.700');
    const cancelHoverBg = useColorModeValue('gray.100', 'gray.600');
  
    const [formData, setFormData] = React.useState({
-     name: '',
+     title: '',
      description: '',
      status: 'active',
    });
+ 
+   // Set form data when bodySystem data is loaded
+   React.useEffect(() => {
+     if (bodySystem?.data) {
+       console.log('Initial data loaded:', bodySystem.data);
+       setFormData({
+         title: bodySystem.data.title || '',
+         description: bodySystem.data.description || '',
+         status: bodySystem.data.status || 'active',
+       });
+     }
+   }, [bodySystem]);
  
    const statusOptions = [
      { value: 'active', label: 'Active' },
@@ -51,12 +67,12 @@ import {
    const showSuccessAlert = () => {
      Swal.fire({
        title: 'Success!',
-       text: 'Remedy type created successfully',
+       text: 'Body system updated successfully',
        icon: 'success',
        confirmButtonText: 'OK',
      }).then((result) => {
        if (result.isConfirmed) {
-         navigate('/admin/remedy-types');
+         navigate('/admin/categories');
        }
      });
    };
@@ -71,8 +87,8 @@ import {
    const handleSubmit = async (e) => {
      e.preventDefault();
  
-     if (!formData.name.trim()) {
-       showErrorAlert('Remedy type name is required');
+     if (!formData.title.trim()) {
+       showErrorAlert('Body system title is required');
        return;
      }
  
@@ -82,18 +98,23 @@ import {
      }
  
      try {
-       const response = await createRemedyType(formData).unwrap();
+       console.log('Submitting data:', { id, data: formData });
        
-       console.log('Create successful:', response);
+       const response = await updateBodySystem({
+         id, // This is the ID from useParams
+         bodySystem: formData
+       }).unwrap();
+ 
+       console.log('Update response:', response);
        
        if (response.success) {
          showSuccessAlert();
        } else {
-         showErrorAlert(response.message || 'Creation failed');
+         showErrorAlert(response.message || 'Update failed');
        }
      } catch (error) {
-       console.error('Failed to create remedy type:', error);
-       let errorMessage = 'Failed to create remedy type. Please try again.';
+       console.error('Failed to update body system:', error);
+       let errorMessage = 'Failed to update body system. Please try again.';
        
        if (error.data) {
          console.error('Error details:', error.data);
@@ -119,10 +140,26 @@ import {
        confirmButtonText: 'Yes, cancel it!'
      }).then((result) => {
        if (result.isConfirmed) {
-         navigate('/admin/remedy-types');
+         navigate('/admin/categories');
        }
      });
    };
+ 
+   if (isLoading) {
+     return (
+       <Flex justify="center" align="center" height="100vh">
+         <Spinner size="xl" />
+       </Flex>
+     );
+   }
+ 
+   if (isError) {
+     return (
+       <Flex justify="center" align="center" height="100vh">
+         <Text>Error loading body system data</Text>
+       </Flex>
+     );
+   }
  
    return (
      <Box mt="80px">
@@ -139,7 +176,7 @@ import {
              fontWeight="700"
              lineHeight="100%"
            >
-             Add New Remedy Type
+             Update Body System
            </Text>
          </Flex>
          
@@ -148,12 +185,12 @@ import {
              <VStack spacing="6" align="stretch" maxW="600px">
                <FormControl isRequired>
                  <FormLabel color={textColor} fontWeight="600">
-                   Name
+                   Title
                  </FormLabel>
                  <Input
-                   placeholder="Enter remedy type name"
-                   value={formData.name}
-                   onChange={(e) => handleInputChange('name', e.target.value)}
+                   placeholder="Enter title"
+                   value={formData.title}
+                   onChange={(e) => handleInputChange('title', e.target.value)}
                    bg={inputBg}
                    border="1px solid"
                    borderColor={borderColor}
@@ -170,7 +207,7 @@ import {
                    Description
                  </FormLabel>
                  <Textarea
-                   placeholder="Enter description for this remedy type"
+                   placeholder="Enter description for this body system"
                    value={formData.description}
                    onChange={(e) => handleInputChange('description', e.target.value)}
                    rows={4}
@@ -219,13 +256,13 @@ import {
                    borderRadius="70px"
                    px="24px"
                    py="5px"
-                   isLoading={isLoading}
-                   loadingText="Creating..."
+                   isLoading={isUpdating}
+                   loadingText="Updating..."
                    _hover={{
                      bg: 'blue.600',
                    }}
                  >
-                   Create Remedy Type
+                   Update Body System
                  </Button>
                  <Button
                    type="button"
@@ -252,4 +289,4 @@ import {
    );
  };
  
- export default AddRemedyType;
+ export default UpdateBodySystem;

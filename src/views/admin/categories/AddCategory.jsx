@@ -10,26 +10,25 @@ import {
   VStack,
   Text,
   useColorModeValue,
-  useToast,
 } from '@chakra-ui/react';
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { useNavigate } from 'react-router-dom';
+import { useCreateBodySystemMutation } from 'api/bodySystemsSlice';
+import Swal from 'sweetalert2';
 
-const AddCategory = () => {
+const AddBodySystem = () => {
   const navigate = useNavigate();
-  const toast = useToast();
-  
+  const [createBodySystem, { isLoading: isCreating }] = useCreateBodySystemMutation();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
   const [formData, setFormData] = React.useState({
-    name: '',
+    title: '',
     description: '',
     status: 'active',
+    bodySystemId: '',
   });
-
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const statusOptions = [
     { value: 'active', label: 'Active' },
@@ -43,100 +42,112 @@ const AddCategory = () => {
     }));
   };
 
+  const showErrorAlert = (message) => {
+    Swal.fire({
+      title: 'Error!',
+      text: message,
+      icon: 'error',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#4B2E2B',
+    });
+  };
+
+  const showSuccessAlert = () => {
+    Swal.fire({
+      title: 'Success!',
+      text: 'Body system created successfully',
+      icon: 'success',
+      confirmButtonText: 'OK',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate('/admin/categories');
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+
+    // Validate form data
+    if (!formData.title.trim()) {
+      showErrorAlert('Body system title is required');
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      showErrorAlert('Description is required');
+      return;
+    }
 
     try {
-      // Validate form data
-      if (!formData.name.trim()) {
-        toast({
-          title: 'Error',
-          description: 'Category name is required',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-        return;
-      }
+      // Call the create body system API
+      await createBodySystem({
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
+        bodySystemId: formData.bodySystemId
+      }).unwrap();
 
-      if (!formData.description.trim()) {
-        toast({
-          title: 'Error',
-          description: 'Description is required',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-        return;
-      }
-
-      // In a real app, you would call your API here
-      // const response = await api.post('/categories', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast({
-        title: 'Success',
-        description: 'Category added successfully',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-
-      // Navigate back to categories list
-      navigate('/admin/categories');
+      showSuccessAlert();
       
     } catch (error) {
-      console.error('Failed to add category:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to add category. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsSubmitting(false);
+      console.error('Failed to create body system:', error);
+      
+      let errorMessage = 'Failed to create body system. Please try again.';
+      if (error.data?.message) {
+        errorMessage = error.data.message;
+      }
+
+      showErrorAlert(errorMessage);
     }
   };
 
   const handleCancel = () => {
-    navigate('/admin/categories');
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'You will lose any unsaved changes',
+      icon: 'warning',
+      showCancelButton: true,
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, cancel it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate('/admin/categories');
+      }
+    });
   };
 
   return (
-    <div className="container">
+    <Box mt="80px">
       <Card
         flexDirection="column"
         w="100%"
         px="0px"
         overflowX={{ sm: 'scroll', lg: 'hidden' }}
       >
-        <Flex px="25px" mb="8px" justifyContent="space-between" align="center">
+        <Flex px="25px" mb="20px" justifyContent="space-between" align="center">
           <Text
             color={textColor}
             fontSize="22px"
             fontWeight="700"
             lineHeight="100%"
           >
-            Add New Category
+            Add New Body System
           </Text>
         </Flex>
         
         <Box px="25px" pb="25px">
           <form onSubmit={handleSubmit}>
             <VStack spacing="6" align="stretch" maxW="600px">
-              {/* Category Name */}
+              {/* Body System Name */}
               <FormControl isRequired>
                 <FormLabel color={textColor} fontWeight="600">
-                  Category Name
+                  Title
                 </FormLabel>
                 <Input
-                  placeholder="Enter category name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Enter title"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
                   bg={useColorModeValue('white', 'gray.700')}
                   border="1px solid"
                   borderColor={borderColor}
@@ -154,7 +165,7 @@ const AddCategory = () => {
                   Description
                 </FormLabel>
                 <Textarea
-                  placeholder="Enter description for this category"
+                  placeholder="Enter description for this body system"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={4}
@@ -205,13 +216,13 @@ const AddCategory = () => {
                   borderRadius="70px"
                   px="24px"
                   py="5px"
-                  isLoading={isSubmitting}
-                  loadingText="Adding..."
+                  isLoading={isCreating}
+                  loadingText="Creating..."
                   _hover={{
                     bg: 'blue.600',
                   }}
                 >
-                  Add Category
+                  Create Body System
                 </Button>
                 <Button
                   type="button"
@@ -234,8 +245,8 @@ const AddCategory = () => {
           </form>
         </Box>
       </Card>
-    </div>
+    </Box>
   );
 };
 
-export default AddCategory;
+export default AddBodySystem;

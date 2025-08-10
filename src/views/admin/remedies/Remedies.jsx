@@ -16,8 +16,10 @@ import {
   InputLeftElement,
   IconButton,
   Badge,
-  Image,
   Avatar,
+  useToast,
+  HStack,
+  Select,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -28,116 +30,100 @@ import {
 } from '@tanstack/react-table';
 import * as React from 'react';
 import Card from 'components/card/Card';
-import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
-import { FaEye, FaTrash, FaLeaf, FaSeedling, FaFlask, FaPills, FaMugHot, FaSprayCan } from 'react-icons/fa6';
+import { EditIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
+import { FaEye, FaTrash, FaLeaf, FaArrowUpRightFromSquare } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useGetRemediesQuery, useDeleteRemedyMutation } from 'api/remediesSlice';
 
 const columnHelper = createColumnHelper();
 
 const Remedies = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(15);
 
+  // Chakra color mode values
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const searchBg = useColorModeValue('secondaryGray.300', 'gray.700');
+  const searchColor = useColorModeValue('gray.700', 'white');
 
-  // Static remedies data
-  const staticData = [
-    {
-      id: 1,
-      disease: 'Common Cold',
-      remedyType: 'Herbal Tea',
-      bodySystem: 'Respiratory',
-      image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=100&h=100&fit=crop',
-      title: 'Ginger Honey Tea',
-      description: 'A soothing herbal tea to relieve cold symptoms and boost immunity',
-      ingredients: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Fresh Ginger' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Raw Honey' },
-        { image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop', name: 'Lemon' }
-      ],
-      instructions: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Boil water' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Add ginger' },
-        { image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop', name: 'Strain and serve' }
-      ],
-      benefits: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Relieves sore throat' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Boosts immunity' },
-        { image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop', name: 'Reduces inflammation' }
-      ],
-      precautions: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Avoid if allergic to ginger' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Not for children under 1' }
-      ],
-      status: 'active',
+  // API calls
+  const { data: remediesData, isLoading, isError, refetch } = useGetRemediesQuery(
+    { 
+      search: searchQuery,
+      page: currentPage,
+      per_page: perPage
     },
-    {
-      id: 2,
-      disease: 'Headache',
-      remedyType: 'Essential Oil',
-      bodySystem: 'Nervous',
-      image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=100&fit=crop',
-      title: 'Lavender Oil Massage',
-      description: 'Natural headache relief using lavender essential oil',
-      ingredients: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Lavender Oil' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Carrier Oil' }
-      ],
-      instructions: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Dilute oil' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Apply to temples' },
-        { image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop', name: 'Massage gently' }
-      ],
-      benefits: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Relieves tension' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Promotes relaxation' }
-      ],
-      precautions: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Avoid eye contact' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Test for allergies' }
-      ],
-      status: 'active',
-    },
-    {
-      id: 3,
-      disease: 'Digestive Issues',
-      remedyType: 'Herbal Supplement',
-      bodySystem: 'Digestive',
-      image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&h=100&fit=crop',
-      title: 'Peppermint Capsules',
-      description: 'Natural digestive aid using peppermint extract',
-      ingredients: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Peppermint Oil' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Gelatin Capsule' }
-      ],
-      instructions: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Take with water' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Before meals' }
-      ],
-      benefits: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Relieves bloating' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Soothes stomach' }
-      ],
-      precautions: [
-        { image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop', name: 'Not for GERD patients' },
-        { image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop', name: 'Consult doctor if pregnant' }
-      ],
-      status: 'active',
-    },
-  ];
+    { refetchOnMountOrArgChange: true }
+  );
+  
+  const [deleteRemedy, { isLoading: isDeleting }] = useDeleteRemedyMutation();
 
-  // Filter data based on search query
-  const filteredData = React.useMemo(() => {
-    if (!searchQuery) return staticData;
-    return staticData.filter((item) =>
-      Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }, [searchQuery]);
+  // Transform API data to match table structure
+  const remedies = React.useMemo(() => {
+    if (!remediesData?.data) return [];
+    
+    return remediesData.data.map(remedy => ({
+      id: remedy.id,
+      title: remedy.title,
+      disease: remedy.disease,
+      remedyType: remedy.remedy_type,
+      bodySystem: remedy.body_system,
+      image: remedy.main_image_url,
+      description: remedy.description,
+      status: remedy.status,
+      visibleToPlan: remedy.visible_to_plan,
+      rating: remedy.average_rating,
+      reviewCount: remedy.review_count,
+      productLink: remedy.product_link,
+    }));
+  }, [remediesData]);
+
+  // Handle search input change with debounce
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle page size change
+  const handlePerPageChange = (e) => {
+    setPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  // Handle page navigation
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Handle image click to navigate to product link
+  const handleImageClick = (productLink) => {
+    if (productLink) {
+      window.open(productLink, '_blank', 'noopener,noreferrer');
+    } else {
+      toast({
+        title: 'No product link available',
+        description: 'This remedy does not have a product link.',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  // Debounced search effect
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      refetch();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, currentPage, perPage, refetch]);
 
   const columns = [
     columnHelper.accessor('image', {
@@ -153,12 +139,29 @@ const Remedies = () => {
         </Text>
       ),
       cell: (info) => (
-        <Avatar
-          src={info.getValue()}
-          size="md"
-          borderRadius="lg"
-          fallback={<Icon as={FaLeaf} color="green.500" />}
-        />
+        <Flex align="center" gap="2">
+          <Avatar
+            src={info.getValue()}
+            size="md"
+            borderRadius="lg"
+            fallback={<Icon as={FaLeaf} color="green.500" />}
+            onClick={() => handleImageClick(info.row.original.productLink)}
+            cursor="pointer"
+            _hover={{ opacity: 0.8 }}
+            transition="opacity 0.2s"
+          />
+                     {info.row.original.productLink && (
+             <Icon
+               as={FaArrowUpRightFromSquare}
+               color="blue.500"
+               w="12px"
+               h="12px"
+               cursor="pointer"
+               onClick={() => handleImageClick(info.row.original.productLink)}
+               _hover={{ color: "blue.600" }}
+             />
+           )}
+        </Flex>
       ),
     }),
     columnHelper.accessor('title', {
@@ -212,7 +215,7 @@ const Remedies = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Remedy Type
+          Type
         </Text>
       ),
       cell: (info) => (
@@ -251,8 +254,8 @@ const Remedies = () => {
         </Badge>
       ),
     }),
-    columnHelper.accessor('description', {
-      id: 'description',
+    columnHelper.accessor('visibleToPlan', {
+      id: 'visibleToPlan',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -260,31 +263,20 @@ const Remedies = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Description
+          Visibility
         </Text>
       ),
       cell: (info) => (
-        <Text color={textColor} fontSize="sm" maxW="200px" noOfLines={2}>
+        <Badge 
+          colorScheme={info.getValue() === 'all' ? 'green' : 'orange'}
+          px="2"
+          py="1"
+          borderRadius="full"
+          fontSize="xs"
+          textTransform="capitalize"
+        >
           {info.getValue()}
-        </Text>
-      ),
-    }),
-    columnHelper.accessor('ingredients', {
-      id: 'ingredients',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Ingredients
-        </Text>
-      ),
-      cell: (info) => (
-        <Text color={textColor} fontSize="sm">
-          {info.getValue().length} items
-        </Text>
+        </Badge>
       ),
     }),
     columnHelper.accessor('status', {
@@ -306,6 +298,7 @@ const Remedies = () => {
           py="1"
           borderRadius="full"
           fontSize="xs"
+          textTransform="capitalize"
         >
           {info.getValue()}
         </Badge>
@@ -331,8 +324,9 @@ const Remedies = () => {
             me="10px"
             color="red.500"
             as={FaTrash}
-            cursor="pointer"
-            onClick={() => handleDeleteRemedy(info.getValue())}
+            cursor={isDeleting ? "not-allowed" : "pointer"}
+            opacity={isDeleting ? 0.5 : 1}
+            onClick={isDeleting ? undefined : () => handleDeleteRemedy(info.getValue())}
           />
           <Icon
             w="18px"
@@ -350,15 +344,15 @@ const Remedies = () => {
             color="blue.500"
             as={FaEye}
             cursor="pointer"
-            onClick={() => navigate(`/admin/remedy/details/${info.getValue()}`)}
-          />
+            onClick={() => navigate(`/admin/remedy/${info.getValue()}`)}
+          /> 
         </Flex>
       ),
     }),
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: remedies,
     columns,
     state: {
       sorting,
@@ -383,24 +377,88 @@ const Remedies = () => {
       });
 
       if (result.isConfirmed) {
-        // In a real app, you would call your API here
-        Swal.fire('Deleted!', 'The remedy has been deleted.', 'success');
+        await deleteRemedy(id).unwrap();
+        
+        toast({
+          title: 'Remedy deleted',
+          description: 'The remedy has been successfully deleted.',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        
+        refetch();
       }
     } catch (error) {
       console.error('Failed to delete remedy:', error);
-      Swal.fire('Error!', 'Failed to delete the remedy.', 'error');
+      
+      let errorMessage = 'Failed to delete the remedy';
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box mt="80px">
+        <Card
+          flexDirection="column"
+          w="100%"
+          px="0px"
+          overflowX={{ sm: 'scroll', lg: 'hidden' }}
+        >
+          <Flex justify="center" align="center" h="200px">
+            <Text color={textColor}>Loading remedies...</Text>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <Box mt="80px">
+        <Card
+          flexDirection="column"
+          w="100%"
+          px="0px"
+          overflowX={{ sm: 'scroll', lg: 'hidden' }}
+        >
+          <Flex justify="center" align="center" h="200px">
+            <Text color="red.500">Error loading remedies. Please try again.</Text>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
   return (
-    <div className="container">
+    <Box mt="80px">
       <Card
         flexDirection="column"
         w="100%"
         px="0px"
         overflowX={{ sm: 'scroll', lg: 'hidden' }}
       >
-        <Flex px="25px" mb="8px" justifyContent="space-between" align="center">
+        <Flex
+          px={{ base: "16px", md: "25px" }}
+          mb="8px"
+          direction={{ base: "column", md: "row" }}
+          justifyContent="space-between"
+          align={{ base: "stretch", md: "center" }}
+          gap={{ base: 4, md: 0 }}
+        >
           <Text
             color={textColor}
             fontSize="22px"
@@ -409,8 +467,9 @@ const Remedies = () => {
           >
             Remedies
           </Text>
-          <div className="search-container d-flex align-items-center gap-2">
-            <InputGroup w={{ base: "100", md: "400px" }}>
+
+          <Box w={{ base: "100%", md: "auto" }}>
+            <InputGroup w={{ base: "100%", md: "400px" }}>
               <InputLeftElement>
                 <IconButton
                   bg="inherit"
@@ -430,31 +489,33 @@ const Remedies = () => {
               <Input
                 variant="search"
                 fontSize="sm"
-                bg={useColorModeValue("secondaryGray.300", "gray.700")}
-                color={useColorModeValue("gray.700", "white")}
+                bg={searchBg}
+                color={searchColor}
                 fontWeight="500"
                 _placeholder={{ color: "gray.400", fontSize: "14px" }}
                 borderRadius="30px"
                 placeholder="Search remedies..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
               />
             </InputGroup>
-          </div>
+          </Box>
+
           <Button
-            variant='darkBrand'
-            color='white'
-            fontSize='sm'
-            fontWeight='500'
-            borderRadius='70px'
-            px='24px'
-            py='5px'
+            variant="darkBrand"
+            color="white"
+            fontSize="sm"
+            fontWeight="500"
+            borderRadius="70px"
+            px="24px"
+            py="5px"
             onClick={() => navigate('/admin/add-remedy')}
-            width={'200px'}
+            w={{ base: "100%", md: "200px" }}
           >
             Add New Remedy
           </Button>
         </Flex>
+
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
             <Thead>
@@ -516,8 +577,91 @@ const Remedies = () => {
             </Tbody>
           </Table>
         </Box>
+
+        {/* Pagination Controls */}
+        {remediesData?.pagination && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="20px"
+            justify="space-between"
+            align="center"
+            borderTop="1px solid"
+            borderColor={borderColor}
+            direction={{ base: "column", md: "row" }}
+            gap={{ base: 4, md: 0 }}
+          >
+            {/* Page Info */}
+            <Text color={textColor} fontSize="sm">
+              Showing {remediesData.pagination.from} to {remediesData.pagination.to} of {remediesData.pagination.total} results
+            </Text>
+
+            {/* Pagination Controls */}
+            <HStack spacing="3">
+              {/* Page Size Selector */}
+              <HStack spacing="2">
+                <Text fontSize="sm" color={textColor}>
+                  Show:
+                </Text>
+                <Select
+                  size="sm"
+                  value={perPage}
+                  onChange={handlePerPageChange}
+                  w="70px"
+                  bg={searchBg}
+                  color={searchColor}
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </Select>
+              </HStack>
+
+              {/* Page Navigation */}
+              <HStack spacing="2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  isDisabled={currentPage <= 1}
+                  leftIcon={<ChevronLeftIcon />}
+                >
+                  Previous
+                </Button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, remediesData.pagination.last_page) }, (_, i) => {
+                  const pageNum = i + 1;
+                  const isCurrentPage = pageNum === currentPage;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      size="sm"
+                      variant={isCurrentPage ? "solid" : "outline"}
+                      colorScheme={isCurrentPage ? "blue" : "gray"}
+                      onClick={() => handlePageChange(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  isDisabled={currentPage >= remediesData.pagination.last_page}
+                  rightIcon={<ChevronRightIcon />}
+                >
+                  Next
+                </Button>
+              </HStack>
+            </HStack>
+          </Flex>
+        )}
       </Card>
-    </div>
+    </Box>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -10,64 +10,79 @@ import {
   useColorModeValue,
   Image,
   Select,
-  IconButton,
-  Textarea,
   VStack,
-  HStack,
   useToast,
-  Avatar,
   Icon,
   Spinner,
 } from '@chakra-ui/react';
-import { AddIcon, ChevronDownIcon } from '@chakra-ui/icons';
-import { FaUser, FaUpload } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import { ArrowBackIcon, ChevronDownIcon } from '@chakra-ui/icons';
+import { FaUpload, FaImage } from 'react-icons/fa';
+import { useNavigate, useParams } from 'react-router-dom';
 import Card from 'components/card/Card';
-import { useCreateUserMutation } from 'api/usersSlice';
+import { useGetAdQuery, useUpdateAdMutation } from 'api/adsSlice';
 import { useUploadImageMutation } from 'api/fileUploadSlice';
 
-const AddUser = () => {
+const EditAd = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const toast = useToast();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
-  const cardBg = useColorModeValue('white', 'navy.700');
   const inputBg = useColorModeValue('gray.100', 'gray.700');
   const inputBorder = useColorModeValue('gray.300', 'gray.600');
-  const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
   // API hooks
-  const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
+  const { data: adResponse, isLoading: isLoadingAd, isError: isErrorLoadingAd } = useGetAdQuery(id);
+  const [updateAd, { isLoading: isUpdating }] = useUpdateAdMutation();
   const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    full_name: '',
-    subscription_plan: 'rookie',
+    title: '',
+    url: '',
+    status: 'active',
+    image: '',
   });
 
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  const subscriptionPlans = [
-    { value: 'rookie', label: 'Rookie' },
-    { value: 'skilled', label: 'Skilled' },
-    { value: 'master', label: 'Master' },
+  const statusOptions = [
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
   ];
+
+  // Load ad data when fetched (only once)
+  useEffect(() => {
+    if (adResponse?.data && !isDataLoaded) {
+      const adData = adResponse.data;
+      console.log('Loading ad data:', adData);
+      setFormData({
+        title: adData.title || '',
+        url: adData.url || '',
+        status: adData.status || 'active',
+        image: adData.image || '',
+      });
+      setImagePreview(adData.image || null);
+      setIsDataLoaded(true);
+    }
+  }, [adResponse?.data, isDataLoaded]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
+    console.log('Input change:', name, value);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value,
+      };
+      console.log('Updated formData:', newData);
+      return newData;
     });
   };
 
-  // Image upload functions (matching AddRemedy pattern)
+  // Image upload functions
   const handleImageUpload = (files) => {
     if (files && files.length > 0) {
       const selectedFile = files[0];
@@ -142,7 +157,7 @@ const AddUser = () => {
       if (response.success && response.url) {
         setFormData(prev => ({
           ...prev,
-          profile_image: response.url
+          image: response.url
         }));
 
         toast({
@@ -176,45 +191,25 @@ const AddUser = () => {
     setSelectedFile(null);
     setFormData(prev => ({
       ...prev,
-      profile_image: ''
+      image: ''
     }));
   };
 
   const validateForm = () => {
-    if (!formData.name.trim()) {
+    if (!formData.title.trim()) {
       toast({
         title: 'Error',
-        description: 'Name is required',
+        description: 'Title is required',
         status: 'error',
         duration: 3000,
         isClosable: true,
       });
       return false;
     }
-    if (!formData.email.trim()) {
+    if (!formData.image.trim()) {
       toast({
         title: 'Error',
-        description: 'Email is required',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-      return false;
-    }
-    if (!formData.password.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Password is required',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-      return false;
-    }
-    if (formData.password.length < 6) {
-      toast({
-        title: 'Error',
-        description: 'Password must be at least 6 characters',
+        description: 'Image is required',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -232,33 +227,30 @@ const AddUser = () => {
     }
 
     try {
-      // Prepare the data according to the API structure
-      const userData = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        full_name: formData.full_name || formData.name, // Use name as fallback
-        subscription_plan: formData.subscription_plan,
-        profile_image: formData.profile_image || null,
+      // Prepare the data according to the specified API structure
+      const ad = {
+        title: formData.title,
+        image: formData.image,
+        url: formData.url || null,
       };
 
-      await createUser(userData).unwrap();
+      await updateAd({ id, ad }).unwrap();
 
       toast({
         title: 'Success',
-        description: 'User created successfully',
+        description: 'Ad updated successfully',
         status: 'success',
         duration: 3000,
         isClosable: true,
       });
 
-      navigate('/admin/users');
+      navigate('/admin/ads');
       
     } catch (error) {
-      console.error('Failed to create user:', error);
+      console.error('Failed to update ad:', error);
       toast({
         title: 'Error',
-        description: error.data?.message || 'Failed to create user. Please try again.',
+        description: error.data?.message || 'Failed to update ad. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -266,20 +258,76 @@ const AddUser = () => {
     }
   };
 
+  // Loading state
+  if (isLoadingAd) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Flex justify="center" align="center" h="200px">
+              <VStack spacing={4}>
+                <Spinner size="xl" color="#422afb" thickness="4px" />
+                <Text color={textColor}>Loading ad details...</Text>
+              </VStack>
+            </Flex>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (isErrorLoadingAd) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Flex justify="center" align="center" h="200px">
+              <VStack spacing={4}>
+                <Text color="red.500" fontSize="lg">Error loading ad details</Text>
+                <Text color={textColor} fontSize="sm">
+                  The ad you're looking for might not exist or there was an error loading it.
+                </Text>
+                <Button
+                  leftIcon={<ArrowBackIcon />}
+                  variant="outline"
+                  onClick={() => navigate('/admin/ads')}
+                  size="sm"
+                >
+                  Back to Ads
+                </Button>
+              </VStack>
+            </Flex>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
   return (
     <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
       <Card>
         <Box p={6}>
-          <Text color={textColor} fontSize="22px" fontWeight="700" mb="20px">
-            Add New User
-          </Text>
+          <Flex justify="space-between" align="center" mb="20px">
+            <Text color={textColor} fontSize="22px" fontWeight="700">
+              Edit Ad
+            </Text>
+            <Button
+              leftIcon={<ArrowBackIcon />}
+              variant="outline"
+              onClick={() => navigate('/admin/ads')}
+              size="sm"
+            >
+              Back to Ads
+            </Button>
+          </Flex>
 
           <form onSubmit={handleSubmit}>
             <VStack spacing={6} align="stretch">
-              {/* Profile Image Upload */}
-              <FormControl>
+              {/* Ad Image Upload */}
+              <FormControl isRequired>
                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Profile Image
+                  Ad Image
                 </FormLabel>
                 <Box
                   border="1px dashed"
@@ -298,11 +346,11 @@ const AddUser = () => {
                     <Flex direction="column" align="center">
                       <Image
                         src={imagePreview}
-                        alt="Profile Preview"
+                        alt="Ad Preview"
                         maxH="200px"
                         mb={2}
                         borderRadius="md"
-                        fallback={<Icon as={FaUser} color="gray.500" boxSize="100px" />}
+                        fallback={<Icon as={FaImage} color="gray.500" boxSize="100px" />}
                       />
                       <Button
                         variant="outline"
@@ -385,16 +433,16 @@ const AddUser = () => {
                 </Box>
               </FormControl>
 
-              {/* Name Field */}
+              {/* Title Field */}
               <FormControl isRequired>
                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Name
+                  Ad Title
                 </FormLabel>
                 <Input
                   type="text"
-                  name="name"
-                  placeholder="Enter user's name"
-                  value={formData.name}
+                  name="title"
+                  placeholder="Enter ad title"
+                  value={formData.title}
                   onChange={handleInputChange}
                   bg={inputBg}
                   color={textColor}
@@ -402,16 +450,16 @@ const AddUser = () => {
                 />
               </FormControl>
 
-              {/* Full Name Field */}
+              {/* URL Field */}
               <FormControl>
                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Full Name (Optional)
+                  URL (Optional)
                 </FormLabel>
                 <Input
-                  type="text"
-                  name="full_name"
-                  placeholder="Enter user's full name"
-                  value={formData.full_name}
+                  type="url"
+                  name="url"
+                  placeholder="Enter URL (e.g., https://example.com)"
+                  value={formData.url}
                   onChange={handleInputChange}
                   bg={inputBg}
                   color={textColor}
@@ -419,57 +467,23 @@ const AddUser = () => {
                 />
               </FormControl>
 
-              {/* Email Field */}
+              {/* Status Field */}
               <FormControl isRequired>
                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Email Address
-                </FormLabel>
-                <Input
-                  type="email"
-                  name="email"
-                  placeholder="Enter user's email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  bg={inputBg}
-                  color={textColor}
-                  borderColor={inputBorder}
-                />
-              </FormControl>
-
-              {/* Password Field */}
-              <FormControl isRequired>
-                <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Password
-                </FormLabel>
-                <Input
-                  type="password"
-                  name="password"
-                  placeholder="Enter password (min 6 characters)"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  bg={inputBg}
-                  color={textColor}
-                  borderColor={inputBorder}
-                />
-              </FormControl>
-
-              {/* Subscription Plan */}
-              <FormControl isRequired>
-                <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Subscription Plan
+                  Status
                 </FormLabel>
                 <Select
-                  name="subscription_plan"
-                  value={formData.subscription_plan}
+                  name="status"
+                  value={formData.status}
                   onChange={handleInputChange}
                   bg={inputBg}
                   color={textColor}
                   borderColor={inputBorder}
                   icon={<ChevronDownIcon />}
                 >
-                  {subscriptionPlans.map(plan => (
-                    <option key={plan.value} value={plan.value}>
-                      {plan.label}
+                  {statusOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </Select>
@@ -481,10 +495,10 @@ const AddUser = () => {
                 colorScheme="blue"
                 width="100%"
                 size="lg"
-                isLoading={isCreating}
-                loadingText="Creating User"
+                isLoading={isUpdating}
+                loadingText="Updating Ad"
               >
-                Create User
+                Update Ad
               </Button>
             </VStack>
           </form>
@@ -494,4 +508,4 @@ const AddUser = () => {
   );
 };
 
-export default AddUser;
+export default EditAd;

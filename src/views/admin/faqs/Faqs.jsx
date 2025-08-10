@@ -14,10 +14,12 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  IconButton,
   HStack,
   VStack,
   Badge,
-  Select,
+  useToast,
+  Spinner,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -28,92 +30,56 @@ import {
 } from '@tanstack/react-table';
 import * as React from 'react';
 import Card from 'components/card/Card';
-import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
-import { FaEye, FaTrash, FaQuestion, FaList } from 'react-icons/fa';
+import { ChevronLeftIcon, ChevronRightIcon, EditIcon, SearchIcon } from '@chakra-ui/icons';
+import { FaEye, FaTrash, FaPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { 
+  useGetFaqsQuery, 
+  useDeleteFaqMutation 
+} from 'api/faqsSlice';
 
 const columnHelper = createColumnHelper();
 
 const Faqs = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(15);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const searchBg = useColorModeValue('secondaryGray.300', 'gray.700');
+  const searchColor = useColorModeValue('gray.700', 'white');
 
-  // Static FAQs data
-  const staticData = [
-    {
-      id: 1,
-      question: 'How do I use natural remedies safely?',
-      answer: 'Always consult with a healthcare professional before trying new remedies, especially if you have existing health conditions or are taking medications. Start with small doses and monitor your body\'s response.',
-      category: 'safety',
-      status: 'active',
-      order: 1,
-    },
-    {
-      id: 2,
-      question: 'What are the benefits of herbal teas?',
-      answer: 'Herbal teas offer various benefits including improved digestion, better sleep, stress relief, and immune system support. Different herbs have different properties, so choose based on your specific needs.',
-      category: 'benefits',
-      status: 'active',
-      order: 2,
-    },
-    {
-      id: 3,
-      question: 'How long does it take for natural remedies to work?',
-      answer: 'The effectiveness timeline varies depending on the remedy and individual factors. Some remedies like peppermint for digestion work within minutes, while others may take days or weeks for full benefits.',
-      category: 'usage',
-      status: 'active',
-      order: 3,
-    },
-    {
-      id: 4,
-      question: 'Can I use natural remedies during pregnancy?',
-      answer: 'Many natural remedies are not recommended during pregnancy. Always consult with your healthcare provider before using any herbs, supplements, or natural treatments while pregnant or breastfeeding.',
-      category: 'safety',
-      status: 'active',
-      order: 4,
-    },
-    {
-      id: 5,
-      question: 'What\'s the difference between essential oils and herbal extracts?',
-      answer: 'Essential oils are concentrated volatile compounds extracted from plants, while herbal extracts contain a broader range of plant compounds. Essential oils are typically used in aromatherapy, while extracts are often taken internally.',
-      category: 'education',
-      status: 'active',
-      order: 5,
-    },
-    {
-      id: 6,
-      question: 'How do I store natural remedies properly?',
-      answer: 'Store herbs and natural remedies in cool, dry places away from direct sunlight. Use airtight containers and check expiration dates. Essential oils should be stored in dark glass bottles in a cool location.',
-      category: 'storage',
-      status: 'inactive',
-      order: 6,
-    },
-  ];
+  // API hooks
+  const { data: faqsResponse, isLoading, isError, refetch } = useGetFaqsQuery({
+    question: searchQuery || undefined,
+    page: currentPage,
+    per_page: perPage
+  }, { refetchOnMountOrArgChange: true });
 
-  // Filter data based on search query
-  const filteredData = React.useMemo(() => {
-    let filtered = staticData;
-    
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter((item) =>
-        Object.values(item).some((value) =>
-          String(value).toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    }
-    
-    return filtered;
+  const [deleteFaq, { isLoading: isDeleting }] = useDeleteFaqMutation();
+
+  // Extract data and pagination from response
+  const faqsData = faqsResponse?.data || [];
+  const pagination = faqsResponse?.pagination || null;
+
+  // Effect to reset to first page when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
   }, [searchQuery]);
 
+  // Effect to refetch when search or pagination changes
+  React.useEffect(() => {
+    refetch();
+  }, [searchQuery, currentPage, perPage, refetch]);
+
   const columns = [
-    columnHelper.accessor('order', {
-      id: 'order',
+    columnHelper.accessor('id', {
+      id: 'id',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -121,7 +87,7 @@ const Faqs = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          #
+          ID
         </Text>
       ),
       cell: (info) => (
@@ -156,30 +122,6 @@ const Faqs = () => {
     
 
     
-    columnHelper.accessor('status', {
-      id: 'status',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Status
-        </Text>
-      ),
-      cell: (info) => (
-        <Badge 
-          colorScheme={info.getValue() === 'active' ? 'green' : 'red'}
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-        >
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
     columnHelper.accessor('id', {
       id: 'actions',
       header: () => (
@@ -212,7 +154,7 @@ const Faqs = () => {
             cursor="pointer"
             onClick={() => handleEditFaq(info.getValue())}
           />
-          <Icon
+          {/* <Icon
             w="18px"
             h="18px"
             me="10px"
@@ -220,14 +162,14 @@ const Faqs = () => {
             as={FaEye}
             cursor="pointer"
             onClick={() => handleViewFaq(info.getValue())}
-          />
+          /> */}
         </Flex>
       ),
     }),
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: faqsData,
     columns,
     state: {
       sorting,
@@ -246,40 +188,40 @@ const Faqs = () => {
   };
 
   const handleDeleteFaq = async (id) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    });
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+      });
 
-    if (result.isConfirmed) {
-      try {
-        // In a real app, you would call your API here
-        // await api.delete(`/faqs/${id}`);
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (result.isConfirmed) {
+        await deleteFaq(id).unwrap();
 
-        Swal.fire(
-          'Deleted!',
-          'FAQ has been deleted.',
-          'success'
-        );
+        toast({
+          title: 'FAQ Deleted',
+          description: 'The FAQ has been successfully deleted.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
 
-        // Refresh the data or remove from state
-        // setFaqs(faqs.filter(faq => faq.id !== id));
-      } catch (error) {
-        console.error('Failed to delete FAQ:', error);
-        Swal.fire(
-          'Error!',
-          'Failed to delete FAQ.',
-          'error'
-        );
+        // Refetch the data to get updated list
+        refetch();
       }
+    } catch (error) {
+      console.error('Failed to delete FAQ:', error);
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to delete FAQ.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
@@ -287,65 +229,131 @@ const Faqs = () => {
     navigate('/admin/add-faq');
   };
 
-  return (
-    <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
-      <Card>
-        <Flex
-          direction="column"
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card
+          flexDirection="column"
           w="100%"
+          px="0px"
           overflowX={{ sm: 'scroll', lg: 'hidden' }}
         >
-          <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
-            justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
-            mb="10px"
-            boxShadow="0px 2px 5.5px rgba(0, 0, 0, 0.06)"
-          >
-            <Text color={textColor} fontSize="xl" fontWeight="600">
-              FAQs Management
-            </Text>
-            <Button
-              leftIcon={<PlusSquareIcon />}
-              colorScheme="blue"
-              onClick={handleAddFaq}
-            >
-              Add FAQ
-            </Button>
+          <Flex justify="center" align="center" h="200px">
+            <VStack spacing={4}>
+              <Spinner size="xl" color="#422afb" thickness="4px" />
+              <Text color={textColor}>Loading FAQs...</Text>
+            </VStack>
           </Flex>
+        </Card>
+      </Box>
+    );
+  }
 
-          <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
-            justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
-            gap={4}
+  // Error state
+  if (isError) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card
+          flexDirection="column"
+          w="100%"
+          px="0px"
+          overflowX={{ sm: 'scroll', lg: 'hidden' }}
+        >
+          <Flex justify="center" align="center" h="200px">
+            <Text color="red.500">Error loading FAQs. Please try again.</Text>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
+  return (
+    <Box mt="80px">
+      <Card
+        flexDirection="column"
+        w="100%"
+        px="0px"
+        overflowX={{ sm: 'scroll', lg: 'hidden' }}
+      >
+        <Flex
+          px={{ base: "16px", md: "25px" }}
+          mb="8px"
+          direction={{ base: "column", md: "row" }}
+          justifyContent="space-between"
+          align={{ base: "stretch", md: "center" }}
+          gap={{ base: 4, md: 0 }}
+        >
+          <Text
+            color={textColor}
+            fontSize="22px"
+            fontWeight="700"
+            lineHeight="100%"
           >
-            <InputGroup maxW="400px">
-              <InputLeftElement pointerEvents="none">
-                <SearchIcon color="gray.400" />
+            FAQs Management
+          </Text>
+
+          <HStack spacing={4} w={{ base: "100%", md: "auto" }}>
+            {/* Search Input */}
+            <InputGroup w={{ base: "100%", md: "400px" }}>
+              <InputLeftElement>
+                <IconButton
+                  bg="inherit"
+                  borderRadius="inherit"
+                  _hover="none"
+                  _active={{
+                    bg: "inherit",
+                    transform: "none",
+                    borderColor: "transparent",
+                  }}
+                  _focus={{
+                    boxShadow: "none",
+                  }}
+                  icon={<SearchIcon w="15px" h="15px" />}
+                />
               </InputLeftElement>
               <Input
+                variant="search"
+                fontSize="sm"
+                bg={searchBg}
+                color={searchColor}
+                fontWeight="500"
+                _placeholder={{ color: "gray.400", fontSize: "14px" }}
+                borderRadius="30px"
                 placeholder="Search FAQs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </InputGroup>
 
+            {/* Add FAQ Button */}
+            <Button
+              leftIcon={<FaPlus />}
+              variant='darkBrand'
+              color='white'
+              fontSize='sm'
+              fontWeight='500'
+              borderRadius='70px'
+              px='24px'
+              py='5px'
+              onClick={handleAddFaq}
+              w={{ base: "100%", md: "200px" }}
+            >
+              Add New FAQ
+            </Button>
+          </HStack>
+        </Flex>
 
-          </Flex>
-
-          <Box overflowX="auto">
-            <Table variant="simple" color="gray.500" mb="24px">
-              <Thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <Tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
+        <Box>
+          <Table variant="simple" color="gray.500" mb="24px" mt="12px">
+            <Thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <Tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
                       <Th
                         key={header.id}
+                        colSpan={header.colSpan}
                         pe="10px"
                         borderColor={borderColor}
                         cursor="pointer"
@@ -359,36 +367,147 @@ const Faqs = () => {
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
+                          {{
+                            asc: ' 🔼',
+                            desc: ' 🔽',
+                          }[header.column.getIsSorted()] ?? null}
                         </Flex>
                       </Th>
-                    ))}
-                  </Tr>
-                ))}
-              </Thead>
-              <Tbody>
-                {table.getRowModel().rows.map((row) => (
+                    );
+                  })}
+                </Tr>
+              ))}
+            </Thead>
+            <Tbody>
+              {table.getRowModel().rows.map((row) => {
+                return (
                   <Tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <Td
-                        key={cell.id}
-                        fontSize={{ sm: '14px' }}
-                        minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                        borderColor="transparent"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </Td>
-                    ))}
+                    {row.getVisibleCells().map((cell) => {
+                      return (
+                        <Td
+                          key={cell.id}
+                          fontSize={{ sm: '14px' }}
+                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                          borderColor="transparent"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </Td>
+                      );
+                    })}
                   </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </Box>
-        </Flex>
+                );
+              })}
+            </Tbody>
+          </Table>
+        </Box>
+
+        {/* Pagination Controls */}
+        {pagination && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="20px"
+            justify="space-between"
+            align="center"
+            borderTop="1px solid"
+            borderColor={borderColor}
+            direction={{ base: "column", md: "row" }}
+            gap={{ base: 4, md: 0 }}
+          >
+            {/* Page Info */}
+            <Text color={textColor} fontSize="sm">
+              Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} results
+            </Text>
+
+            {/* Pagination Controls */}
+            <HStack spacing="3">
+              {/* Page Size Selector */}
+              <HStack spacing="2">
+                <Text fontSize="sm" color={textColor}>
+                  Show:
+                </Text>
+                <select
+                  size="sm"
+                  value={perPage}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </HStack>
+
+              {/* Page Navigation */}
+              <HStack spacing="2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  isDisabled={currentPage <= 1}
+                  leftIcon={<ChevronLeftIcon />}
+                >
+                  Previous
+                </Button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, pagination.last_page || 1) }, (_, i) => {
+                  const pageNum = i + 1;
+                  const isCurrentPage = pageNum === currentPage;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      size="sm"
+                      variant={isCurrentPage ? "solid" : "outline"}
+                      colorScheme={isCurrentPage ? "blue" : "gray"}
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  isDisabled={currentPage >= (pagination.last_page || 1)}
+                  rightIcon={<ChevronRightIcon />}
+                >
+                  Next
+                </Button>
+              </HStack>
+            </HStack>
+          </Flex>
+        )}
+
+        {/* No data message */}
+        {(!faqsData || faqsData.length === 0) && !isLoading && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="40px"
+            justify="center"
+            align="center"
+          >
+            <Text color={textColor} fontSize="md">
+              No FAQs found with the current search.
+            </Text>
+          </Flex>
+        )}
       </Card>
     </Box>
   );

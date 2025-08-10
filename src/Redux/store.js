@@ -1,23 +1,58 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import { pharmacyApi } from "api/pharmacySlice";
-import { roleApi } from "api/roleSlice";
-import { apiService } from "api/userSlice";
+import { adminApiService } from "api/adminSlice";
+import { bodySystemsApiService } from "api/bodySystemsSlice";
+import { remedyTypesApiService } from "api/remediesTypesSlice";
+import { remediesApiService } from "api/remediesSlice";
+import { diseasesApiService } from "api/diseasesSlice";
+import { fileUploadApiService } from "api/fileUploadSlice";
+import { videosApiService } from "api/videosSlice";
+import { articlesApiService } from "api/articlesSlice";
+import { reviewsApiService } from "api/reviewsSlice";
+import { usersApiService } from "api/usersSlice";
+import { adsApiService } from "api/adsSlice"; 
+import { faqsApiService } from "api/faqsSlice";
+import { policiesApiService } from "api/policiesSlice";
+import { contactUsApiService } from "api/contactUsSlice";
+import { aboutApiService } from "api/aboutSlice";
 
 // import { userApi, authReducer } from './userSlice';
 
 export const store = configureStore({
   reducer: {
-    [apiService.reducerPath]: apiService.reducer,
-    [roleApi.reducerPath]: roleApi.reducer,
-    [pharmacyApi.reducerPath]: pharmacyApi.reducer,
+    [adminApiService.reducerPath]: adminApiService.reducer,
+    [bodySystemsApiService.reducerPath]: bodySystemsApiService.reducer,
+    [remedyTypesApiService.reducerPath]: remedyTypesApiService.reducer,
+    [remediesApiService.reducerPath]: remediesApiService.reducer,
+    [diseasesApiService.reducerPath]: diseasesApiService.reducer,
+    [fileUploadApiService.reducerPath]: fileUploadApiService.reducer,
+    [videosApiService.reducerPath]: videosApiService.reducer,
+    [articlesApiService.reducerPath]: articlesApiService.reducer,
+    [reviewsApiService.reducerPath]: reviewsApiService.reducer,
+    [usersApiService.reducerPath]: usersApiService.reducer,
+    [adsApiService.reducerPath]: adsApiService.reducer,
+    [faqsApiService.reducerPath]: faqsApiService.reducer,
+    [policiesApiService.reducerPath]: policiesApiService.reducer,
+    [contactUsApiService.reducerPath]: contactUsApiService.reducer,
+    [aboutApiService.reducerPath]: aboutApiService.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
-      
-      apiService.middleware,
-      roleApi.middleware,
-      pharmacyApi.middleware
+      adminApiService.middleware,
+      bodySystemsApiService.middleware,
+      remedyTypesApiService.middleware,
+      remediesApiService.middleware,
+      diseasesApiService.middleware,
+      fileUploadApiService.middleware,
+      videosApiService.middleware,
+      articlesApiService.middleware,
+      reviewsApiService.middleware,
+      usersApiService.middleware,
+      adsApiService.middleware,
+      faqsApiService.middleware,
+      policiesApiService.middleware,
+      contactUsApiService.middleware,
+      aboutApiService.middleware,
     ),
 });
 

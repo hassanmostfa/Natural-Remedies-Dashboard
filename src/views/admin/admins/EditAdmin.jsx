@@ -1,40 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import {
   Button,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
   Text,
   useColorModeValue,
   Flex,
   Box,
   Input,
+  HStack,
 } from '@chakra-ui/react';
-import { ChevronDownIcon } from '@chakra-ui/icons';
-import './admins.css';
-import { useGetRolesQuery } from 'api/roleSlice';
+import { ChevronLeftIcon } from '@chakra-ui/icons';
 import Swal from 'sweetalert2';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useUpdateUserMutation } from 'api/userSlice';
-import { useGetUserProfileQuery } from 'api/userSlice';
+import { useUpdateAdminMutation } from 'api/adminSlice';
+import { useGetAdminProfileQuery } from 'api/adminSlice';
 
 const EditAdmin = () => {
   const { id } = useParams();
-  const { data: roles, isLoading: isRolesLoading, isError: isRolesError } = useGetRolesQuery();
-  const { data: admin, isLoading: isAdminLoading, isError: isAdminError } = useGetUserProfileQuery(id);
-  const [editAdmin, { isLoading: isCreating }] = useUpdateUserMutation();
+  const { data: admin, isLoading: isAdminLoading, isError: isAdminError , refetch } = useGetAdminProfileQuery(id);
+  const [editAdmin, { isLoading: isCreating }] = useUpdateAdminMutation();
   const navigate = useNavigate();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const cardBg = useColorModeValue("white", "navy.700");
   const inputBg = useColorModeValue("gray.100", "gray.700");
   const inputBorder = useColorModeValue("gray.300", "gray.600");
-  const [selectedRole, setSelectedRole] = useState('Select a role');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
-    roleId: '',
   });
 
   // Update formData when admin data is available
@@ -43,16 +36,11 @@ const EditAdmin = () => {
       setFormData({
         name: admin.data.name,
         email: admin.data.email,
+        phone: admin.data.phone,
         password: '', // Password is not pre-filled for security reasons
-        roleId: admin.data.roleId,
       });
-      // Set the selected role name
-      const role = roles?.data?.find((r) => r.id === admin.data.roleId);
-      if (role) {
-        setSelectedRole(role.name);
-      }
     }
-  }, [admin, roles]);
+  }, [admin]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -62,10 +50,10 @@ const EditAdmin = () => {
     });
   };
 
-  const handleSelect = (role) => {
-    setSelectedRole(role.name);
-    setFormData({ ...formData, roleId: role.id });
-  };
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,48 +66,80 @@ const EditAdmin = () => {
       delete dataToSend.password;
     }
 
+    console.log('Data being sent to API:', dataToSend);
+
     try {
-      const response = await editAdmin({ id, user: dataToSend }).unwrap();
+      const response = await editAdmin({ id, admin: dataToSend }).unwrap();
+      
+      console.log('Admin updated successfully:', response);
+      
       Swal.fire({
         icon: 'success',
         title: 'Success',
         text: 'Admin updated successfully',
         confirmButtonText: 'OK',
-        customClass: {
-          popup: 'custom-swal-popup', // Add a custom class for the popup
-          title: 'custom-swal-title', // Add a custom class for the title
-          content: 'custom-swal-content', // Add a custom class for the content
-          confirmButton: 'custom-swal-confirm-button', // Add a custom class for the confirm button
-        },
       }).then((result) => {
         if (result.isConfirmed) {
-          navigate(`/admin/undefined/admins`); // Redirect to the admins page after successful submission
+          navigate('/admin/admins'); // Redirect to the admins page after successful submission
         }
       });
     } catch (error) {
+      console.error('Failed to update admin:', error);
+      
+      let errorMessage = 'Failed to update admin';
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      }
+      
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: error.data?.message || 'Failed to update admin',
+        text: errorMessage,
         confirmButtonText: 'OK',
       });
     }
   };
 
-  if (isAdminLoading || isRolesLoading) {
-    return <div>Loading...</div>;
+  if (isAdminLoading) {
+    return (
+      <Flex justify="center" align="center" h="100vh">
+        <Text color={textColor} fontSize="lg">Loading admin details...</Text>
+      </Flex>
+    );
   }
 
-  if (isAdminError || isRolesError) {
-    return <div>Error loading data</div>;
+  if (isAdminError) {
+    return (
+      <Flex justify="center" align="center" h="100vh">
+        <Text color="red.500" fontSize="lg">Error loading admin data</Text>
+        <Button onClick={() => navigate('/admin/admins')} colorScheme="blue" ml="4">
+          Back to Admins
+        </Button>
+      </Flex>
+    );
   }
 
   return (
     <Flex justify="center" p="20px" mt={"80px"}>
       <Box w="100%" p="6" boxShadow="md" borderRadius="lg" bg={cardBg}>
-        <Text color={textColor} fontSize="22px" fontWeight="700" mb="20px">
-          Edit Admin
-        </Text>
+        <HStack justify="space-between" mb="20px">
+          <Button
+            leftIcon={<ChevronLeftIcon />}
+            color="green.500"
+            onClick={() => navigate('/admin/admins')}
+            border="2px solid"
+            borderColor="green.500"
+            _hover={{ bg: 'green.100' }}
+          >
+            Back
+          </Button>
+          <Text color={textColor} fontSize="22px" fontWeight="700">
+            Edit Admin
+          </Text>
+          <Box w="80px" /> {/* Spacer to center the title */}
+        </HStack>
 
         <form onSubmit={handleSubmit}>
           {/* Name Field */}
@@ -158,6 +178,24 @@ const EditAdmin = () => {
             />
           </Box>
 
+          {/* Phone Field */}
+          <Box mb="3">
+            <Text color={textColor} fontSize="sm" fontWeight="700" mb="1">
+              Phone <span style={{ color: "red" }}>*</span>
+            </Text>
+            <Input
+              type="tel"
+              name="phone"
+              bg={inputBg}
+              color={textColor}
+              borderColor={inputBorder}
+              placeholder="Enter phone number"
+              value={formData.phone}
+              onChange={handleInputChange}
+              required
+            />
+          </Box>
+
           {/* Password Field */}
           <Box mb="3">
             <Text color={textColor} fontSize="sm" fontWeight="700" mb="1">
@@ -175,46 +213,21 @@ const EditAdmin = () => {
             />
           </Box>
 
-          {/* Role Dropdown */}
-          <Box mb="3">
-            <Text color={textColor} fontSize="sm" fontWeight="700" mb="1">
-              Role <span style={{ color: "red" }}>*</span>
-            </Text>
-            <Menu>
-              <MenuButton
-                as={Button}
-                rightIcon={<ChevronDownIcon />}
-                width="100%"
-                bg={inputBg}
-                borderColor={inputBorder}
-                borderRadius="md"
-                _hover={{ bg: "gray.200" }}
-                textAlign="left"
-              >
-                {selectedRole || "Select Role"}
-              </MenuButton>
-              <MenuList width="100%">
-                {roles?.data?.map((role) => (
-                  <MenuItem key={role.id} onClick={() => handleSelect(role)}>
-                    {role.name}
-                  </MenuItem>
-                ))}
-              </MenuList>
-            </Menu>
-          </Box>
+
 
           {/* Submit Button */}
           <Button
-            variant="solid"
-            colorScheme="brandScheme"
-            color={textColor}
+            width="200px"
+            variant="darkBrand"
             fontSize="sm"
             fontWeight="500"
-            borderRadius="70px"
+            borderRadius="xl"
             px="24px"
             py="5px"
             type="submit"
+            height="40px"
             isLoading={isCreating}
+            loadingText="Updating Admin..."
             mt={"20px"}
           >
             Update Admin

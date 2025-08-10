@@ -14,10 +14,21 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  IconButton,
   Avatar,
   HStack,
   VStack,
   Badge,
+  useToast,
+  Select,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Grid,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -28,101 +39,93 @@ import {
 } from '@tanstack/react-table';
 import * as React from 'react';
 import Card from 'components/card/Card';
-import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
+import { EditIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { FaEye, FaTrash, FaLeaf, FaList } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useGetArticlesQuery, useDeleteArticleMutation } from 'api/articlesSlice';
 
 const columnHelper = createColumnHelper();
 
 const Articles = () => {
   const navigate = useNavigate();
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedPlans, setSelectedPlans] = React.useState([]);
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(15);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const searchBg = useColorModeValue('secondaryGray.300', 'gray.700');
+  const searchColor = useColorModeValue('gray.700', 'white');
+  const modalBg = useColorModeValue('white', 'gray.800');
+  const modalContainerBg = useColorModeValue('gray.50', 'gray.700');
+  const planItemBg = useColorModeValue('white', 'gray.600');
 
-  // Static articles data
-  const staticData = [
-    {
-      id: 1,
-      title: 'Natural Healing with Herbs',
-      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=100&h=100&fit=crop',
-      description: 'Discover the powerful healing properties of common herbs and how to use them effectively for various ailments.',
-      plants: [
-        { 
-          title: 'Chamomile', 
-          image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop',
-          description: 'Calming herb for sleep and digestion'
-        },
-        { 
-          title: 'Lavender', 
-          image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop',
-          description: 'Relaxing herb for stress relief'
-        },
-        { 
-          title: 'Peppermint', 
-          image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop',
-          description: 'Refreshing herb for digestion and headaches'
-        }
-      ],
-      status: 'active',
+  // API calls
+  const { data: articlesData, isLoading, isError, refetch } = useGetArticlesQuery(
+    { 
+      search: searchQuery,
+      page: currentPage,
+      per_page: perPage
     },
-    {
-      id: 2,
-      title: 'Essential Oils for Wellness',
-      image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&h=100&fit=crop',
-      description: 'Learn about the therapeutic benefits of essential oils and how to incorporate them into your daily wellness routine.',
-      plants: [
-        { 
-          title: 'Tea Tree Oil', 
-          image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop',
-          description: 'Antibacterial and antifungal properties'
-        },
-        { 
-          title: 'Eucalyptus Oil', 
-          image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop',
-          description: 'Respiratory support and muscle relief'
-        }
-      ],
-      status: 'active',
-    },
-    {
-      id: 3,
-      title: 'Medicinal Plants Guide',
-      image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=100&h=100&fit=crop',
-      description: 'A comprehensive guide to medicinal plants, their properties, and traditional uses in natural medicine.',
-      plants: [
-        { 
-          title: 'Aloe Vera', 
-          image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop',
-          description: 'Healing gel for skin conditions and burns'
-        },
-        { 
-          title: 'Ginger', 
-          image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop',
-          description: 'Anti-inflammatory and digestive aid'
-        },
-        { 
-          title: 'Turmeric', 
-          image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop',
-          description: 'Powerful anti-inflammatory and antioxidant'
-        }
-      ],
-      status: 'active',
-    },
-  ];
+    { refetchOnMountOrArgChange: true }
+  );
+  
+  const [deleteArticle, { isLoading: isDeleting }] = useDeleteArticleMutation();
 
-  // Filter data based on search query
-  const filteredData = React.useMemo(() => {
-    if (!searchQuery) return staticData;
-    return staticData.filter((item) =>
-      Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }, [searchQuery]);
+  // Transform API data to match table structure
+  const articles = React.useMemo(() => {
+    if (!articlesData) return [];
+    
+    return articlesData.map(article => ({
+      id: article.id,
+      title: article.title,
+      image: article.image,
+      description: article.description,
+      plans: article.plans,
+      status: article.status,
+      rating: article.average_rating,
+      reviewCount: article.review_count,
+      createdAt: article.created_at,
+      updatedAt: article.updated_at,
+    }));
+  }, [articlesData]);
+
+  // Handle search input change with debounce
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle page size change
+  const handlePerPageChange = (e) => {
+    setPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  // Handle page navigation
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Handle plans click to show popup
+  const handlePlansClick = (plans) => {
+    setSelectedPlans(plans);
+    onOpen();
+  };
+
+  // Debounced search effect
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      refetch();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, currentPage, perPage, refetch]);
 
   const columns = [
     columnHelper.accessor('image', {
@@ -164,14 +167,16 @@ const Articles = () => {
             {info.getValue()}
           </Text>
           <Text color="gray.500" fontSize="xs" noOfLines={2}>
-            {info.row.original.description}
+            {info.row.original.description && info.row.original.description.length > 100 
+              ? `${info.row.original.description.substring(0, 100)}...` 
+              : info.row.original.description}
           </Text>
         </VStack>
       ),
     }),
     
-    columnHelper.accessor('plants', {
-      id: 'plants',
+    columnHelper.accessor('plans', {
+      id: 'plans',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -179,14 +184,64 @@ const Articles = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Plants
+          Plans
+        </Text>
+      ),
+      cell: (info) => (
+        <HStack 
+          spacing={1} 
+          cursor="pointer" 
+          onClick={() => handlePlansClick(info.getValue())}
+          _hover={{ opacity: 0.8 }}
+          transition="opacity 0.2s"
+        >
+          <Icon as={FaList} color="green.500" size="sm" />
+          <Text color={textColor} fontSize="sm" fontWeight="medium">
+            {info.getValue().length} plans
+          </Text>
+        </HStack>
+      ),
+    }),
+
+    columnHelper.accessor('rating', {
+      id: 'rating',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Rating
         </Text>
       ),
       cell: (info) => (
         <HStack spacing={1}>
-          <Icon as={FaList} color="green.500" size="sm" />
+          <Icon as={FaLeaf} color="yellow.500" size="sm" />
           <Text color={textColor} fontSize="sm" fontWeight="medium">
-            {info.getValue().length} plants
+            {info.getValue() || 0}
+          </Text>
+        </HStack>
+      ),
+    }),
+
+    columnHelper.accessor('reviewCount', {
+      id: 'reviewCount',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Reviews
+        </Text>
+      ),
+      cell: (info) => (
+        <HStack spacing={1}>
+          <Icon as={FaList} color="blue.500" size="sm" />
+          <Text color={textColor} fontSize="sm" fontWeight="medium">
+            {info.getValue() || 0}
           </Text>
         </HStack>
       ),
@@ -248,7 +303,7 @@ const Articles = () => {
             cursor="pointer"
             onClick={() => handleEditArticle(info.getValue())}
           />
-          <Icon
+          {/* <Icon
             w="18px"
             h="18px"
             me="10px"
@@ -256,14 +311,14 @@ const Articles = () => {
             as={FaEye}
             cursor="pointer"
             onClick={() => handleViewArticle(info.getValue())}
-          />
+          /> */}
         </Flex>
       ),
     }),
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: articles,
     columns,
     state: {
       sorting,
@@ -281,41 +336,47 @@ const Articles = () => {
     navigate(`/admin/edit-article/${id}`);
   };
 
+  // Delete function
   const handleDeleteArticle = async (id) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    });
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+      });
 
-    if (result.isConfirmed) {
-      try {
-        // In a real app, you would call your API here
-        // await api.delete(`/articles/${id}`);
+      if (result.isConfirmed) {
+        await deleteArticle(id).unwrap();
         
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        Swal.fire(
-          'Deleted!',
-          'Article has been deleted.',
-          'success'
-        );
-
-        // Refresh the data or remove from state
-        // setArticles(articles.filter(article => article.id !== id));
-      } catch (error) {
-        console.error('Failed to delete article:', error);
-        Swal.fire(
-          'Error!',
-          'Failed to delete article.',
-          'error'
-        );
+        toast({
+          title: 'Article deleted',
+          description: 'The article has been successfully deleted.',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        
+        refetch();
       }
+    } catch (error) {
+      console.error('Failed to delete article:', error);
+      
+      let errorMessage = 'Failed to delete the article';
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -323,62 +384,125 @@ const Articles = () => {
     navigate('/admin/add-article');
   };
 
-  return (
-    <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
-      <Card>
-        <Flex
-          direction="column"
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box mt="80px">
+        <Card
+          flexDirection="column"
           w="100%"
+          px="0px"
           overflowX={{ sm: 'scroll', lg: 'hidden' }}
         >
-          <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
-            justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
-            mb="10px"
-            boxShadow="0px 2px 5.5px rgba(0, 0, 0, 0.06)"
-          >
-            <Text color={textColor} fontSize="xl" fontWeight="600">
-              Articles Management
-            </Text>
-            <Button
-              leftIcon={<PlusSquareIcon />}
-              colorScheme="blue"
-              onClick={handleAddArticle}
-            >
-              Add Article
-            </Button>
+          <Flex justify="center" align="center" h="200px">
+            <Text color={textColor}>Loading articles...</Text>
           </Flex>
+        </Card>
+      </Box>
+    );
+  }
 
-          <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
-            justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
+  // Error state
+  if (isError) {
+    return (
+      <Box mt="80px">
+        <Card
+          flexDirection="column"
+          w="100%"
+          px="0px"
+          overflowX={{ sm: 'scroll', lg: 'hidden' }}
+        >
+          <Flex justify="center" align="center" h="200px">
+            <Text color="red.500">Error loading articles. Please try again.</Text>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
+  return (
+    <Box mt="80px">
+      <Card
+        flexDirection="column"
+        w="100%"
+        px="0px"
+        overflowX={{ sm: 'scroll', lg: 'hidden' }}
+      >
+        <Flex
+          px={{ base: "16px", md: "25px" }}
+          mb="8px"
+          direction={{ base: "column", md: "row" }}
+          justifyContent="space-between"
+          align={{ base: "stretch", md: "center" }}
+          gap={{ base: 4, md: 0 }}
+        >
+          <Text
+            color={textColor}
+            fontSize="22px"
+            fontWeight="700"
+            lineHeight="100%"
           >
-            <InputGroup maxW="400px">
-              <InputLeftElement pointerEvents="none">
-                <SearchIcon color="gray.400" />
+            Articles
+          </Text>
+
+          <Box w={{ base: "100%", md: "auto" }}>
+            <InputGroup w={{ base: "100%", md: "400px" }}>
+              <InputLeftElement>
+                <IconButton
+                  bg="inherit"
+                  borderRadius="inherit"
+                  _hover="none"
+                  _active={{
+                    bg: "inherit",
+                    transform: "none",
+                    borderColor: "transparent",
+                  }}
+                  _focus={{
+                    boxShadow: "none",
+                  }}
+                  icon={<SearchIcon w="15px" h="15px" />}
+                />
               </InputLeftElement>
               <Input
+                variant="search"
+                fontSize="sm"
+                bg={searchBg}
+                color={searchColor}
+                fontWeight="500"
+                _placeholder={{ color: "gray.400", fontSize: "14px" }}
+                borderRadius="30px"
                 placeholder="Search articles..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
               />
             </InputGroup>
-          </Flex>
+          </Box>
 
-          <Box overflowX="auto">
-            <Table variant="simple" color="gray.500" mb="24px">
-              <Thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <Tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
+          <Button
+            variant="darkBrand"
+            color="white"
+            fontSize="sm"
+            fontWeight="500"
+            borderRadius="70px"
+            px="24px"
+            py="5px"
+            onClick={handleAddArticle}
+            w={{ base: "100%", md: "200px" }}
+          >
+            Add New Article
+          </Button>
+        </Flex>
+
+        <Box>
+          <Table variant="simple" color="gray.500" mb="24px" mt="12px">
+            <Thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <Tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
                       <Th
                         key={header.id}
+                        colSpan={header.colSpan}
                         pe="10px"
                         borderColor={borderColor}
                         cursor="pointer"
@@ -392,36 +516,246 @@ const Articles = () => {
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
+                          {{
+                            asc: ' 🔼',
+                            desc: ' 🔽',
+                          }[header.column.getIsSorted()] ?? null}
                         </Flex>
                       </Th>
-                    ))}
-                  </Tr>
-                ))}
-              </Thead>
-              <Tbody>
-                {table.getRowModel().rows.map((row) => (
+                    );
+                  })}
+                </Tr>
+              ))}
+            </Thead>
+            <Tbody>
+              {table.getRowModel().rows.map((row) => {
+                return (
                   <Tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <Td
-                        key={cell.id}
-                        fontSize={{ sm: '14px' }}
-                        minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                        borderColor="transparent"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </Td>
-                    ))}
+                    {row.getVisibleCells().map((cell) => {
+                      return (
+                        <Td
+                          key={cell.id}
+                          fontSize={{ sm: '14px' }}
+                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                          borderColor="transparent"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </Td>
+                      );
+                    })}
                   </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </Box>
-        </Flex>
+                );
+              })}
+            </Tbody>
+          </Table>
+        </Box>
+
+        {/* Plans Modal */}
+        <Modal isOpen={isOpen} onClose={onClose} size="md">
+          <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+          <ModalContent 
+            bg={modalBg}
+            borderRadius="xl"
+            boxShadow="2xl"
+            mx={4}
+          >
+            <ModalHeader 
+              borderBottom="1px solid" 
+              borderColor={borderColor}
+              pb={4}
+              textAlign="center"
+            >
+              <VStack spacing={2}>
+                <Icon as={FaList} color="green.500" boxSize={6} />
+                <Text fontSize="lg" fontWeight="600">
+                  Article Subscription Plans
+                </Text>
+              </VStack>
+            </ModalHeader>
+            <ModalCloseButton 
+              top={4} 
+              right={4}
+              bg="gray.100"
+              _hover={{ bg: "gray.200" }}
+              borderRadius="full"
+            />
+            <ModalBody py={6}>
+              <VStack spacing={4} align="stretch">
+                <Text 
+                  color="gray.600" 
+                  fontSize="sm" 
+                  textAlign="center"
+                  mb={2}
+                >
+                  This article is available for the following subscription plans:
+                </Text>
+                
+                <Box 
+                  bg={modalContainerBg}
+                  p={4}
+                  borderRadius="lg"
+                  border="1px solid"
+                  borderColor={borderColor}
+                >
+                  <VStack spacing={3} align="stretch">
+                    {selectedPlans.map((plan, index) => (
+                      <Flex
+                        key={index}
+                        align="center"
+                        justify="space-between"
+                        p={3}
+                        bg={planItemBg}
+                        borderRadius="lg"
+                        border="1px solid"
+                        borderColor={borderColor}
+                        _hover={{
+                          transform: "translateY(-2px)",
+                          boxShadow: "lg",
+                          transition: "all 0.2s"
+                        }}
+                        transition="all 0.2s"
+                      >
+                        <HStack spacing={3}>
+                          <Box
+                            w={3}
+                            h={3}
+                            borderRadius="full"
+                            bg={plan === 'pro' ? 'purple.500' : plan === 'premium' ? 'blue.500' : 'green.500'}
+                          />
+                          <Text 
+                            fontSize="md" 
+                            fontWeight="600"
+                            textTransform="capitalize"
+                            color={textColor}
+                          >
+                            {plan}
+                          </Text>
+                        </HStack>
+                        
+                        <Badge
+                          colorScheme={
+                            plan === 'pro' ? 'purple' : 
+                            plan === 'premium' ? 'blue' : 
+                            'green'
+                          }
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          fontSize="xs"
+                          fontWeight="600"
+                        >
+                          {plan === 'pro' ? 'Professional' : 
+                           plan === 'premium' ? 'Premium' : 
+                           'Basic'}
+                        </Badge>
+                      </Flex>
+                    ))}
+                  </VStack>
+                </Box>
+                
+                <Text 
+                  color="gray.500" 
+                  fontSize="xs" 
+                  textAlign="center"
+                  mt={2}
+                >
+                  Users with these subscription levels can access this article
+                </Text>
+              </VStack>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+
+        {/* Show Article Details Modal */}
+        {/* Removed as per edit hint */}
+
+        {/* Pagination Controls */}
+        {articlesData?.pagination && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="20px"
+            justify="space-between"
+            align="center"
+            borderTop="1px solid"
+            borderColor={borderColor}
+            direction={{ base: "column", md: "row" }}
+            gap={{ base: 4, md: 0 }}
+          >
+            {/* Page Info */}
+            <Text color={textColor} fontSize="sm">
+              Showing {articlesData.pagination.from} to {articlesData.pagination.to} of {articlesData.pagination.total} results
+            </Text>
+
+            {/* Pagination Controls */}
+            <HStack spacing="3">
+              {/* Page Size Selector */}
+              <HStack spacing="2">
+                <Text fontSize="sm" color={textColor}>
+                  Show:
+                </Text>
+                <Select
+                  size="sm"
+                  value={perPage}
+                  onChange={handlePerPageChange}
+                  w="70px"
+                  bg={searchBg}
+                  color={searchColor}
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </Select>
+              </HStack>
+
+              {/* Page Navigation */}
+              <HStack spacing="2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  isDisabled={currentPage <= 1}
+                  leftIcon={<ChevronLeftIcon />}
+                >
+                  Previous
+                </Button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, articlesData.pagination.last_page) }, (_, i) => {
+                  const pageNum = i + 1;
+                  const isCurrentPage = pageNum === currentPage;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      size="sm"
+                      variant={isCurrentPage ? "solid" : "outline"}
+                      colorScheme={isCurrentPage ? "blue" : "gray"}
+                      onClick={() => handlePageChange(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  isDisabled={currentPage >= articlesData.pagination.last_page}
+                  rightIcon={<ChevronRightIcon />}
+                >
+                  Next
+                </Button>
+              </HStack>
+            </HStack>
+          </Flex>
+        )}
       </Card>
     </Box>
   );

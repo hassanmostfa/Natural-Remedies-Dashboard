@@ -3,6 +3,7 @@ import {
   Button,
   Flex,
   Icon,
+  Image,
   Table,
   Tbody,
   Td,
@@ -17,9 +18,8 @@ import {
   IconButton,
   HStack,
   VStack,
-  Badge,
-  Spinner,
   useToast,
+  Switch,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -31,46 +31,49 @@ import {
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { ChevronLeftIcon, ChevronRightIcon, EditIcon, SearchIcon } from '@chakra-ui/icons';
-import { FaEye, FaTrash, FaShieldAlt, FaFileContract, FaPlus } from 'react-icons/fa';
+import { FaTrash, FaEye, FaPlus, FaImage } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { useGetPoliciesQuery, useDeletePolicyMutation } from 'api/policiesSlice';
+import { 
+  useGetAdsQuery, 
+  useDeleteAdMutation,
+  useToggleAdStatusMutation,
+  adsApiService,
+} from 'api/adsSlice';
+import { useDispatch } from 'react-redux';
+
+
 
 const columnHelper = createColumnHelper();
 
-const PrivacyAndTerms = () => {
+const Ads = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const dispatch = useDispatch();
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const [perPage, setPerPage] = React.useState(15);
+  const [togglingId, setTogglingId] = React.useState(null);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
   const searchBg = useColorModeValue('secondaryGray.300', 'gray.700');
   const searchColor = useColorModeValue('gray.700', 'white');
 
-  // API query parameters
-  const queryParams = React.useMemo(() => {
-    const params = {
-      page: currentPage,
-      per_page: perPage,
-    };
-    
-    if (searchQuery.trim()) {
-      params.content = searchQuery.trim();
-    }
-    
-    return params;
-  }, [currentPage, perPage, searchQuery]);
-
   // API hooks
-  const { data: policiesResponse, isLoading, isError, refetch } = useGetPoliciesQuery(queryParams, { refetchOnMountOrArgChange: true });
-  const [deletePolicy, { isLoading: isDeleting }] = useDeletePolicyMutation();
+  const { data: adsResponse, isLoading, isError, refetch } = useGetAdsQuery({
+    title: searchQuery || undefined,
+    page: currentPage,
+    per_page: perPage
+  }, { refetchOnMountOrArgChange: true });
 
-  const policies = policiesResponse?.data || [];
-  const pagination = policiesResponse?.pagination || null;
+  const [deleteAd, { isLoading: isDeleting }] = useDeleteAdMutation();
+  const [toggleAdStatus] = useToggleAdStatusMutation();
+
+  // Extract data and pagination from response
+  const adsData = adsResponse?.data || [];
+  const pagination = adsResponse?.pagination || null;
 
   // Effect to reset to first page when search changes
   React.useEffect(() => {
@@ -83,8 +86,8 @@ const PrivacyAndTerms = () => {
   }, [searchQuery, currentPage, perPage, refetch]);
 
   const columns = [
-    columnHelper.accessor('id', {
-      id: 'id',
+    columnHelper.accessor('image', {
+      id: 'image',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -92,17 +95,22 @@ const PrivacyAndTerms = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          ID
+          Image
         </Text>
       ),
       cell: (info) => (
-        <Text color={textColor} fontWeight="bold" fontSize="sm">
-          {info.getValue()}
-        </Text>
+        <Image
+          src={info.getValue()}
+          alt="Ad Preview"
+          boxSize="60px"
+          objectFit="cover"
+          borderRadius="md"
+          fallback={<Icon as={FaImage} color="gray.500" boxSize="30px" />}
+        />
       ),
     }),
-    columnHelper.accessor('type', {
-      id: 'type',
+    columnHelper.accessor('title', {
+      id: 'title',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -110,62 +118,38 @@ const PrivacyAndTerms = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Type
-        </Text>
-      ),
-      cell: (info) => {
-        const typeColors = {
-          privacy: 'blue',
-          terms: 'green'
-        };
-        
-        const typeIcons = {
-          privacy: FaShieldAlt,
-          terms: FaFileContract
-        };
-        
-        return (
-          <HStack spacing={2}>
-            <Icon as={typeIcons[info.getValue()]} color={`${typeColors[info.getValue()]}.500`} />
-            <Badge 
-              colorScheme={typeColors[info.getValue()] || 'gray'}
-              px="2"
-              py="1"
-              borderRadius="full"
-              fontSize="xs"
-              textTransform="capitalize"
-            >
-              {info.getValue()}
-            </Badge>
-          </HStack>
-        );
-      },
-    }),
-
-    columnHelper.accessor('content', {
-      id: 'content',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Content
+          Title
         </Text>
       ),
       cell: (info) => (
         <VStack align="start" spacing={1}>
-          <Text color={textColor} fontWeight="bold" fontSize="sm" noOfLines={1}>
-            {info.row.original.type === 'privacy' ? 'Privacy Policy' : 'Terms & Conditions'}
+          <Text color={textColor} fontWeight="bold" fontSize="sm">
+            {info.getValue()}
           </Text>
-          <Text color="gray.500" fontSize="xs" noOfLines={2}>
-            {info.getValue()?.replace(/<[^>]*>/g, '') || 'No content available'}
+          <Text color="gray.500" fontSize="xs">
+            ID: {info.row.original.id}
           </Text>
         </VStack>
       ),
     }),
-    
+    columnHelper.accessor('url', {
+      id: 'url',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          URL
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor} fontSize="sm">
+          {info.getValue() || 'No URL'}
+        </Text>
+      ),
+    }),
     columnHelper.accessor('status', {
       id: 'status',
       header: () => (
@@ -178,38 +162,52 @@ const PrivacyAndTerms = () => {
           Status
         </Text>
       ),
-      cell: (info) => (
-        <Badge 
-          colorScheme={info.getValue() === 'active' ? 'green' : 'red'}
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-        >
-          {info.getValue()}
-        </Badge>
-      ),
+      cell: (info) => {
+        const id = info.row.original.id;
+        const isActive = info.getValue() === 'active';
+        const isLoading = togglingId === id;
+        const handleToggle = async () => {
+          try {
+            setTogglingId(id);
+            await toggleAdStatus(id).unwrap();
+            toast({
+              title: 'Status Updated',
+              description: `Ad has been ${isActive ? 'deactivated' : 'activated'}.`,
+              status: 'success',
+              duration: 2000,
+              isClosable: true,
+            });
+            // Optimistically update cache to prevent full list refetch
+            dispatch(
+              adsApiService.util.updateQueryData(
+                'getAds',
+                { title: searchQuery || undefined, page: currentPage, per_page: perPage },
+                (draft) => {
+                  if (!draft?.data) return;
+                  const ad = draft.data.find((a) => a.id === id);
+                  if (ad) {
+                    ad.status = isActive ? 'inactive' : 'active';
+                  }
+                }
+              )
+            );
+          } catch (error) {
+            toast({
+              title: 'Error',
+              description: error?.data?.message || 'Failed to toggle status',
+              status: 'error',
+              duration: 3000,
+              isClosable: true,
+            });
+          } finally {
+            setTogglingId(null);
+          }
+        };
+        return (
+          <Switch isChecked={isActive} onChange={handleToggle} isDisabled={isLoading} colorScheme="green" />
+        );
+      },
     }),
-    
-    columnHelper.accessor('updated_at', {
-      id: 'updated_at',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Last Updated
-        </Text>
-      ),
-      cell: (info) => (
-        <Text color={textColor} fontSize="sm">
-          {new Date(info.getValue()).toLocaleDateString()}
-        </Text>
-      ),
-    }),
-    
     columnHelper.accessor('id', {
       id: 'actions',
       header: () => (
@@ -223,33 +221,33 @@ const PrivacyAndTerms = () => {
         </Text>
       ),
       cell: (info) => (
-        <Flex align="center">
+        <Flex align="center" gap={2}>
           <Icon
             w="18px"
             h="18px"
-            me="10px"
             color="red.500"
             as={FaTrash}
             cursor="pointer"
-            onClick={() => handleDeletePolicy(info.getValue())}
+            onClick={() => handleDeleteAd(info.getValue())}
+            title="Delete Ad"
           />
           <Icon
             w="18px"
             h="18px"
-            me="10px"
             color="green.500"
             as={EditIcon}
             cursor="pointer"
-            onClick={() => handleEditPolicy(info.getValue())}
+            onClick={() => navigate(`/admin/edit-ad/${info.getValue()}`)}
+            title="Edit Ad"
           />
           {/* <Icon
             w="18px"
             h="18px"
-            me="10px"
             color="blue.500"
             as={FaEye}
             cursor="pointer"
-            onClick={() => handleViewPolicy(info.getValue())}
+            onClick={() => navigate(`/admin/view-ad/${info.getValue()}`)}
+            title="View Ad"
           /> */}
         </Flex>
       ),
@@ -257,7 +255,7 @@ const PrivacyAndTerms = () => {
   ];
 
   const table = useReactTable({
-    data: policies,
+    data: adsData,
     columns,
     state: {
       sorting,
@@ -267,60 +265,51 @@ const PrivacyAndTerms = () => {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const handleViewPolicy = (id) => {
-    navigate(`/admin/policy/details/${id}`);
-  };
+  // Delete function
+  const handleDeleteAd = async (id) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+      });
 
-  const handleEditPolicy = (id) => {
-    navigate(`/admin/edit-policy/${id}`);
-  };
-
-  const handleDeletePolicy = async (id) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await deletePolicy(id).unwrap();
+      if (result.isConfirmed) {
+        await deleteAd(id).unwrap();
 
         toast({
-          title: 'Success',
-          description: 'Policy deleted successfully',
+          title: 'Ad Deleted',
+          description: 'The ad has been successfully deleted.',
           status: 'success',
           duration: 3000,
           isClosable: true,
         });
 
-        // Refetch the data to update the table
+        // Refetch the data to get updated list
         refetch();
-      } catch (error) {
-        console.error('Failed to delete policy:', error);
-        toast({
-          title: 'Error',
-          description: error.data?.message || 'Failed to delete policy. Please try again.',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
       }
+    } catch (error) {
+      console.error('Failed to delete ad:', error);
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to delete ad.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
-  const handleAddPolicy = () => {
-    navigate('/admin/add-policy');
-  };
+
 
   // Loading state
   if (isLoading) {
     return (
-      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+      <Box mt="80px">
         <Card
           flexDirection="column"
           w="100%"
@@ -328,10 +317,7 @@ const PrivacyAndTerms = () => {
           overflowX={{ sm: 'scroll', lg: 'hidden' }}
         >
           <Flex justify="center" align="center" h="200px">
-            <VStack spacing={4}>
-              <Spinner size="xl" color="#422afb" thickness="4px" />
-              <Text color={textColor}>Loading policies...</Text>
-            </VStack>
+            <Text color={textColor}>Loading ads...</Text>
           </Flex>
         </Card>
       </Box>
@@ -341,7 +327,7 @@ const PrivacyAndTerms = () => {
   // Error state
   if (isError) {
     return (
-      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+      <Box mt="80px">
         <Card
           flexDirection="column"
           w="100%"
@@ -349,7 +335,7 @@ const PrivacyAndTerms = () => {
           overflowX={{ sm: 'scroll', lg: 'hidden' }}
         >
           <Flex justify="center" align="center" h="200px">
-            <Text color="red.500">Error loading policies. Please try again.</Text>
+            <Text color="red.500">Error loading ads. Please try again.</Text>
           </Flex>
         </Card>
       </Box>
@@ -378,7 +364,7 @@ const PrivacyAndTerms = () => {
             fontWeight="700"
             lineHeight="100%"
           >
-            Privacy & Terms Management
+            Ads Management
           </Text>
 
           <HStack spacing={4} w={{ base: "100%", md: "auto" }}>
@@ -408,15 +394,13 @@ const PrivacyAndTerms = () => {
                 fontWeight="500"
                 _placeholder={{ color: "gray.400", fontSize: "14px" }}
                 borderRadius="30px"
-                placeholder="Search policies..."
+                placeholder="Search ads..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </InputGroup>
 
-
-
-            {/* Add Policy Button */}
+            {/* Add Ad Button */}
             <Button
               leftIcon={<FaPlus />}
               variant='darkBrand'
@@ -426,10 +410,10 @@ const PrivacyAndTerms = () => {
               borderRadius='70px'
               px='24px'
               py='5px'
-              onClick={handleAddPolicy}
+              onClick={() => navigate('/admin/add-ad')}
               w={{ base: "100%", md: "200px" }}
             >
-              Add New Policy
+              Add New Ad
             </Button>
           </HStack>
         </Flex>
@@ -586,7 +570,7 @@ const PrivacyAndTerms = () => {
         )}
 
         {/* No data message */}
-        {(!policies || policies.length === 0) && !isLoading && (
+        {(!adsData || adsData.length === 0) && !isLoading && (
           <Flex
             px={{ base: "16px", md: "25px" }}
             py="40px"
@@ -594,7 +578,7 @@ const PrivacyAndTerms = () => {
             align="center"
           >
             <Text color={textColor} fontSize="md">
-              No policies found with the current search.
+              No ads found with the current search.
             </Text>
           </Flex>
         )}
@@ -603,4 +587,4 @@ const PrivacyAndTerms = () => {
   );
 };
 
-export default PrivacyAndTerms;
+export default Ads;

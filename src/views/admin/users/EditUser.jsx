@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -18,17 +18,20 @@ import {
   Avatar,
   Icon,
   Spinner,
+  Alert,
+  AlertIcon,
 } from '@chakra-ui/react';
-import { AddIcon, ChevronDownIcon } from '@chakra-ui/icons';
+import { AddIcon, ChevronDownIcon, ArrowBackIcon } from '@chakra-ui/icons';
 import { FaUser, FaUpload } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import Card from 'components/card/Card';
-import { useCreateUserMutation } from 'api/usersSlice';
+import { useGetUserQuery, useUpdateUserMutation } from 'api/usersSlice';
 import { useUploadImageMutation } from 'api/fileUploadSlice';
 
-const AddUser = () => {
+const EditUser = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const toast = useToast();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const cardBg = useColorModeValue('white', 'navy.700');
@@ -37,27 +40,63 @@ const AddUser = () => {
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
   // API hooks
-  const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
+  const { data: userData, isLoading: isLoadingUser, isError: isErrorUser, error: userError , refetch } = useGetUserQuery(id);
+  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: '',
     full_name: '',
     subscription_plan: 'rookie',
+    profile_image: '',
+    password: '',
+    account_status: 'active',
   });
 
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [originalData, setOriginalData] = useState(null);
 
   const subscriptionPlans = [
     { value: 'rookie', label: 'Rookie' },
     { value: 'skilled', label: 'Skilled' },
     { value: 'master', label: 'Master' },
   ];
+
+  const accountStatuses = [
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+    { value: 'suspended', label: 'Suspended' },
+  ];
+
+  // Load user data when it's fetched
+  useEffect(() => {
+    if (userData?.data) {
+      const user = userData.data;
+             setFormData({
+         name: user.name || '',
+         email: user.email || '',
+         full_name: user.full_name || '',
+         subscription_plan: user.subscription_plan || 'rookie',
+         profile_image: user.profile_image || '',
+         password: '',
+         account_status: user.account_status || 'active',
+       });
+      setOriginalData(user);
+      
+      // Set image preview if user has a profile image
+      if (user.profile_image) {
+        setImagePreview(user.profile_image);
+      }
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -67,7 +106,7 @@ const AddUser = () => {
     });
   };
 
-  // Image upload functions (matching AddRemedy pattern)
+  // Image upload functions
   const handleImageUpload = (files) => {
     if (files && files.length > 0) {
       const selectedFile = files[0];
@@ -201,26 +240,6 @@ const AddUser = () => {
       });
       return false;
     }
-    if (!formData.password.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Password is required',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-      return false;
-    }
-    if (formData.password.length < 6) {
-      toast({
-        title: 'Error',
-        description: 'Password must be at least 6 characters',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-      return false;
-    }
     return true;
   };
 
@@ -232,21 +251,26 @@ const AddUser = () => {
     }
 
     try {
-      // Prepare the data according to the API structure
-      const userData = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        full_name: formData.full_name || formData.name, // Use name as fallback
-        subscription_plan: formData.subscription_plan,
-        profile_image: formData.profile_image || null,
-      };
+             // Prepare the data according to the API structure
+       const userData = {
+         name: formData.name,
+         email: formData.email,
+         full_name: formData.full_name || formData.name, // Use name as fallback
+         subscription_plan: formData.subscription_plan,
+         profile_image: formData.profile_image || null,
+         account_status: formData.account_status,
+       };
 
-      await createUser(userData).unwrap();
+       // Only include password if it's provided
+       if (formData.password.trim()) {
+         userData.password = formData.password;
+       }
+
+      await updateUser({ id, user: userData }).unwrap();
 
       toast({
         title: 'Success',
-        description: 'User created successfully',
+        description: 'User updated successfully',
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -255,10 +279,10 @@ const AddUser = () => {
       navigate('/admin/users');
       
     } catch (error) {
-      console.error('Failed to create user:', error);
+      console.error('Failed to update user:', error);
       toast({
         title: 'Error',
-        description: error.data?.message || 'Failed to create user. Please try again.',
+        description: error.data?.message || 'Failed to update user. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -266,14 +290,65 @@ const AddUser = () => {
     }
   };
 
+  // Loading state
+  if (isLoadingUser) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Flex justify="center" align="center" h="200px">
+              <VStack spacing={4}>
+                <Spinner size="xl" color="#422afb" thickness="4px" />
+                <Text color={textColor}>Loading user data...</Text>
+              </VStack>
+            </Flex>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (isErrorUser) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Alert status="error" mb={4}>
+              <AlertIcon />
+              Error loading user data. {userError?.data?.message || 'Please try again.'}
+            </Alert>
+            <Button
+              leftIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/admin/users')}
+              colorScheme="blue"
+            >
+              Back to Users
+            </Button>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
   return (
     <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
       <Card>
         <Box p={6}>
-          <Text color={textColor} fontSize="22px" fontWeight="700" mb="20px">
-            Add New User
-          </Text>
-
+          <Flex justify="space-between" align="center" mb="20px">
+            <Text color={textColor} fontSize="22px" fontWeight="700">
+              Edit User
+            </Text>
+            <Button
+              leftIcon={<ArrowBackIcon />}
+              variant="outline"
+              onClick={() => navigate('/admin/users')}
+              size="sm"
+            >
+              Back to Users
+            </Button>
+          </Flex>
+          
           <form onSubmit={handleSubmit}>
             <VStack spacing={6} align="stretch">
               {/* Profile Image Upload */}
@@ -419,61 +494,83 @@ const AddUser = () => {
                 />
               </FormControl>
 
-              {/* Email Field */}
-              <FormControl isRequired>
-                <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Email Address
-                </FormLabel>
-                <Input
-                  type="email"
-                  name="email"
-                  placeholder="Enter user's email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  bg={inputBg}
-                  color={textColor}
-                  borderColor={inputBorder}
-                />
-              </FormControl>
+                             {/* Email Field */}
+               <FormControl isRequired>
+                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                   Email Address
+                 </FormLabel>
+                 <Input
+                   type="email"
+                   name="email"
+                   placeholder="Enter user's email"
+                   value={formData.email}
+                   onChange={handleInputChange}
+                   bg={inputBg}
+                   color={textColor}
+                   borderColor={inputBorder}
+                 />
+               </FormControl>
 
-              {/* Password Field */}
-              <FormControl isRequired>
-                <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Password
-                </FormLabel>
-                <Input
-                  type="password"
-                  name="password"
-                  placeholder="Enter password (min 6 characters)"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  bg={inputBg}
-                  color={textColor}
-                  borderColor={inputBorder}
-                />
-              </FormControl>
+               {/* Password Field */}
+               <FormControl>
+                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                   Password (Leave blank to keep current password)
+                 </FormLabel>
+                 <Input
+                   type="password"
+                   name="password"
+                   placeholder="Enter new password (optional)"
+                   value={formData.password}
+                   onChange={handleInputChange}
+                   bg={inputBg}
+                   color={textColor}
+                   borderColor={inputBorder}
+                 />
+               </FormControl>
 
-              {/* Subscription Plan */}
-              <FormControl isRequired>
-                <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Subscription Plan
-                </FormLabel>
-                <Select
-                  name="subscription_plan"
-                  value={formData.subscription_plan}
-                  onChange={handleInputChange}
-                  bg={inputBg}
-                  color={textColor}
-                  borderColor={inputBorder}
-                  icon={<ChevronDownIcon />}
-                >
-                  {subscriptionPlans.map(plan => (
-                    <option key={plan.value} value={plan.value}>
-                      {plan.label}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
+               {/* Subscription Plan */}
+               <FormControl isRequired>
+                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                   Subscription Plan
+                 </FormLabel>
+                 <Select
+                   name="subscription_plan"
+                   value={formData.subscription_plan}
+                   onChange={handleInputChange}
+                   bg={inputBg}
+                   color={textColor}
+                   borderColor={inputBorder}
+                   icon={<ChevronDownIcon />}
+                 >
+                   {subscriptionPlans.map(plan => (
+                     <option key={plan.value} value={plan.value}>
+                       {plan.label}
+                     </option>
+                   ))}
+                 </Select>
+               </FormControl>
+
+               {/* Account Status */}
+               <FormControl isRequired>
+                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                   Account Status
+                 </FormLabel>
+                 <Select
+                   name="account_status"
+                   value={formData.account_status}
+                   onChange={handleInputChange}
+                   bg={inputBg}
+                   color={textColor}
+                   borderColor={inputBorder}
+                   icon={<ChevronDownIcon />}
+                 >
+                   {accountStatuses.map(status => (
+                     <option key={status.value} value={status.value}>
+                       {status.label}
+                     </option>
+                   ))}
+                 </Select>
+               </FormControl>
 
               {/* Submit Button */}
               <Button
@@ -481,10 +578,10 @@ const AddUser = () => {
                 colorScheme="blue"
                 width="100%"
                 size="lg"
-                isLoading={isCreating}
-                loadingText="Creating User"
+                isLoading={isUpdating}
+                loadingText="Updating User"
               >
-                Create User
+                Update User
               </Button>
             </VStack>
           </form>
@@ -494,4 +591,4 @@ const AddUser = () => {
   );
 };
 
-export default AddUser;
+export default EditUser;

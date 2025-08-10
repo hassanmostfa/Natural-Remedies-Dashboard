@@ -12,26 +12,43 @@ import {
   FormLabel,
   FormErrorMessage,
   Card,
+  Spinner,
+  useToast,
 } from '@chakra-ui/react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSave, FaEdit } from 'react-icons/fa';
-import Swal from 'sweetalert2';
+import { useGetAboutByIdQuery, useUpdateAboutMutation } from 'api/aboutSlice';
 
 const About = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const toast = useToast();
+  const [isDataLoaded, setIsDataLoaded] = React.useState(false);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const cardBg = useColorModeValue('white', 'navy.800');
 
+  // API hooks
+  const { data: aboutResponse, isLoading, isError, refetch } = useGetAboutByIdQuery(1);
+  const [updateAbout, { isLoading: isUpdating }] = useUpdateAboutMutation();
+
   const [formData, setFormData] = React.useState({
-    mainDescription: 'At Natural Remedies, we believe in the power of nature to heal and nurture. Our mission is to provide you with the highest quality natural remedies, backed by centuries of traditional wisdom and modern scientific research. We are committed to helping you achieve optimal health through safe, effective, and sustainable natural solutions.'
+    mainDescription: ''
   });
 
   const [errors, setErrors] = React.useState({});
+
+  // Load data when API response is received
+  React.useEffect(() => {
+    if (aboutResponse?.data && !isDataLoaded) {
+      setFormData({
+        mainDescription: aboutResponse.data.mainDescription || ''
+      });
+      setIsDataLoaded(true);
+    }
+  }, [aboutResponse?.data, isDataLoaded]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -64,40 +81,69 @@ const About = () => {
       return;
     }
 
-    setIsLoading(true);
     try {
-      // In a real app, you would call your API here
-      // const response = await api.put('/about', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await updateAbout({
+        id: 1,
+        mainDescription: formData.mainDescription
+      }).unwrap();
 
-      Swal.fire({
-        title: 'Success!',
-        text: 'About information has been updated successfully.',
-        icon: 'success',
-        confirmButtonText: 'OK'
+      toast({
+        title: 'Success',
+        description: 'About information has been updated successfully.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
       });
     } catch (error) {
       console.error('Failed to update about information:', error);
-      Swal.fire({
-        title: 'Error!',
-        text: 'Failed to update about information. Please try again.',
-        icon: 'error',
-        confirmButtonText: 'OK'
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to update about information. Please try again.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
-    setFormData({
-      mainDescription: 'At Natural Remedies, we believe in the power of nature to heal and nurture. Our mission is to provide you with the highest quality natural remedies, backed by centuries of traditional wisdom and modern scientific research. We are committed to helping you achieve optimal health through safe, effective, and sustainable natural solutions.'
-    });
+    // Reset form data to original values from API
+    if (aboutResponse?.data) {
+      setFormData({
+        mainDescription: aboutResponse.data.mainDescription || ''
+      });
+    }
     setErrors({});
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card p={6}>
+          <Flex justify="center" align="center" h="200px">
+            <VStack spacing={4}>
+              <Spinner size="xl" color="#422afb" thickness="4px" />
+              <Text color={textColor}>Loading about information...</Text>
+            </VStack>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card p={6}>
+          <Flex justify="center" align="center" h="200px">
+            <Text color="red.500">Error loading about information. Please try again.</Text>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
 
   return (
     <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
@@ -156,7 +202,7 @@ const About = () => {
               onClick={handleSave}
               colorScheme="green"
               leftIcon={<FaSave />}
-              isLoading={isLoading}
+              isLoading={isUpdating}
             >
               Save Changes
             </Button>

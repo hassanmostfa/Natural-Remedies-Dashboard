@@ -30,6 +30,7 @@
    import { FaEye, FaTrash, FaLeaf, FaSeedling, FaFlask, FaPills, FaMugHot, FaSprayCan } from 'react-icons/fa6';
    import { useNavigate } from 'react-router-dom';
    import Swal from 'sweetalert2';
+   import { useGetBodySystemsQuery, useDeleteBodySystemMutation } from 'api/bodySystemsSlice';
 
    const columnHelper = createColumnHelper();
 
@@ -40,88 +41,48 @@
 
    const textColor = useColorModeValue('secondaryGray.900', 'white');
    const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+   const searchBg = useColorModeValue("secondaryGray.300", "gray.700");
+   const searchColor = useColorModeValue("gray.700", "white");
 
-   // Static categories data
-   const staticData = [
-      {
-         id: 1,
-         name: 'Digestive Health',
-         description: 'Remedies for stomach, gut, and digestive system issues',
-         status: 'active',
-         colorScheme: 'green',
-         remediesCount: 23,
-      },
-      {
-         id: 2,
-         name: 'Respiratory Health',
-         description: 'Natural solutions for breathing, lungs, and respiratory problems',
-         status: 'active',
-         colorScheme: 'blue',
-         remediesCount: 18,
-      },
-      {
-         id: 3,
-         name: 'Immune System',
-         description: 'Boosters and strengtheners for the body\'s natural defenses',
-         status: 'active',
-         colorScheme: 'purple',
-         remediesCount: 31,
-      },
-      {
-         id: 4,
-         name: 'Pain Relief',
-         description: 'Natural alternatives for managing various types of pain',
-         status: 'active',
-         colorScheme: 'orange',
-         remediesCount: 15,
-      },
-      {
-         id: 5,
-         name: 'Sleep & Relaxation',
-         description: 'Herbs and remedies to promote better sleep and calmness',
-         status: 'active',
-         colorScheme: 'teal',
-         remediesCount: 12,
-      },
-      {
-         id: 6,
-         name: 'Skin Health',
-         description: 'Natural treatments for various skin conditions and beauty',
-         status: 'inactive',
-         colorScheme: 'pink',
-         remediesCount: 8,
-      },
-      {
-         id: 7,
-         name: 'Energy & Vitality',
-         description: 'Natural boosters for energy, stamina, and overall vitality',
-         status: 'active',
-         colorScheme: 'yellow',
-         remediesCount: 19,
-      },
-      {
-         id: 8,
-         name: 'Women\'s Health',
-         description: 'Specialized remedies for women\'s health and wellness',
-         status: 'active',
-         colorScheme: 'red',
-         remediesCount: 14,
-      },
-   ];
+   // Delete body system mutation
+   const [deleteBodySystem, { isLoading: isDeleting }] = useDeleteBodySystemMutation();
 
-   // Filter data based on search query
-   const filteredData = React.useMemo(() => {
-      if (!searchQuery) return staticData;
-      return staticData.filter((item) =>
-         Object.values(item).some((value) =>
-         String(value).toLowerCase().includes(searchQuery.toLowerCase())
-         )
-      );
-   }, [searchQuery]);
+   // API call with search parameters
+   const { data: bodySystemsData, isLoading, error, refetch } = useGetBodySystemsQuery(
+     { title: searchQuery },
+     { 
+       refetchOnMountOrArgChange: true,
+       pollingInterval: 30000 // Refetch every 30 seconds
+     }
+   );
+
+   // Extract body systems from API response
+   const bodySystems = React.useMemo(() => {
+     if (bodySystemsData?.data) {
+       return bodySystemsData.data;
+     }
+     return [];
+   }, [bodySystemsData]);
+
+ 
+
+   // Handle search input change
+   const handleSearchChange = (e) => {
+     setSearchQuery(e.target.value);
+   };
+
+   // Debounced search effect
+   React.useEffect(() => {
+     const timeoutId = setTimeout(() => {
+       refetch();
+     }, 500); // Debounce search by 500ms
+
+     return () => clearTimeout(timeoutId);
+   }, [searchQuery, refetch]);
 
    const columns = [
-      columnHelper.accessor('name', {
-         id: 'name',
+      columnHelper.accessor('title', {
+         id: 'title',
          header: () => (
          <Text
             justifyContent="space-between"
@@ -129,7 +90,7 @@
             fontSize={{ sm: '10px', lg: '12px' }}
             color="gray.400"
          >
-            Category Name
+            Title
          </Text>
          ),
          cell: (info) => (
@@ -200,8 +161,9 @@
                me="10px"
                color="red.500"
                as={FaTrash}
-               cursor="pointer"
-               onClick={() => handleDeleteCategory(info.getValue())}
+               cursor={isDeleting ? "not-allowed" : "pointer"}
+               opacity={isDeleting ? 0.5 : 1}
+               onClick={isDeleting ? undefined : () => handleDeleteCategory(info.getValue())}
             />
             <Icon
                w="18px"
@@ -210,7 +172,7 @@
                color="green.500"
                as={EditIcon}
                cursor="pointer"
-               onClick={() => navigate(`/admin/edit-category/${info.getValue()}`)}
+               onClick={() => navigate(`/admin/edit-body-system/${info.getValue()}`)}
             />
          </Flex>
          ),
@@ -218,7 +180,7 @@
    ];
 
    const table = useReactTable({
-      data: filteredData,
+      data: bodySystems,
       columns,
       state: {
          sorting,
@@ -243,78 +205,141 @@
          });
 
          if (result.isConfirmed) {
-         // In a real app, you would call your API here
-         Swal.fire('Deleted!', 'The category has been deleted.', 'success');
+           // Call the delete API
+           await deleteBodySystem(id).unwrap();
+           
+           // Show success message
+           Swal.fire('Deleted!', 'The body system has been deleted successfully.', 'success');
+           
+           // Refetch the body systems list to update the table
+           refetch();
          }
       } catch (error) {
-         console.error('Failed to delete category:', error);
-         Swal.fire('Error!', 'Failed to delete the category.', 'error');
+         console.error('Failed to delete body system:', error);
+         
+         let errorMessage = 'Failed to delete the body system';
+         if (error?.data?.message) {
+           errorMessage = error.data.message;
+         } else if (error?.error) {
+           errorMessage = error.error;
+         }
+         
+         Swal.fire('Error!', errorMessage, 'error');
       }
    };
 
+   // Loading state
+   if (isLoading) {
+     return (
+       <div className="container">
+         <Card
+           flexDirection="column"
+           w="100%"
+           px="0px"
+           overflowX={{ sm: 'scroll', lg: 'hidden' }}
+         >
+           <Flex justify="center" align="center" h="200px">
+             <Text color={textColor}>Loading body systems...</Text>
+           </Flex>
+         </Card>
+       </div>
+     );
+   }
+
+   // Error state
+   if (error) {
+     return (
+       <Box  mt={"80px"}>
+         <Card
+           flexDirection="column"
+           w="100%"
+           px="0px"
+           overflowX={{ sm: 'scroll', lg: 'hidden' }}
+         >
+           <Flex justify="center" align="center" h="200px">
+             <Text color="red.500">Error loading body systems. Please try again.</Text>
+           </Flex>
+         </Card>
+       </Box>
+     );
+   }
+
    return (
-      <div className="container">
+      <Box  mt={"80px"}>
          <Card
          flexDirection="column"
          w="100%"
          px="0px"
          overflowX={{ sm: 'scroll', lg: 'hidden' }}
          >
-         <Flex px="25px" mb="8px" justifyContent="space-between" align="center">
-            <Text
-               color={textColor}
-               fontSize="22px"
-               fontWeight="700"
-               lineHeight="100%"
-            >
-               Categories
-            </Text>
-            <div className="search-container d-flex align-items-center gap-2">
-               <InputGroup w={{ base: "100", md: "400px" }}>
+         <Flex
+         px={{ base: "16px", md: "25px" }}
+         mb="8px"
+         direction={{ base: "column", md: "row" }}
+         justifyContent="space-between"
+         align={{ base: "stretch", md: "center" }}
+         gap={{ base: 4, md: 0 }}
+         >
+         {/* Title */}
+         <Text
+            color={textColor}
+            fontSize="22px"
+            fontWeight="700"
+            lineHeight="100%"
+         >
+            Body Systems
+         </Text>
+
+         {/* Search Input */}
+         <Box w={{ base: "100%", md: "auto" }}>
+            <InputGroup w={{ base: "100%", md: "400px" }}>
                <InputLeftElement>
-                  <IconButton
-                     bg="inherit"
-                     borderRadius="inherit"
-                     _hover="none"
-                     _active={{
+               <IconButton
+                  bg="inherit"
+                  borderRadius="inherit"
+                  _hover="none"
+                  _active={{
                      bg: "inherit",
                      transform: "none",
                      borderColor: "transparent",
-                     }}
-                     _focus={{
+                  }}
+                  _focus={{
                      boxShadow: "none",
-                     }}
-                     icon={<SearchIcon w="15px" h="15px" />}
-                  />
+                  }}
+                  icon={<SearchIcon w="15px" h="15px" />}
+               />
                </InputLeftElement>
                <Input
-                  variant="search"
-                  fontSize="sm"
-                  bg={useColorModeValue("secondaryGray.300", "gray.700")}
-                  color={useColorModeValue("gray.700", "white")}
-                  fontWeight="500"
-                  _placeholder={{ color: "gray.400", fontSize: "14px" }}
-                  borderRadius="30px"
-                  placeholder="Search categories..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+               variant="search"
+               fontSize="sm"
+               bg={searchBg}
+               color={searchColor}
+               fontWeight="500"
+               _placeholder={{ color: "gray.400", fontSize: "14px" }}
+               borderRadius="30px"
+               placeholder="Search body systems..."
+               value={searchQuery}
+               onChange={handleSearchChange}
                />
-               </InputGroup>
-            </div>
-            <Button
-               variant='darkBrand'
-               color='white'
-               fontSize='sm'
-               fontWeight='500'
-               borderRadius='70px'
-               px='24px'
-               py='5px'
-               onClick={() => navigate('/admin/add-category')}
-               width={'200px'}
-            >
-               Add New Category
-            </Button>
+            </InputGroup>
+         </Box>
+
+         {/* Button */}
+         <Button
+            variant="darkBrand"
+            color="white"
+            fontSize="sm"
+            fontWeight="500"
+            borderRadius="70px"
+            px="24px"
+            py="5px"
+            onClick={() => navigate('/admin/add-category')}
+            w={{ base: "100%", md: "200px" }}
+         >
+            Add New Body System
+         </Button>
          </Flex>
+
          <Box>
             <Table variant="simple" color="gray.500" mb="24px" mt="12px">
                <Thead>
@@ -377,7 +402,7 @@
             </Table>
          </Box>
          </Card>
-      </div>
+      </Box>
    );
    };
 

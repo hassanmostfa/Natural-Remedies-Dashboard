@@ -20,7 +20,7 @@ import DefaultAuth from "layouts/auth/Default";
 import illustration from "assets/img/auth/auth.png";
 import { MdOutlineRemoveRedEye } from "react-icons/md";
 import { RiEyeCloseLine } from "react-icons/ri";
-import { useLoginUserMutation } from "api/userSlice";
+import { useLoginAdminMutation } from "api/adminSlice";
 import Swal from "sweetalert2";
 import { LanguageContext } from "../../../components/auth/LanguageContext"; // Adjust the path accordingly
 import Logo from "../../../assets/img/logo.png";
@@ -33,7 +33,7 @@ function SignIn() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const [loginUser, { isError, error: apiError }] = useLoginUserMutation();
+  const [loginAdmin, { isError, error: apiError }] = useLoginAdminMutation();
   const [show, setShow] = useState(false);
 
   const translations = {
@@ -62,21 +62,22 @@ function SignIn() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await loginUser(formData).unwrap();
-      if (response) {
-        localStorage.setItem("token", response.data.token);
-        navigate("/");
+      const response = await loginAdmin(formData).unwrap();
+      if (response.success) {
+        // Tokens are already stored in localStorage by the transformResponse
+        console.log("Login successful, redirecting to dashboard...");
+        
+        // Navigate directly to dashboard without showing success message
+        navigate("/admin/dashboard");
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError(apiError?.data?.message || "Invalid credentials");
       Swal.fire({
         icon: "error",
         title: "Login Failed",
         text: error,
         confirmButtonText: "OK",
-        onClose: () => {
-          if (!isError) navigate("/");
-        },
       });
     }
   };

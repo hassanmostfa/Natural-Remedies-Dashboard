@@ -32,14 +32,15 @@ import {
 } from '@chakra-ui/react';
 import * as React from 'react';
 import Card from 'components/card/Card';
-import { useNavigate } from 'react-router-dom';
-import { AddIcon, CloseIcon, UploadIcon } from '@chakra-ui/icons';
+import { useNavigate, useParams } from 'react-router-dom';
+import { AddIcon, CloseIcon } from '@chakra-ui/icons';
 import { FaImage, FaUpload } from 'react-icons/fa';
 import { useUploadImageMutation } from 'api/fileUploadSlice';
-import { useCreateDiseaseMutation } from 'api/diseasesSlice';
+import { useGetDiseaseQuery, useUpdateDiseaseMutation } from 'api/diseasesSlice';
 
-const AddDisease = () => {
+const EditDisease = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const toast = useToast();
   
   const textColor = useColorModeValue('secondaryGray.900', 'white');
@@ -48,7 +49,10 @@ const AddDisease = () => {
 
   // API hooks
   const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
-  const [createDisease, { isLoading: isCreating }] = useCreateDiseaseMutation();
+  const [updateDisease, { isLoading: isUpdating }] = useUpdateDiseaseMutation();
+  
+  // Get disease data
+  const { data: diseaseResponse, isLoading: isLoadingDisease, error } = useGetDiseaseQuery(id);
 
   const steps = [
     { title: 'Basic Information' },
@@ -84,6 +88,30 @@ const AddDisease = () => {
     { value: 'inactive', label: 'Inactive' },
     { value: 'draft', label: 'Draft' },
   ];
+
+  // Load disease data when it's fetched
+  React.useEffect(() => {
+    if (diseaseResponse?.data) {
+      const disease = diseaseResponse.data;
+      setBasicInfo({
+        name: disease.name || '',
+        image: disease.image || '',
+        description: disease.description || '',
+        status: disease.status || 'active',
+      });
+      
+      // Set symptoms
+      if (disease.symptoms && disease.symptoms.length > 0) {
+        const symptomsData = disease.symptoms.map((symptom, index) => ({
+          id: index + 1,
+          name: symptom
+        }));
+        setSymptoms(symptomsData);
+      } else {
+        setSymptoms([{ id: 1, name: '' }]);
+      }
+    }
+  }, [diseaseResponse]);
 
   // Basic info handlers
   const handleBasicInfoChange = React.useCallback((field, value) => {
@@ -223,7 +251,6 @@ const AddDisease = () => {
     }));
   };
 
-
   const validateStep = (step) => {
     switch (step) {
       case 0: // Basic Information
@@ -297,12 +324,12 @@ const AddDisease = () => {
         symptoms: symptoms.map(s => s.name).filter(name => name.trim()),
       };
 
-      // Create disease using API
-      await createDisease(formData).unwrap();
+      // Update disease using API
+      await updateDisease({ id, disease: formData }).unwrap();
 
       toast({
         title: 'Success',
-        description: 'Disease added successfully',
+        description: 'Disease updated successfully',
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -312,10 +339,10 @@ const AddDisease = () => {
       navigate('/admin/disease');
       
     } catch (error) {
-      console.error('Failed to add disease:', error);
+      console.error('Failed to update disease:', error);
       toast({
         title: 'Error',
-        description: error.data?.message || 'Failed to add disease. Please try again.',
+        description: error.data?.message || 'Failed to update disease. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -329,6 +356,45 @@ const AddDisease = () => {
     navigate('/admin/disease');
   };
 
+  // Loading state while fetching disease data
+  if (isLoadingDisease) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Flex justify="center" align="center" h="200px">
+              <VStack spacing={4}>
+                <Spinner size="xl" color="blue.500" />
+                <Text color={textColor}>Loading disease data...</Text>
+              </VStack>
+            </Flex>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Flex justify="center" align="center" h="200px">
+              <VStack spacing={4}>
+                <Text color="red.500" fontSize="lg">Error loading disease</Text>
+                <Text color="gray.500">{error.data?.message || 'Failed to load disease data'}</Text>
+                <Button onClick={handleCancel} colorScheme="blue">
+                  Back to Diseases
+                </Button>
+              </VStack>
+            </Flex>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
@@ -337,7 +403,7 @@ const AddDisease = () => {
             <Heading size="md" color={textColor} mb={4}>Basic Information</Heading>
             <Grid templateColumns="repeat(2, 1fr)" gap={6}>
               <GridItem colSpan={2}>
-              <FormControl>
+                <FormControl>
                   <FormLabel color={textColor}>Disease Image</FormLabel>
                   <Box
                     border="1px dashed"
@@ -442,7 +508,7 @@ const AddDisease = () => {
                       </>
                     )}
                   </Box>
-              </FormControl>
+                </FormControl>
               </GridItem>
 
               <GridItem colSpan={2}>
@@ -533,8 +599,6 @@ const AddDisease = () => {
           </Box>
         );
 
-
-
       default:
         return null;
     }
@@ -545,7 +609,7 @@ const AddDisease = () => {
       <Card>
         <Box p={6}>
           <Flex justify="space-between" align="center" mb={6}>
-            <Heading size="lg" color={textColor}>Add New Disease</Heading>
+            <Heading size="lg" color={textColor}>Edit Disease</Heading>
             <Text color="gray.500" fontSize="sm">
               Step {activeStep + 1} of {steps.length}
             </Text>
@@ -608,10 +672,10 @@ const AddDisease = () => {
                     <Button
                       onClick={handleSubmit}
                       colorScheme="green"
-                      isLoading={isSubmitting || isCreating}
-                      loadingText="Adding Disease"
+                      isLoading={isSubmitting || isUpdating}
+                      loadingText="Updating Disease"
                     >
-                      Add Disease
+                      Update Disease
                     </Button>
                   )}
                 </HStack>
@@ -624,4 +688,4 @@ const AddDisease = () => {
   );
 };
 
-export default AddDisease;
+export default EditDisease;

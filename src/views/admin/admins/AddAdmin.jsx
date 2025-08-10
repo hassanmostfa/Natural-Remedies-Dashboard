@@ -7,13 +7,16 @@ import {
   Box,
   Flex,
   IconButton,
+  HStack,
 } from '@chakra-ui/react';
-import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
+import { ViewIcon, ViewOffIcon, ChevronLeftIcon } from '@chakra-ui/icons';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import { useCreateAdminMutation } from 'api/adminSlice';
 
 const AddAdmin = () => {
   const navigate = useNavigate();
+  const [createAdmin, { isLoading }] = useCreateAdminMutation();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const cardBg = useColorModeValue('white', 'navy.700');
   const inputBg = useColorModeValue('gray.100', 'gray.700');
@@ -38,11 +41,9 @@ const AddAdmin = () => {
     e.preventDefault();
 
     try {
-      // In a real app, you would call your API here:
-      // const response = await createAdmin(formData).unwrap();
+      const response = await createAdmin(formData).unwrap();
       
-      // For static demo purposes:
-      console.log('Form submitted:', formData);
+      console.log('Admin created successfully:', response);
       
       Swal.fire({
         icon: 'success',
@@ -55,10 +56,19 @@ const AddAdmin = () => {
         }
       });
     } catch (error) {
+      console.error('Failed to create admin:', error);
+      
+      let errorMessage = 'Failed to add admin';
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      }
+      
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Failed to add admin',
+        text: errorMessage,
         confirmButtonText: 'OK',
       });
     }
@@ -67,9 +77,22 @@ const AddAdmin = () => {
   return (
     <Flex p="20px" mt={'80px'}>
       <Box w="100%" p="6" boxShadow="md" borderRadius="lg" bg={cardBg}>
-        <Text color={textColor} fontSize="22px" fontWeight="700" mb="20px">
-          Add New Admin
-        </Text>
+        <HStack justify="space-between" mb="20px">
+          <Button
+            leftIcon={<ChevronLeftIcon />}
+            color="green.500"
+            onClick={() => navigate('/admin/admins')}
+            border="2px solid"
+            borderColor="green.500"
+            _hover={{ bg: 'green.100' }}
+          >
+            Back
+          </Button>
+          <Text color={textColor} fontSize="22px" fontWeight="700">
+            Add New Admin
+          </Text>
+          <Box w="80px" /> {/* Spacer to center the title */}
+        </HStack>
 
         <form onSubmit={handleSubmit}>
           {/* Name Field */}
@@ -116,14 +139,12 @@ const AddAdmin = () => {
             <Input
               type="tel"
               name="phone"
-              placeholder="Enter phone number (e.g. +966501234567)"
+              placeholder="Enter phone number"
               value={formData.phone}
               onChange={handleInputChange}
               bg={inputBg}
               color={textColor}
               borderColor={inputBorder}
-              pattern="\+966[0-9]{9}"
-              title="Please enter a valid Saudi phone number (+966 followed by 9 digits)"
               required
             />
           </Box>
@@ -158,17 +179,17 @@ const AddAdmin = () => {
 
           {/* Submit Button */}
           <Button
-            width="100%"
-            variant="solid"
-            colorScheme="blue"
-            color="white"
+            width="200px"
+            variant="darkBrand"
             fontSize="sm"
             fontWeight="500"
-            borderRadius="md"
+            borderRadius="xl"
             px="24px"
             py="5px"
             type="submit"
             height="40px"
+            isLoading={isLoading}
+            loadingText="Creating Admin..."
           >
             Create Admin
           </Button>

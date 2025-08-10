@@ -7,7 +7,6 @@ import {
   VStack,
   HStack,
   Textarea,
-  Select,
   FormControl,
   FormLabel,
   FormErrorMessage,
@@ -23,18 +22,20 @@ import {
   StepTitle,
   useSteps,
   useToast,
+  Spinner,
 } from '@chakra-ui/react';
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCreateFaqMutation } from 'api/faqsSlice';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useGetFaqQuery, useUpdateFaqMutation } from 'api/faqsSlice';
 
 const steps = [
   { title: 'Basic Information', description: 'Question and Answer' },
-  { title: 'Preview', description: 'Review and Create' },
+  { title: 'Preview', description: 'Review and Update' },
 ];
 
-const AddFaq = () => {
+const EditFaq = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const toast = useToast();
   const { activeStep, setActiveStep } = useSteps({
     index: 0,
@@ -45,7 +46,8 @@ const AddFaq = () => {
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
   // API hooks
-  const [createFaq, { isLoading: isCreating }] = useCreateFaqMutation();
+  const { data: faqResponse, isLoading: isLoadingFaq, isError: isErrorLoadingFaq , refetch} = useGetFaqQuery(id);
+  const [updateFaq, { isLoading: isUpdating }] = useUpdateFaqMutation();
 
   const [formData, setFormData] = React.useState({
     question: '',
@@ -53,6 +55,23 @@ const AddFaq = () => {
   });
 
   const [errors, setErrors] = React.useState({});
+  const [isDataLoaded, setIsDataLoaded] = React.useState(false);
+
+  // Load FAQ data when fetched (only once)
+  React.useEffect(() => {
+    if (faqResponse?.data && !isDataLoaded) {
+      const faqData = faqResponse.data;
+      setFormData({
+        question: faqData.question || '',
+        answer: faqData.answer || '',
+      });
+      setIsDataLoaded(true);
+    }
+  }, [faqResponse?.data, isDataLoaded]);
+
+  React.useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -111,23 +130,25 @@ const AddFaq = () => {
         answer: formData.answer,
       };
 
-      await createFaq(faqData).unwrap();
+      await updateFaq({ id, faq: faqData }).unwrap();
 
       toast({
         title: 'Success',
-        description: 'FAQ created successfully',
+        description: 'FAQ updated successfully',
         status: 'success',
         duration: 3000,
         isClosable: true,
       });
 
+      refetch();
+
       navigate('/admin/undefined/faqs');
       
     } catch (error) {
-      console.error('Failed to create FAQ:', error);
+      console.error('Failed to update FAQ:', error);
       toast({
         title: 'Error',
-        description: error.data?.message || 'Failed to create FAQ. Please try again.',
+        description: error.data?.message || 'Failed to update FAQ. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -201,7 +222,7 @@ const AddFaq = () => {
 
             <Box p={4} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
               <Text fontSize="sm" color="blue.700">
-                <strong>Ready to create:</strong> Review the information above and click "Create FAQ" to add this FAQ to your system.
+                <strong>Ready to update:</strong> Review the changes above and click "Update FAQ" to save your modifications.
               </Text>
             </Box>
           </VStack>
@@ -212,16 +233,61 @@ const AddFaq = () => {
     }
   };
 
+  // Loading state
+  if (isLoadingFaq) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Flex justify="center" align="center" h="200px">
+              <VStack spacing={4}>
+                <Spinner size="xl" color="#422afb" thickness="4px" />
+                <Text color={textColor}>Loading FAQ details...</Text>
+              </VStack>
+            </Flex>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (isErrorLoadingFaq) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Flex justify="center" align="center" h="200px">
+              <VStack spacing={4}>
+                <Text color="red.500" fontSize="lg">Error loading FAQ details</Text>
+                <Text color={textColor} fontSize="sm">
+                  The FAQ you're looking for might not exist or there was an error loading it.
+                </Text>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/admin/undefined/faqs')}
+                  size="sm"
+                >
+                  Back to FAQs
+                </Button>
+              </VStack>
+            </Flex>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
   return (
     <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
       <Card p={6}>
         <VStack spacing={8} align="stretch">
           <Box>
             <Text color={textColor} fontSize="2xl" fontWeight="bold" mb={2}>
-              Add New FAQ
+              Edit FAQ
             </Text>
             <Text color="gray.500">
-              Create a new frequently asked question with detailed information
+              Update the frequently asked question with new information
             </Text>
           </Box>
 
@@ -252,7 +318,7 @@ const AddFaq = () => {
 
           <HStack justify="space-between">
             <Button
-              onClick={() => navigate('/admin/faqs')}
+              onClick={() => navigate('/admin/undefined/faqs')}
               variant="outline"
               colorScheme="gray"
             >
@@ -281,10 +347,10 @@ const AddFaq = () => {
                 <Button
                   onClick={handleSubmit}
                   colorScheme="green"
-                  isLoading={isCreating}
-                  loadingText="Creating FAQ"
+                  isLoading={isUpdating}
+                  loadingText="Updating FAQ"
                 >
-                  Create FAQ
+                  Update FAQ
                 </Button>
               )}
             </HStack>
@@ -295,4 +361,4 @@ const AddFaq = () => {
   );
 };
 
-export default AddFaq;
+export default EditFaq;
