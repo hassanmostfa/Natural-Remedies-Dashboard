@@ -18,6 +18,7 @@ import { FaBell } from "react-icons/fa";
 import { FaSkull } from "react-icons/fa";
 import { GiStomach } from "react-icons/gi";
 import { FaBook, FaPlay , FaFile , FaStar , FaAd } from "react-icons/fa";
+import { FaPersonChalkboard } from "react-icons/fa6";
 
 // Admin Imports
 import MainDashboard from 'views/admin/default';
@@ -42,8 +43,15 @@ import AddRemedy from 'views/admin/remedies/AddRemedy';
 import EditRemedy from 'views/admin/remedies/EditRemedy';
 import ShowRemedy from 'views/admin/remedies/ShowRemedy';
 import Notifications from 'views/admin/notifications/Notifications';
+import Instructors from 'views/admin/instructors/Instructors';
+import AddInstructor from 'views/admin/instructors/AddInstructor';
+import EditInstructor from 'views/admin/instructors/EditInstructor';
 import Courses from 'views/admin/courses/Courses';
 import AddCourse from 'views/admin/courses/AddCourse';
+import EditCourse from 'views/admin/courses/EditCourse';
+import Lessons from 'views/admin/courses/lessons/Lessons';
+import AddLesson from 'views/admin/courses/lessons/AddLesson';
+import EditLesson from 'views/admin/courses/lessons/EditLesson';
 import Videos from 'views/admin/videos/Videos';
 import AddVideo from 'views/admin/videos/AddVideo';
 import EditVideo from 'views/admin/videos/EditVideo ';
@@ -207,6 +215,28 @@ const routes = [
     showInSidebar: true,
   },
   {
+    name: 'Instructors',
+    layout: '/admin',
+    path: '/instructors',
+    icon: <Icon as={FaPersonChalkboard} width="20px" height="20px" color="inherit" />,
+    component: <Instructors />,
+    showInSidebar: true,
+  },
+  {
+    name: 'Instructors',
+    layout: '/admin',
+    path: '/add-instructor',
+    component: <AddInstructor />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Instructors',
+    layout: '/admin',
+    path: '/edit-instructor/:id',
+    component: <EditInstructor />,
+    showInSidebar: false,
+  },
+  {
     name: 'Courses',
     layout: '/admin',
     path: '/courses',
@@ -220,6 +250,34 @@ const routes = [
     layout: '/admin',
     path: '/add-course',
     component: <AddCourse />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Courses',
+    layout: '/admin',
+    path: '/edit-course/:id',
+    component: <EditCourse />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Courses',
+    layout: '/admin',
+    path: '/courses/:id/lessons',
+    component: <Lessons />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Courses',
+    layout: '/admin',
+    path: '/courses/:id/lessons/add',
+    component: <AddLesson />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Courses',
+    layout: '/admin',
+    path: '/courses/:id/lessons/:lessonId/edit',
+    component: <EditLesson />,
     showInSidebar: false,
   },
   {

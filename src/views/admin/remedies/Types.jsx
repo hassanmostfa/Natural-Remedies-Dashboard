@@ -16,6 +16,8 @@ import {
    InputLeftElement,
    IconButton,
    Badge,
+   HStack,
+   Select,
  } from '@chakra-ui/react';
  import {
    createColumnHelper,
@@ -41,6 +43,8 @@ import {
    const navigate = useNavigate();
    const [sorting, setSorting] = React.useState([]);
    const [searchQuery, setSearchQuery] = React.useState('');
+   const [currentPage, setCurrentPage] = React.useState(1);
+   const [pageSize, setPageSize] = React.useState(15);
  
    const textColor = useColorModeValue('secondaryGray.900', 'white');
    const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
@@ -50,27 +54,73 @@ import {
    // Delete remedy type mutation
    const [deleteRemedyType, { isLoading: isDeleting }] = useDeleteRemedyTypeMutation();
  
-   // API call with search parameters
+   // API call with search and pagination parameters
    const { data: remedyTypesData, isLoading, error, refetch } = useGetRemedyTypesQuery(
-     { name: searchQuery },
+     { 
+       name: searchQuery,
+       page: currentPage,
+       per_page: pageSize
+     },
      { 
        refetchOnMountOrArgChange: true,
-       pollingInterval: 30000 // Refetch every 30 seconds
+       skip: false
      }
    );
  
-   // Extract remedy types from API response
-   const remedyTypes = React.useMemo(() => {
-     if (remedyTypesData?.data) {
-       return remedyTypesData.data;
+   // Extract remedy types and pagination info from API response
+   const { remedyTypes, pagination } = React.useMemo(() => {
+     if (remedyTypesData?.success && remedyTypesData?.data) {
+       return {
+         remedyTypes: remedyTypesData.data,
+         pagination: {
+           current_page: remedyTypesData.pagination?.current_page || 1,
+           last_page: remedyTypesData.pagination?.last_page || 1,
+           per_page: remedyTypesData.pagination?.per_page || pageSize,
+           total: remedyTypesData.pagination?.total || 0,
+           from: remedyTypesData.pagination?.from || 0,
+           to: remedyTypesData.pagination?.to || 0,
+           has_more_pages: remedyTypesData.pagination?.has_more_pages || false
+         }
+       };
      }
-     return [];
-   }, [remedyTypesData]);
+     return {
+       remedyTypes: [],
+       pagination: {
+         current_page: 1,
+         last_page: 1,
+         per_page: pageSize,
+         total: 0,
+         from: 0,
+         to: 0,
+         has_more_pages: false
+       }
+     };
+   }, [remedyTypesData, pageSize]);
  
    // Handle search input change
    const handleSearchChange = (e) => {
      setSearchQuery(e.target.value);
+     setCurrentPage(1); // Reset to first page when searching
    };
+
+   // Handle page change
+   const handlePageChange = (newPage) => {
+     setCurrentPage(newPage);
+   };
+
+   // Handle page size change
+   const handlePageSizeChange = (e) => {
+     const newPageSize = parseInt(e.target.value);
+     setPageSize(newPageSize);
+     setCurrentPage(1); // Reset to first page when changing page size
+   };
+
+   // Reset to first page when search query changes
+   React.useEffect(() => {
+     if (currentPage !== 1) {
+       setCurrentPage(1);
+     }
+   }, [searchQuery]);
  
    // Debounced search effect
    React.useEffect(() => {
@@ -79,7 +129,7 @@ import {
      }, 500); // Debounce search by 500ms
  
      return () => clearTimeout(timeoutId);
-   }, [searchQuery, refetch]);
+   }, [searchQuery, currentPage, pageSize, refetch]);
  
    const columns = [
      columnHelper.accessor('name', {
@@ -401,8 +451,99 @@ import {
                  );
                })}
              </Tbody>
-           </Table>
+                        </Table>
          </Box>
+
+         {remedyTypes.length === 0 && (
+           <Flex justify="center" align="center" h="100px" px={{ base: "15px", md: "25px" }}>
+             <Text color={textColor} fontSize={{ base: "sm", md: "md" }} textAlign="center">
+               {searchQuery ? 'No remedy types found matching your search.' : 'No remedy types found.'}
+             </Text>
+           </Flex>
+         )}
+
+         {/* Pagination Controls */}
+         {pagination.total > 0 && (
+           <Flex
+             px={{ base: "16px", md: "25px" }}
+             py="20px"
+             justify="space-between"
+             align="center"
+             borderTop="1px solid"
+             borderColor={borderColor}
+             direction={{ base: "column", md: "row" }}
+             gap={{ base: 4, md: 0 }}
+           >
+             {/* Page Info */}
+             <Text color={textColor} fontSize="sm">
+               Showing {pagination.from} to {pagination.to} of {pagination.total} results
+             </Text>
+
+             {/* Pagination Controls */}
+             <HStack spacing="3">
+               {/* Page Size Selector */}
+               <HStack spacing="2">
+                 <Text fontSize="sm" color={textColor}>
+                   Show:
+                 </Text>
+                 <Select
+                   size="sm"
+                   value={pageSize}
+                   onChange={handlePageSizeChange}
+                   w="70px"
+                   bg={searchBg}
+                   color={searchColor}
+                 >
+                   <option value={10}>10</option>
+                   <option value={15}>15</option>
+                   <option value={25}>25</option>
+                   <option value={50}>50</option>
+                 </Select>
+               </HStack>
+
+               {/* Page Navigation */}
+               <HStack spacing="2">
+                 <Button
+                   size="sm"
+                   variant="outline"
+                   onClick={() => handlePageChange(pagination.current_page - 1)}
+                   isDisabled={pagination.current_page <= 1}
+                   leftIcon={<ChevronLeftIcon />}
+                 >
+                   Previous
+                 </Button>
+
+                 {/* Page Numbers */}
+                 {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
+                   const pageNum = i + 1;
+                   const isCurrentPage = pageNum === pagination.current_page;
+                   
+                   return (
+                     <Button
+                       key={pageNum}
+                       size="sm"
+                       variant={isCurrentPage ? "solid" : "outline"}
+                       colorScheme={isCurrentPage ? "blue" : "gray"}
+                       onClick={() => handlePageChange(pageNum)}
+                     >
+                       {pageNum}
+                     </Button>
+                   );
+                 })}
+
+                 <Button
+                   size="sm"
+                   variant="outline"
+                   onClick={() => handlePageChange(pagination.current_page + 1)}
+                   isDisabled={pagination.current_page >= pagination.last_page}
+                   rightIcon={<ChevronRightIcon />}
+                 >
+                   Next
+                 </Button>
+               </HStack>
+             </HStack>
+           </Flex>
+         )}
        </Card>
      </Box>
    );

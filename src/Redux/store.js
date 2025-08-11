@@ -15,7 +15,9 @@ import { faqsApiService } from "api/faqsSlice";
 import { policiesApiService } from "api/policiesSlice";
 import { contactUsApiService } from "api/contactUsSlice";
 import { aboutApiService } from "api/aboutSlice";
-
+import { instructorsApiService } from "api/instructorsSlice";
+import { coursesApiService } from "api/coursesSlice";
+import { lessonsApiService } from "api/lessonsSlice";
 // import { userApi, authReducer } from './userSlice';
 
 export const store = configureStore({
@@ -35,6 +37,9 @@ export const store = configureStore({
     [policiesApiService.reducerPath]: policiesApiService.reducer,
     [contactUsApiService.reducerPath]: contactUsApiService.reducer,
     [aboutApiService.reducerPath]: aboutApiService.reducer,
+    [instructorsApiService.reducerPath]: instructorsApiService.reducer,
+    [coursesApiService.reducerPath]: coursesApiService.reducer,
+    [lessonsApiService.reducerPath]: lessonsApiService.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -53,6 +58,9 @@ export const store = configureStore({
       policiesApiService.middleware,
       contactUsApiService.middleware,
       aboutApiService.middleware,
+      instructorsApiService.middleware,
+      coursesApiService.middleware,
+      lessonsApiService.middleware,
     ),
 });
 

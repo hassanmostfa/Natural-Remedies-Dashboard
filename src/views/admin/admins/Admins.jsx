@@ -16,6 +16,8 @@ import {
   InputLeftElement,
   IconButton,
   Spinner,
+  Select,
+  HStack,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -38,6 +40,8 @@ const Admins = () => {
   const navigate = useNavigate();
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(15);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
@@ -47,27 +51,74 @@ const Admins = () => {
   // Delete admin mutation
   const [deleteAdmin, { isLoading: isDeleting }] = useDeleteAdminMutation();
 
-  // API call with search parameters
+  // API call with search and pagination parameters
   const { data: adminsData, isLoading, error, refetch } = useGetAdminsQuery(
-    { name: searchQuery },
+    { 
+      name: searchQuery,
+      page: currentPage,
+      per_page: pageSize
+    },
     { 
       refetchOnMountOrArgChange: true,
-      pollingInterval: 30000 // Refetch every 30 seconds
+      skip: false
     }
   );
 
-  // Extract admins from API response
-  const admins = React.useMemo(() => {
-    if (adminsData?.data) {
-      return adminsData.data;
+  // Extract admins and pagination info from API response
+  const { admins, pagination } = React.useMemo(() => {
+    if (adminsData?.success && adminsData?.data) {
+      return {
+        admins: adminsData.data,
+        pagination: {
+          current_page: adminsData.pagination?.current_page || 1,
+          last_page: adminsData.pagination?.last_page || 1,
+          per_page: adminsData.pagination?.per_page || pageSize,
+          total: adminsData.pagination?.total || 0,
+          from: adminsData.pagination?.from || 0,
+          to: adminsData.pagination?.to || 0,
+          has_more_pages: adminsData.pagination?.has_more_pages || false
+        }
+      };
     }
-    return [];
-  }, [adminsData]);
+    return {
+      admins: [],
+      pagination: {
+        current_page: 1,
+        last_page: 1,
+        per_page: pageSize,
+        total: 0,
+        from: 0,
+        to: 0,
+        has_more_pages: false
+      }
+    };
+  }, [adminsData, pageSize]);
 
   // Handle search input change
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (e) => {
+    const newPageSize = parseInt(e.target.value);
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+
+
+  // Reset to first page when search query changes
+  React.useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [searchQuery]);
 
   // Debounced search effect
   React.useEffect(() => {
@@ -76,7 +127,7 @@ const Admins = () => {
     }, 500); // Debounce search by 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, refetch]);
+  }, [searchQuery, currentPage, pageSize, refetch]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -404,16 +455,99 @@ const Admins = () => {
              </Tbody>
            </Table>
          </Box>
-                 {admins.length === 0 && (
-           <Flex justify="center" align="center" h="100px" px={{ base: "15px", md: "25px" }}>
-             <Text color={textColor} fontSize={{ base: "sm", md: "md" }} textAlign="center">
-               {searchQuery ? 'No admins found matching your search.' : 'No admins found.'}
-             </Text>
-           </Flex>
-         )}
-      </Card>
-    </Box>
-  );
+                                 {admins.length === 0 && (
+          <Flex justify="center" align="center" h="100px" px={{ base: "15px", md: "25px" }}>
+            <Text color={textColor} fontSize={{ base: "sm", md: "md" }} textAlign="center">
+              {searchQuery ? 'No admins found matching your search.' : 'No admins found.'}
+            </Text>
+          </Flex>
+        )}
+
+        {/* Pagination Controls */}
+        {pagination.total > 0 && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="20px"
+            justify="space-between"
+            align="center"
+            borderTop="1px solid"
+            borderColor={borderColor}
+            direction={{ base: "column", md: "row" }}
+            gap={{ base: 4, md: 0 }}
+          >
+            {/* Page Info */}
+            <Text color={textColor} fontSize="sm">
+              Showing {pagination.from} to {pagination.to} of {pagination.total} results
+            </Text>
+
+            {/* Pagination Controls */}
+            <HStack spacing="3">
+              {/* Page Size Selector */}
+              <HStack spacing="2">
+                <Text fontSize="sm" color={textColor}>
+                  Show:
+                </Text>
+                <Select
+                  size="sm"
+                  value={pageSize}
+                  onChange={handlePageSizeChange}
+                  w="70px"
+                  bg={searchBg}
+                  color={searchColor}
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </Select>
+              </HStack>
+
+              {/* Page Navigation */}
+              <HStack spacing="2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handlePageChange(pagination.current_page - 1)}
+                  isDisabled={pagination.current_page <= 1}
+                  leftIcon={<ChevronLeftIcon />}
+                >
+                  Previous
+                </Button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
+                  const pageNum = i + 1;
+                  const isCurrentPage = pageNum === pagination.current_page;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      size="sm"
+                      variant={isCurrentPage ? "solid" : "outline"}
+                      colorScheme={isCurrentPage ? "blue" : "gray"}
+                      onClick={() => handlePageChange(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handlePageChange(pagination.current_page + 1)}
+                  isDisabled={pagination.current_page >= pagination.last_page}
+                  rightIcon={<ChevronRightIcon />}
+                >
+                  Next
+                </Button>
+              </HStack>
+            </HStack>
+          </Flex>
+        )}
+     </Card>
+   </Box>
+ );
 };
 
 export default Admins;

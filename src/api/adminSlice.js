@@ -125,17 +125,27 @@ export const adminApiService = createApi({
       }),
     }),
 
-    // Get all admins with search
+    // Get all admins with search and pagination
     getAdmins: builder.query({
       query: (searchParams = {}) => {
         const params = new URLSearchParams();
         if (searchParams.name) {
           params.append('name', searchParams.name);
         }
+        if (searchParams.page) {
+          params.append('page', String(searchParams.page));
+        }
+        if (searchParams.per_page) {
+          params.append('per_page', String(searchParams.per_page));
+        }
         const queryString = params.toString();
         return {
           url: `/admins${queryString ? `?${queryString}` : ''}`,
         };
+      },
+      transformResponse: (response) => {
+        // Return the full response to access both data and pagination
+        return response;
       },
     }),
 

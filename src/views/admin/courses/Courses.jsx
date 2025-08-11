@@ -3,6 +3,7 @@ import {
   Button,
   Flex,
   Icon,
+  Image,
   Table,
   Tbody,
   Td,
@@ -16,11 +17,15 @@ import {
   InputLeftElement,
   IconButton,
   Badge,
-  Image,
   Avatar,
   HStack,
   VStack,
-  Progress,
+  useToast,
+  Select,
+  Spinner,
+  Alert,
+  AlertIcon,
+
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -32,127 +37,47 @@ import {
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { ChevronLeftIcon, ChevronRightIcon, EditIcon, PlusSquareIcon, SearchIcon } from '@chakra-ui/icons';
-import { FaEye, FaTrash, FaPlay, FaStar, FaUsers, FaClock, FaDollarSign } from 'react-icons/fa';
+import { FaEye, FaTrash, FaPlay, FaStar, FaUsers, FaClock, FaDollarSign, FaBookOpen } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useGetCoursesQuery, useDeleteCourseMutation } from 'api/coursesSlice';
 
 const columnHelper = createColumnHelper();
 
 const Courses = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [sorting, setSorting] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(15);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const searchBg = useColorModeValue('secondaryGray.300', 'gray.700');
+  const searchColor = useColorModeValue('gray.700', 'white');
 
-  // Static courses data
-  const staticData = [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=100&h=100&fit=crop',
-      title: 'Natural Healing Fundamentals',
-      description: 'Learn the basics of natural healing and herbal medicine',
-      duration: '8 weeks',
-      sessionsNumber: 24,
-      price: 99.99,
-      plan: 'Master Plan',
-      overview: 'Comprehensive course covering natural healing principles, herbal medicine basics, and practical applications for common health issues.',
-      courseContent: [
-        { title: 'Introduction to Herbal Medicine', image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop' },
-        { title: 'Essential Oils and Aromatherapy', image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop' },
-        { title: 'Natural Remedies for Common Ailments', image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop' }
-      ],
-      instructors: [
-        { name: 'Dr. Sarah Johnson', description: 'Certified Herbalist with 15+ years experience', image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=50&h=50&fit=crop' }
-      ],
-      reviews: {
-        rating: 4.8,
-        count: 156,
-        comments: [
-          { user: 'John D.', rating: 5, comment: 'Excellent course! Very informative and well-structured.' },
-          { user: 'Maria S.', rating: 4, comment: 'Great content, learned a lot about natural healing.' }
-        ]
-      },
-      relatedCourses: [2, 3],
-      status: 'active',
-      enrolledStudents: 342,
-      selectedRemedies: ['Ginger Honey Tea', 'Lavender Oil Massage'],
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&h=100&fit=crop',
-      title: 'Advanced Herbal Formulations',
-      description: 'Master the art of creating effective herbal remedies',
-      duration: '12 weeks',
-      sessionsNumber: 36,
-      price: 149.99,
-      plan: 'Premium Plan',
-      overview: 'Advanced course focusing on creating custom herbal formulations, understanding herb interactions, and developing professional-grade remedies.',
-      courseContent: [
-        { title: 'Herb Interactions and Safety', image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop' },
-        { title: 'Formulation Techniques', image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop' },
-        { title: 'Quality Control and Testing', image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop' }
-      ],
-      instructors: [
-        { name: 'Dr. Michael Chen', description: 'Pharmaceutical researcher specializing in herbal medicine', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop' },
-        { name: 'Prof. Lisa Rodriguez', description: 'Botany professor with expertise in medicinal plants', image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=50&h=50&fit=crop' }
-      ],
-      reviews: {
-        rating: 4.9,
-        count: 89,
-        comments: [
-          { user: 'Alex K.', rating: 5, comment: 'Incredible depth of knowledge. Highly recommended!' },
-          { user: 'Emma W.', rating: 5, comment: 'Perfect for advanced practitioners.' }
-        ]
-      },
-      relatedCourses: [1, 3],
-      status: 'active',
-      enrolledStudents: 156,
-      selectedRemedies: ['Peppermint Capsules'],
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=100&h=100&fit=crop',
-      title: 'Holistic Wellness Practices',
-      description: 'Integrate natural healing into daily wellness routines',
-      duration: '6 weeks',
-      sessionsNumber: 18,
-      price: 79.99,
-      plan: 'Basic Plan',
-      overview: 'Practical course teaching how to incorporate natural healing practices into daily life for overall wellness and prevention.',
-      courseContent: [
-        { title: 'Daily Wellness Routines', image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=50&h=50&fit=crop' },
-        { title: 'Seasonal Health Practices', image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=50&h=50&fit=crop' },
-        { title: 'Mind-Body Connection', image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=50&h=50&fit=crop' }
-      ],
-      instructors: [
-        { name: 'Dr. Emily Watson', description: 'Wellness coach and certified nutritionist', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop' }
-      ],
-      reviews: {
-        rating: 4.7,
-        count: 203,
-        comments: [
-          { user: 'David L.', rating: 4, comment: 'Great practical tips for daily wellness.' },
-          { user: 'Sophie M.', rating: 5, comment: 'Changed my approach to health completely!' }
-        ]
-      },
-      relatedCourses: [1, 2],
-      status: 'active',
-      enrolledStudents: 289,
-      selectedRemedies: ['Ginger Honey Tea', 'Lavender Oil Massage', 'Peppermint Capsules'],
-    },
-  ];
+  // API hooks
+  const { data: coursesResponse, isLoading, isError, error, refetch } = useGetCoursesQuery({
+    title: searchQuery || undefined,
+    page: currentPage,
+    per_page: perPage,
+  }, { refetchOnMountOrArgChange: true });
+  const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
 
-  // Filter data based on search query
-  const filteredData = React.useMemo(() => {
-    if (!searchQuery) return staticData;
-    return staticData.filter((item) =>
-      Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
+  // Extract data from API response
+  const coursesData = coursesResponse?.data || [];
+  const pagination = coursesResponse?.pagination || null;
+
+  // Effect to reset to first page when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
   }, [searchQuery]);
+
+  // Effect to refetch when search or pagination changes
+  React.useEffect(() => {
+    refetch();
+  }, [searchQuery, currentPage, perPage, refetch]);
 
   const columns = [
     columnHelper.accessor('image', {
@@ -283,7 +208,7 @@ const Courses = () => {
         </Badge>
       ),
     }),
-    columnHelper.accessor('reviews.rating', {
+    columnHelper.accessor('average_rating', {
       id: 'rating',
       header: () => (
         <Text
@@ -299,53 +224,16 @@ const Courses = () => {
         <HStack spacing={1}>
           <Icon as={FaStar} color="yellow.400" size="sm" />
           <Text color={textColor} fontSize="sm" fontWeight="medium">
-            {info.getValue()}
+            {info.getValue() || 0}
           </Text>
           <Text color="gray.500" fontSize="xs">
-            ({info.row.original.reviews.count})
+            ({info.row.original.review_count || 0})
           </Text>
         </HStack>
       ),
     }),
-    columnHelper.accessor('enrolledStudents', {
-      id: 'enrolledStudents',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Students
-        </Text>
-      ),
-      cell: (info) => (
-        <HStack spacing={1}>
-          <Icon as={FaUsers} color="purple.500" size="sm" />
-          <Text color={textColor} fontSize="sm" fontWeight="medium">
-            {info.getValue()}
-          </Text>
-        </HStack>
-      ),
-    }),
-    columnHelper.accessor('selectedRemedies', {
-      id: 'selectedRemedies',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Remedies
-        </Text>
-      ),
-      cell: (info) => (
-        <Text color={textColor} fontSize="sm">
-          {info.getValue().length} items
-        </Text>
-      ),
-    }),
+
+
     columnHelper.accessor('status', {
       id: 'status',
       header: () => (
@@ -406,10 +294,11 @@ const Courses = () => {
             w="18px"
             h="18px"
             me="10px"
-            color="blue.500"
-            as={FaEye}
+            color="black"
+            as={FaBookOpen}
+            title='View Course Lessons'
             cursor="pointer"
-            onClick={() => handleViewCourse(info.getValue())}
+            onClick={() => handleViewLessons(info.getValue())}
           />
         </Flex>
       ),
@@ -417,7 +306,7 @@ const Courses = () => {
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: coursesData,
     columns,
     state: {
       sorting,
@@ -427,8 +316,8 @@ const Courses = () => {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const handleViewCourse = (id) => {
-    navigate(`/admin/course/details/${id}`);
+  const handleViewLessons = (id) => {
+    navigate(`/admin/courses/${id}/lessons`);
   };
 
   const handleEditCourse = (id) => {
@@ -448,27 +337,27 @@ const Courses = () => {
 
     if (result.isConfirmed) {
       try {
-        // In a real app, you would call your API here
-        // await api.delete(`/courses/${id}`);
+        await deleteCourse(id).unwrap();
         
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast({
+          title: 'Success!',
+          description: 'Course has been deleted successfully.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
 
-        Swal.fire(
-          'Deleted!',
-          'Course has been deleted.',
-          'success'
-        );
-
-        // Refresh the data or remove from state
-        // setCourses(courses.filter(course => course.id !== id));
+        // Refetch the data
+        refetch();
       } catch (error) {
         console.error('Failed to delete course:', error);
-        Swal.fire(
-          'Error!',
-          'Failed to delete course.',
-          'error'
-        );
+        toast({
+          title: 'Error!',
+          description: error.data?.message || 'Failed to delete course. Please try again.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
       }
     }
   };
@@ -476,6 +365,49 @@ const Courses = () => {
   const handleAddCourse = () => {
     navigate('/admin/add-course');
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Flex justify="center" align="center" h="200px">
+              <VStack spacing={4}>
+                <Spinner size="xl" color="#422afb" thickness="8px" speed="0.6s" />
+                <Text color={textColor} fontSize="lg" fontWeight="bold">Loading courses...</Text>
+                <Text color="gray.500" fontSize="sm">Please wait while we fetch the courses data</Text>
+              </VStack>
+            </Flex>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
+        <Card>
+          <Box p={6}>
+            <Alert status="error" borderRadius="md" mb={4}>
+              <AlertIcon />
+              <Text>
+                {error?.data?.message || 'Failed to load courses data. Please try again.'}
+              </Text>
+            </Alert>
+            <Button
+              onClick={() => refetch()}
+              colorScheme="blue"
+            >
+              Retry
+            </Button>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
 
   return (
     <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
@@ -485,54 +417,67 @@ const Courses = () => {
           w="100%"
           overflowX={{ sm: 'scroll', lg: 'hidden' }}
         >
+          {/* Header */}
           <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
+            px={{ base: "16px", md: "25px" }}
+            py="20px"
             justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
-            mb="10px"
-            boxShadow="0px 2px 5.5px rgba(0, 0, 0, 0.06)"
+            align="center"
+            borderBottom="1px solid"
+            borderColor={borderColor}
+            direction={{ base: "column", md: "row" }}
+            gap={{ base: 4, md: 0 }}
           >
-            <Text color={textColor} fontSize="xl" fontWeight="600">
+            <Text color={textColor} fontSize="xl" fontWeight="700">
               Courses Management
             </Text>
-            <Button
-              leftIcon={<PlusSquareIcon />}
-              colorScheme="blue"
-              onClick={handleAddCourse}
-            >
-              Add Course
-            </Button>
-          </Flex>
 
-          <Flex
-            align={{ sm: 'flex-start', lg: 'center' }}
-            justify="space-between"
-            w="100%"
-            px="22px"
-            pb="20px"
-          >
-            <InputGroup maxW="400px">
+            {/* Search and Add Button */}
+            <HStack spacing="4" w={{ base: "100%", md: "auto" }}>
+              {/* Search Bar */}
+              <InputGroup maxW={{ base: "100%", md: "400px" }}>
               <InputLeftElement pointerEvents="none">
                 <SearchIcon color="gray.400" />
               </InputLeftElement>
               <Input
-                placeholder="Search courses..."
+                  placeholder="Search courses by title..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                  bg={searchBg}
+                  color={searchColor}
+                  borderRadius="70px"
+                  fontSize="sm"
+                  _placeholder={{ color: 'gray.400' }}
               />
             </InputGroup>
+
+              {/* Add Course Button */}
+              <Button
+                variant='darkBrand'
+                color='white'
+                fontSize='sm'
+                fontWeight='500'
+                borderRadius='70px'
+                px='24px'
+                py='5px'
+                onClick={handleAddCourse}
+                w={{ base: "100%", md: "200px" }}
+              >
+                Add New Course
+              </Button>
+            </HStack>
           </Flex>
 
-          <Box overflowX="auto">
-            <Table variant="simple" color="gray.500" mb="24px">
+          <Box>
+            <Table variant="simple" color="gray.500" mb="24px" mt="12px">
               <Thead>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <Tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
+                    {headerGroup.headers.map((header) => {
+                      return (
                       <Th
                         key={header.id}
+                          colSpan={header.colSpan}
                         pe="10px"
                         borderColor={borderColor}
                         cursor="pointer"
@@ -546,18 +491,25 @@ const Courses = () => {
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                              header.getContext(),
                           )}
+                            {{
+                              asc: ' 🔼',
+                              desc: ' 🔽',
+                            }[header.column.getIsSorted()] ?? null}
                         </Flex>
                       </Th>
-                    ))}
+                      );
+                    })}
                   </Tr>
                 ))}
               </Thead>
               <Tbody>
-                {table.getRowModel().rows.map((row) => (
+                {table.getRowModel().rows.map((row) => {
+                  return (
                   <Tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
+                      {row.getVisibleCells().map((cell) => {
+                        return (
                       <Td
                         key={cell.id}
                         fontSize={{ sm: '14px' }}
@@ -566,17 +518,124 @@ const Courses = () => {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                              cell.getContext(),
                         )}
                       </Td>
-                    ))}
+                        );
+                      })}
                   </Tr>
-                ))}
+                  );
+                })}
               </Tbody>
             </Table>
           </Box>
+
+          {/* Pagination Controls */}
+          {pagination && (
+            <Flex
+              px={{ base: "16px", md: "25px" }}
+              py="20px"
+              justify="space-between"
+              align="center"
+              borderTop="1px solid"
+              borderColor={borderColor}
+              direction={{ base: "column", md: "row" }}
+              gap={{ base: 4, md: 0 }}
+            >
+              {/* Page Info */}
+              <Text color={textColor} fontSize="sm">
+                Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} results
+              </Text>
+
+              {/* Pagination Controls */}
+              <HStack spacing="3">
+                {/* Page Size Selector */}
+                <HStack spacing="2">
+                  <Text fontSize="sm" color={textColor}>
+                    Show:
+                  </Text>
+                  <select
+                    size="sm"
+                    value={perPage}
+                    onChange={(e) => {
+                      setPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <option value={10}>10</option>
+                    <option value={15}>15</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                </HStack>
+
+                {/* Page Navigation */}
+                <HStack spacing="2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    isDisabled={currentPage <= 1}
+                    leftIcon={<ChevronLeftIcon />}
+                  >
+                    Previous
+                  </Button>
+
+                  {/* Page Numbers */}
+                  {Array.from({ length: Math.min(5, pagination.last_page || 1) }, (_, i) => {
+                    const pageNum = i + 1;
+                    const isCurrentPage = pageNum === currentPage;
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        size="sm"
+                        variant={isCurrentPage ? "solid" : "outline"}
+                        colorScheme={isCurrentPage ? "blue" : "gray"}
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    isDisabled={currentPage >= (pagination.last_page || 1)}
+                    rightIcon={<ChevronRightIcon />}
+                  >
+                    Next
+                  </Button>
+                </HStack>
+              </HStack>
+            </Flex>
+          )}
+
+          {/* No data message */}
+          {(!coursesData || coursesData.length === 0) && !isLoading && (
+            <Flex
+              px={{ base: "16px", md: "25px" }}
+              py="40px"
+              justify="center"
+              align="center"
+            >
+              <Text color={textColor} fontSize="md">
+                No courses found with the current search.
+              </Text>
+            </Flex>
+                     )}
         </Flex>
       </Card>
+
+
     </Box>
   );
 };

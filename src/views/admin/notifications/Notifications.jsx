@@ -232,7 +232,7 @@
    };
 
    return (
-      <div className="container">
+      <Box mt={"90px"}>
          <Card
          flexDirection="column"
          w="100%"
@@ -387,7 +387,7 @@
             </form>
          </Box>
          </Card>
-      </div>
+      </Box>
    );
    };
 

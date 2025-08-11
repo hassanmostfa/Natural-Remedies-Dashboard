@@ -41,12 +41,17 @@ import {
   StepStatus,
   StepTitle,
   useSteps,
+  Spinner,
 } from '@chakra-ui/react';
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { useNavigate } from 'react-router-dom';
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
-import { FaPlay, FaUsers, FaClock, FaDollarSign, FaStar, FaBook, FaVideo } from 'react-icons/fa';
+import { FaPlay, FaUsers, FaClock, FaDollarSign, FaStar, FaBook, FaVideo, FaUpload } from 'react-icons/fa';
+import { useCreateCourseMutation } from 'api/coursesSlice';
+import { useUploadImageMutation } from 'api/fileUploadSlice';
+import { useGetInstructorsQuery } from 'api/instructorsSlice';
+import { useGetRemediesQuery } from 'api/remediesSlice';
 
 const AddCourse = () => {
   const navigate = useNavigate();
@@ -59,9 +64,8 @@ const AddCourse = () => {
     { title: 'Basic Information' },
     { title: 'Course Overview' },
     { title: 'Course Content' },
-    { title: 'Instructors' },
+    { title: 'Instructor Selection' },
     { title: 'Remedies Selection' },
-    { title: 'Sessions Management' },
   ];
 
   const { activeStep, setActiveStep } = useSteps({
@@ -79,27 +83,41 @@ const AddCourse = () => {
     plan: '',
     overview: '',
     courseContent: [{ title: '', image: '' }],
-    instructors: [{ name: '', description: '', image: '' }],
+    instructor_ids: [],
     selectedRemedies: [],
-    relatedCourses: [],
     status: 'active',
-    // Session data structure
-    sessions: [
-      {
-        day: 1,
-        title: 'Introduction',
-        description: '',
-        videoUrl: '',
-        videoDescription: '',
-        lessonContent: [{ title: '', image: '' }],
-        remedies: [],
-        tip: '',
-        isCompleted: false,
-      }
-    ]
   });
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  
+  // API hooks
+  const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
+  const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
+  
+  // Pagination and search states for instructors and remedies
+  const [instructorsPage, setInstructorsPage] = React.useState(1);
+  const [remediesPage, setRemediesPage] = React.useState(1);
+  const [instructorsPerPage, setInstructorsPerPage] = React.useState(1000); // Increased to show more
+  const [remediesPerPage, setRemediesPerPage] = React.useState(1000); // Increased to show more
+  const [instructorsSearch, setInstructorsSearch] = React.useState('');
+  const [remediesSearch, setRemediesSearch] = React.useState('');
+  
+  const { data: instructorsResponse, isLoading: isLoadingInstructors } = useGetInstructorsQuery({
+    page: instructorsPage,
+    per_page: instructorsPerPage,
+    search: instructorsSearch
+  });
+  const { data: remediesResponse, isLoading: isLoadingRemedies } = useGetRemediesQuery({
+    page: remediesPage,
+    per_page: remediesPerPage,
+    search: remediesSearch
+  });
+
+  // Image upload states
+  const [imagePreview, setImagePreview] = React.useState(null);
+  const [selectedFile, setSelectedFile] = React.useState(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [isUploadingImage, setIsUploadingImage] = React.useState(false);
 
   const statusOptions = [
     { value: 'active', label: 'Active' },
@@ -108,21 +126,27 @@ const AddCourse = () => {
   ];
 
   const planOptions = [
-    { value: 'Rookie', label: 'Rookie' },
-    { value: 'Skilled', label: 'Skilled' },
-    { value: 'Master', label: 'Master' },
+    { value: 'basic', label: 'Basic' },
+    { value: 'pro', label: 'Pro' },
+    { value: 'premium', label: 'Premium' },
   ];
 
 
 
-  // Available remedies for selection
-  const availableRemedies = [
-    { id: 1, title: 'Ginger Honey Tea', disease: 'Common Cold', remedyType: 'Herbal Tea' },
-    { id: 2, title: 'Lavender Oil Massage', disease: 'Headache', remedyType: 'Essential Oil' },
-    { id: 3, title: 'Peppermint Capsules', disease: 'Digestive Issues', remedyType: 'Herbal Supplement' },
-    { id: 4, title: 'Chamomile Tea', disease: 'Insomnia', remedyType: 'Herbal Tea' },
-    { id: 5, title: 'Eucalyptus Steam', disease: 'Respiratory Issues', remedyType: 'Steam Therapy' },
-  ];
+  // Get instructors and remedies from API with pagination support
+  const availableInstructors = React.useMemo(() => {
+    if (!instructorsResponse?.data) return [];
+    // For now, we'll use the current page data
+    // In a more advanced implementation, you could accumulate data from multiple pages
+    return instructorsResponse.data;
+  }, [instructorsResponse?.data]);
+
+  const availableRemedies = React.useMemo(() => {
+    if (!remediesResponse?.data) return [];
+    // For now, we'll use the current page data
+    // In a more advanced implementation, you could accumulate data from multiple pages
+    return remediesResponse.data;
+  }, [remediesResponse?.data]);
 
   const handleInputChange = React.useCallback((field, value) => {
     setFormData(prev => ({
@@ -154,81 +178,46 @@ const AddCourse = () => {
     }));
   }, []);
 
-  const handleSessionChange = React.useCallback((sessionIndex, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      sessions: prev.sessions.map((session, i) => 
-        i === sessionIndex ? { ...session, [field]: value } : session
-      )
-    }));
-  }, []);
-
-  const handleSessionLessonChange = React.useCallback((sessionIndex, lessonIndex, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      sessions: prev.sessions.map((session, i) => 
-        i === sessionIndex ? {
-          ...session,
-          lessonContent: session.lessonContent.map((lesson, j) => 
-            j === lessonIndex ? { ...lesson, [field]: value } : lesson
-          )
-        } : session
-      )
-    }));
-  }, []);
-
-  const addSessionLesson = React.useCallback((sessionIndex) => {
-    setFormData(prev => ({
-      ...prev,
-      sessions: prev.sessions.map((session, i) => 
-        i === sessionIndex ? {
-          ...session,
-          lessonContent: [...session.lessonContent, { title: '', image: '' }]
-        } : session
-      )
-    }));
-  }, []);
-
-  const removeSessionLesson = React.useCallback((sessionIndex, lessonIndex) => {
-    setFormData(prev => ({
-      ...prev,
-      sessions: prev.sessions.map((session, i) => 
-        i === sessionIndex ? {
-          ...session,
-          lessonContent: session.lessonContent.filter((_, j) => j !== lessonIndex)
-        } : session
-      )
-    }));
-  }, []);
-
-  const addSession = React.useCallback(() => {
+  const handleInstructorSelection = React.useCallback((instructorId) => {
     setFormData(prev => {
-      const newSessionNumber = prev.sessions.length + 1;
-      return {
-        ...prev,
-        sessions: [...prev.sessions, {
-          day: newSessionNumber,
-          title: `Session ${newSessionNumber}`,
-          description: '',
-          videoUrl: '',
-          videoDescription: '',
-          lessonContent: [{ title: '', image: '' }],
-          remedies: [],
-          tip: '',
-          isCompleted: false,
-        }],
-        sessionsNumber: newSessionNumber
-      };
+      const isSelected = prev.instructor_ids.includes(instructorId);
+      if (isSelected) {
+        return {
+      ...prev,
+          instructor_ids: prev.instructor_ids.filter(id => id !== instructorId)
+        };
+      } else {
+        return {
+      ...prev,
+          instructor_ids: [...prev.instructor_ids, instructorId]
+        };
+      }
     });
   }, []);
 
-  const removeSession = React.useCallback((sessionIndex) => {
-    setFormData(prev => ({
-      ...prev,
-      sessions: prev.sessions.filter((_, i) => i !== sessionIndex),
-      sessionsNumber: prev.sessions.length - 1
-    }));
+  // Search handlers
+  const handleInstructorsSearch = React.useCallback((searchTerm) => {
+    setInstructorsSearch(searchTerm);
+    setInstructorsPage(1); // Reset to first page when searching
   }, []);
+
+  const handleRemediesSearch = React.useCallback((searchTerm) => {
+    setRemediesSearch(searchTerm);
+    setRemediesPage(1); // Reset to first page when searching
+  }, []);
+
+  // Pagination handlers
+  const handleLoadMoreInstructors = React.useCallback(() => {
+    if (instructorsResponse?.pagination?.has_more_pages) {
+      setInstructorsPage(prev => prev + 1);
+    }
+  }, [instructorsResponse?.pagination?.has_more_pages]);
+
+  const handleLoadMoreRemedies = React.useCallback(() => {
+    if (remediesResponse?.pagination?.has_more_pages) {
+      setRemediesPage(prev => prev + 1);
+    }
+  }, [remediesResponse?.pagination?.has_more_pages]);
 
   const validateStep = (step) => {
     switch (step) {
@@ -298,8 +287,8 @@ const AddCourse = () => {
           return false;
         }
         return true;
-      case 3: // Instructors
-        if (formData.instructors.length === 0 || !formData.instructors[0].name.trim()) {
+             case 3: // Instructor Selection
+         if (formData.instructor_ids.length === 0) {
           toast({
             title: 'Error',
             description: 'At least one instructor is required',
@@ -312,18 +301,6 @@ const AddCourse = () => {
         return true;
       case 4: // Remedies Selection
         return true; // Optional step
-      case 5: // Sessions Management
-        if (formData.sessionsNumber < 1) {
-          toast({
-            title: 'Error',
-            description: 'At least one session is required',
-            status: 'error',
-            duration: 3000,
-            isClosable: true,
-          });
-          return false;
-        }
-        return true;
       default:
         return true;
     }
@@ -352,11 +329,24 @@ const AddCourse = () => {
         }
       }
 
-      // In a real app, you would call your API here
-      // const response = await api.post('/courses', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+             // Prepare course data for API
+       const courseData = {
+         image: formData.image,
+         title: formData.title,
+         description: formData.description,
+         duration: formData.duration,
+         sessionsNumber: formData.sessionsNumber,
+         price: formData.price,
+         plan: formData.plan,
+         overview: formData.overview,
+         courseContent: formData.courseContent,
+         instructor_ids: formData.instructor_ids,
+         selectedRemedies: formData.selectedRemedies.map(remedy => remedy.toString()),
+         status: formData.status,
+       };
+
+      // Call the API
+      await createCourse(courseData).unwrap();
 
       toast({
         title: 'Success',
@@ -373,7 +363,7 @@ const AddCourse = () => {
       console.error('Failed to add course:', error);
       toast({
         title: 'Error',
-        description: 'Failed to add course. Please try again.',
+        description: error.data?.message || 'Failed to add course. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -387,11 +377,330 @@ const AddCourse = () => {
     navigate('/admin/courses');
   };
 
+  // Image upload functions
+  const handleImageUpload = (files) => {
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      
+      if (!selectedFile.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'Please select an image file (JPEG, PNG, etc.)',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'Error',
+          description: 'Image size should be less than 5MB',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      handleImageUploadToServer(selectedFile);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    handleImageUpload(files);
+  };
+
+  const handleFileInputChange = (e) => {
+    const files = e.target.files;
+    handleImageUpload(files);
+  };
+
+  const handleImageUploadToServer = async (file) => {
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+      setSelectedFile(file);
+      setIsUploadingImage(true);
+      
+      // Add a small delay to ensure state is set before upload starts
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Add a minimum loading time to make the loading state more visible
+      const uploadStartTime = Date.now();
+      const response = await uploadImage(file).unwrap();
+      const uploadTime = Date.now() - uploadStartTime;
+      
+      // Ensure loading state is visible for at least 1 second
+      if (uploadTime < 1000) {
+        await new Promise(resolve => setTimeout(resolve, 1000 - uploadTime));
+      }
+      
+      if (response.success && response.url) {
+        setFormData(prev => ({
+          ...prev,
+          image: response.url
+        }));
+
+        toast({
+          title: 'Success',
+          description: 'Image uploaded successfully',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      setImagePreview(null);
+      setSelectedFile(null);
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to upload image',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const clearImage = () => {
+    setImagePreview(null);
+    setSelectedFile(null);
+    setFormData(prev => ({
+      ...prev,
+      image: ''
+    }));
+  };
+
   const ListItemInput = React.memo(({ listName, index, field, value, onChange, placeholder, textColor }) => {
     const handleChange = React.useCallback((e) => {
       onChange(index, field, e.target.value);
     }, [index, field, onChange]);
 
+      // Hooks must be called unconditionally
+      const [isUploadingContentImage, setIsUploadingContentImage] = React.useState(false);
+      const [contentImagePreview, setContentImagePreview] = React.useState(null);
+
+      // For image fields, use drag-and-drop upload with server upload
+      if (field === 'image') {
+
+        const handleContentImageUpload = async (file) => {
+          try {
+            const previewUrl = URL.createObjectURL(file);
+            setContentImagePreview(previewUrl);
+            setIsUploadingContentImage(true);
+            
+            // Add a small delay to ensure state is set before upload starts
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Add a minimum loading time to make the loading state more visible
+            const uploadStartTime = Date.now();
+            const response = await uploadImage(file).unwrap();
+            const uploadTime = Date.now() - uploadStartTime;
+            
+            // Ensure loading state is visible for at least 1 second
+            if (uploadTime < 1000) {
+              await new Promise(resolve => setTimeout(resolve, 1000 - uploadTime));
+            }
+            
+            if (response.success && response.url) {
+              onChange(index, field, response.url);
+              toast({
+                title: 'Success',
+                description: 'Image uploaded successfully',
+                status: 'success',
+                duration: 3000,
+                isClosable: true,
+              });
+            } else {
+              throw new Error('Upload failed');
+            }
+          } catch (error) {
+            console.error('Failed to upload image:', error);
+            setContentImagePreview(null);
+            toast({
+              title: 'Error',
+              description: error.data?.message || 'Failed to upload image',
+              status: 'error',
+              duration: 3000,
+              isClosable: true,
+            });
+          } finally {
+            setIsUploadingContentImage(false);
+          }
+        };
+
+        const handleContentImageDrop = (e) => {
+          e.preventDefault();
+          const files = e.dataTransfer.files;
+          if (files && files.length > 0) {
+            const file = files[0];
+            if (file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
+              handleContentImageUpload(file);
+            } else {
+              toast({
+                title: 'Error',
+                description: 'Please select a valid image file (max 5MB)',
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+              });
+            }
+          }
+        };
+
+        const handleContentFileInputChange = (e) => {
+          const files = e.target.files;
+          if (files && files.length > 0) {
+            const file = files[0];
+            if (file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
+              handleContentImageUpload(file);
+            } else {
+              toast({
+                title: 'Error',
+                description: 'Please select a valid image file (max 5MB)',
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+              });
+            }
+          }
+        };
+
+        const clearContentImage = () => {
+          setContentImagePreview(null);
+          onChange(index, field, '');
+        };
+
+        return (
+          <FormControl>
+            <FormLabel fontSize="sm" color={textColor}>
+              {field.charAt(0).toUpperCase() + field.slice(1)}
+            </FormLabel>
+            <Box
+              border="1px dashed"
+              borderColor="gray.300"
+              borderRadius="md"
+              p={4}
+              textAlign="center"
+              backgroundColor="white"
+              cursor="default"
+              position="relative"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleContentImageDrop}
+            >
+                         {(value || contentImagePreview) ? (
+               <Flex direction="column" align="center">
+                 <Image
+                   src={value || contentImagePreview}
+                   alt="Preview"
+                   maxH="120px"
+                   mb={2}
+                   borderRadius="md"
+                   fallback={<Icon as={FaPlay} color="gray.500" boxSize="60px" />}
+                 />
+                 <Button
+                   variant="outline"
+                   colorScheme="red"
+                   size="sm"
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     clearContentImage();
+                   }}
+                 >
+                   Remove Image
+                 </Button>
+               </Flex>
+             ) : (
+               <>
+                 {isUploadingContentImage && (
+                   <Box
+                     position="absolute"
+                     top="0"
+                     left="0"
+                     right="0"
+                     bottom="0"
+                     backgroundColor="rgba(0, 0, 0, 0.9)"
+                     display="flex"
+                     alignItems="center"
+                     justifyContent="center"
+                     borderRadius="md"
+                     zIndex="50"
+                     backdropFilter="blur(5px)"
+                     border="2px solid #422afb"
+                   >
+                     <VStack spacing="4">
+                       <Spinner size="xl" color="white" thickness="8px" speed="0.6s" />
+                       <Text color="white" fontSize="lg" fontWeight="bold">Uploading Image...</Text>
+                       <Text color="white" fontSize="sm" opacity="0.9">Please wait while we upload your image</Text>
+                     </VStack>
+                   </Box>
+                 )}
+                 {isUploadingContentImage ? (
+                   <VStack spacing="2">
+                     <Spinner size="lg" color="#422afb" thickness="6px" speed="0.6s" />
+                     <Text color="#422afb" fontSize="sm" fontWeight="bold">Uploading...</Text>
+                     <Text color="#422afb" fontSize="xs" opacity="0.8">Please wait</Text>
+                   </VStack>
+                 ) : (
+                   <>
+                     <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
+                     <Text color="gray.500" mb={2}>
+                       Drag & Drop Image Here
+                     </Text>
+                     <Text color="gray.500" mb={2}>
+                       or
+                     </Text>
+                     <Button
+                       variant="outline"
+                       border="none"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         document.getElementById(`${listName}-${index}-image-upload`).click();
+                       }}
+                       size="sm"
+                       bg="transparent"
+                       color="#422afb"
+                       disabled={isUploadingContentImage}
+                     >
+                       Upload Image
+                       <input
+                         type="file"
+                         id={`${listName}-${index}-image-upload`}
+                         hidden
+                         accept="image/*"
+                         onChange={handleContentFileInputChange}
+                         disabled={isUploadingContentImage}
+                       />
+                     </Button>
+                   </>
+                 )}
+               </>
+             )}
+          </Box>
+        </FormControl>
+      );
+    }
+
+    // For regular text fields
     return (
       <FormControl>
         <FormLabel fontSize="sm" color={textColor}>
@@ -478,16 +787,115 @@ const AddCourse = () => {
         return (
           <Box>
             <Heading size="md" color={textColor} mb={4}>Basic Information</Heading>
-            <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+            <VStack spacing={6} align="stretch">
+              {/* Row 1: Course Image */}
               <FormControl>
-                <FormLabel color={textColor}>Course Image URL</FormLabel>
-                <Input
-                  value={formData.image}
-                  onChange={(e) => handleInputChange('image', e.target.value)}
-                  placeholder="Enter image URL"
-                />
+                <FormLabel color={textColor}>Course Image</FormLabel>
+                <Box
+                  border="1px dashed"
+                  borderColor={isDragging ? 'brand.500' : 'gray.300'}
+                  borderRadius="md"
+                  p={4}
+                  textAlign="center"
+                  backgroundColor={isDragging ? 'brand.50' : 'white'}
+                  cursor="pointer"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  position="relative"
+                >
+                  {imagePreview ? (
+                    <Flex direction="column" align="center">
+                      <Image
+                        src={imagePreview}
+                        alt="Course Preview"
+                        maxH="200px"
+                        mb={2}
+                        borderRadius="md"
+                        fallback={<Icon as={FaPlay} color="gray.500" boxSize="100px" />}
+                      />
+                      <Button
+                        variant="outline"
+                        colorScheme="red"
+                        size="sm"
+                        onClick={clearImage}
+                      >
+                        Remove Image
+                      </Button>
+                    </Flex>
+                  ) : (
+                    <>
+                      {isUploadingImage && (
+                        <Box
+                          position="absolute"
+                          top="0"
+                          left="0"
+                          right="0"
+                          bottom="0"
+                          backgroundColor="rgba(0, 0, 0, 0.9)"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          borderRadius="md"
+                          zIndex="50"
+                          backdropFilter="blur(5px)"
+                          border="2px solid #422afb"
+                        >
+                          <VStack spacing="4">
+                            <Spinner size="xl" color="white" thickness="8px" speed="0.6s" />
+                            <Text color="white" fontSize="lg" fontWeight="bold">Uploading Image...</Text>
+                            <Text color="white" fontSize="sm" opacity="0.9">Please wait while we upload your image</Text>
+                          </VStack>
+                        </Box>
+                      )}
+                      {isUploadingImage ? (
+                        <VStack spacing="2">
+                          <Spinner size="lg" color="#422afb" thickness="6px" speed="0.6s" />
+                          <Text color="#422afb" fontSize="sm" fontWeight="bold">Uploading...</Text>
+                          <Text color="#422afb" fontSize="xs" opacity="0.8">Please wait</Text>
+                        </VStack>
+                      ) : (
+                        <>
+                          <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
+                          <Text color="gray.500" mb={2}>
+                            Drag & Drop Image Here
+                          </Text>
+                          <Text color="gray.500" mb={2}>
+                            or
+                          </Text>
+                        </>
+                      )}
+                      <Button
+                        variant="outline"
+                        border="none"
+                        onClick={() => document.getElementById('course-image-upload').click()}
+                        isLoading={isUploadingImage}
+                        loadingText="Uploading..."
+                        leftIcon={isUploadingImage ? <Spinner size="sm" color="white" /> : undefined}
+                        disabled={isUploadingImage}
+                        _disabled={{
+                          opacity: 0.6,
+                          cursor: 'not-allowed'
+                        }}
+                        bg={isUploadingImage ? "blue.500" : "transparent"}
+                        color={isUploadingImage ? "white" : "#422afb"}
+                      >
+                        {isUploadingImage ? '🔄 Uploading...' : 'Upload Image'}
+                        <input
+                          type="file"
+                          id="course-image-upload"
+                          hidden
+                          accept="image/*"
+                          onChange={handleFileInputChange}
+                          disabled={isUploadingImage}
+                        />
+                      </Button>
+                    </>
+                  )}
+                </Box>
               </FormControl>
 
+              {/* Row 2: Title */}
               <FormControl>
                 <FormLabel color={textColor}>Title</FormLabel>
                 <Input
@@ -497,7 +905,7 @@ const AddCourse = () => {
                 />
               </FormControl>
 
-              <GridItem colSpan={2}>
+              {/* Row 3: Description */}
                 <FormControl>
                   <FormLabel color={textColor}>Description</FormLabel>
                   <Textarea
@@ -507,8 +915,9 @@ const AddCourse = () => {
                     rows={3}
                   />
                 </FormControl>
-              </GridItem>
 
+              {/* Row 4: Duration, Number of Sessions, Price */}
+              <Grid templateColumns="repeat(3, 1fr)" gap={6}>
               <FormControl>
                 <FormLabel color={textColor}>Duration</FormLabel>
                 <Input
@@ -549,7 +958,10 @@ const AddCourse = () => {
                   </NumberInputStepper>
                 </NumberInput>
               </FormControl>
+              </Grid>
 
+              {/* Row 5: Plan and Status */}
+              <Grid templateColumns="repeat(2, 1fr)" gap={6}>
               <FormControl>
                 <FormLabel color={textColor}>Plan</FormLabel>
                 <Select
@@ -579,6 +991,7 @@ const AddCourse = () => {
                 </Select>
               </FormControl>
             </Grid>
+            </VStack>
           </Box>
         );
 
@@ -641,15 +1054,15 @@ const AddCourse = () => {
                         size="sm"
                       />
                     </FormControl>
-                    <FormControl>
-                      <FormLabel fontSize="sm" color={textColor}>Image URL</FormLabel>
-                      <Input
+                     <ListItemInput
+                       listName="courseContent"
+                       index={index}
+                       field="image"
                         value={content.image || ''}
-                        onChange={(e) => handleListChange('courseContent', index, 'image', e.target.value)}
-                        placeholder="Enter image URL"
-                        size="sm"
-                      />
-                    </FormControl>
+                       onChange={(index, field, value) => handleListChange('courseContent', index, field, value)}
+                       placeholder="Enter image"
+                       textColor={textColor}
+                     />
                   </Grid>
                 </Box>
               ))}
@@ -660,71 +1073,109 @@ const AddCourse = () => {
       case 3:
         return (
           <Box>
-            <Heading size="md" color={textColor} mb={4}>Instructors</Heading>
-            <Flex justify="space-between" align="center" mb={4}>
-              <Text fontSize="sm" color="gray.500">Add instructors for this course</Text>
+               <Heading size="md" color={textColor} mb={4}>Instructor Selection</Heading>
+               <Text fontSize="sm" color="gray.500" mb={4}>
+                 Select instructors for this course. You can select multiple instructors.
+               </Text>
+               
+               {/* Search Input */}
+               <FormControl mb={4}>
+                 <FormLabel fontSize="sm" color={textColor}>Search Instructors</FormLabel>
+                 <Input
+                   placeholder="Search by name, specialization, or experience..."
+                   value={instructorsSearch}
+                   onChange={(e) => handleInstructorsSearch(e.target.value)}
+                   size="md"
+                 />
+               </FormControl>
+               
+               {isLoadingInstructors ? (
+                <Flex justify="center" align="center" py={8}>
+                  <VStack spacing={4}>
+                    <Spinner size="lg" color="#422afb" thickness="4px" />
+                    <Text color="gray.500">Loading instructors...</Text>
+                  </VStack>
+                </Flex>
+              ) : availableInstructors.length === 0 ? (
+                <Box p={6} textAlign="center" bg="gray.50" borderRadius="lg">
+                  <Text color="gray.500">No instructors available</Text>
+                </Box>
+              ) : (
+                <>
+                  <VStack spacing={3} align="stretch">
+                    {availableInstructors.map((instructor) => (
+                      <Box
+                        key={instructor.id}
+                        p={4}
+                        border="1px"
+                        borderColor={borderColor}
+                        borderRadius="lg"
+                        cursor="pointer"
+                        onClick={() => handleInstructorSelection(instructor.id)}
+                        bg={formData.instructor_ids.includes(instructor.id) ? 'blue.50' : 'transparent'}
+                        _hover={{ bg: formData.instructor_ids.includes(instructor.id) ? 'blue.100' : 'gray.50' }}
+                      >
+                        <Flex justify="space-between" align="center">
+                          <VStack align="start" spacing={1}>
+                            <Text fontWeight="medium" color={textColor}>
+                              {instructor.name}
+                            </Text>
+                            <HStack spacing={2}>
+                              <Badge colorScheme="blue" size="sm">
+                                {instructor.specialization || 'General'}
+                              </Badge>
+                              <Badge colorScheme="green" size="sm">
+                                {instructor.experience_years ? `${instructor.experience_years} years` : 'Experienced'}
+                              </Badge>
+                            </HStack>
+                          </VStack>
+                          <Box
+                            w={4}
+                            h={4}
+                            borderRadius="full"
+                            border="2px"
+                            borderColor={formData.instructor_ids.includes(instructor.id) ? 'blue.500' : 'gray.300'}
+                            bg={formData.instructor_ids.includes(instructor.id) ? 'blue.500' : 'transparent'}
+                          />
+                        </Flex>
+                      </Box>
+                    ))}
+                  </VStack>
+                  
+                  {/* Pagination Info */}
+                  {instructorsResponse?.pagination && (
+                    <Box mt={4} p={3} bg="gray.50" borderRadius="lg">
+                      <Flex justify="space-between" align="center">
+                        <Text fontSize="sm" color="gray.600">
+                          Showing {instructorsResponse.pagination.from}-{instructorsResponse.pagination.to} of {instructorsResponse.pagination.total} instructors
+                        </Text>
+                        {instructorsResponse.pagination.has_more_pages && (
               <Button
-                leftIcon={<AddIcon />}
                 size="sm"
                 colorScheme="blue"
                 variant="outline"
-                onClick={() => addListItem('instructors', { name: '', description: '', image: '' })}
+                            onClick={handleLoadMoreInstructors}
+                            isLoading={isLoadingInstructors}
               >
-                Add Instructor
+                            Load More
               </Button>
+                        )}
             </Flex>
-            <VStack spacing={4} align="stretch">
-              {formData.instructors.map((instructor, index) => (
-                <Box key={`instructor-${index}`} p={4} border="1px" borderColor={borderColor} borderRadius="lg">
-                  <Flex justify="space-between" align="center" mb={3}>
-                    <Text fontWeight="medium" color={textColor}>
-                      Instructor {index + 1}
+                    </Box>
+                  )}
+                  
+                  {formData.instructor_ids.length > 0 && (
+                    <Box mt={4} p={3} bg="blue.50" borderRadius="lg">
+                      <Text fontSize="sm" color="blue.700" fontWeight="medium">
+                        Selected Instructors: {formData.instructor_ids.map(id => {
+                          const instructor = availableInstructors.find(i => i.id === id);
+                          return instructor ? instructor.name : `Instructor ${id}`;
+                        }).join(', ')}
                     </Text>
-                    <IconButton
-                      aria-label="Remove instructor"
-                      icon={<CloseIcon />}
-                      size="sm"
-                      colorScheme="red"
-                      variant="ghost"
-                      onClick={() => removeListItem('instructors', index)}
-                      isDisabled={formData.instructors.length === 1}
-                    />
-                  </Flex>
-                  <Grid templateColumns="repeat(2, 1fr)" gap={4}>
-                    <FormControl>
-                      <FormLabel fontSize="sm" color={textColor}>Name</FormLabel>
-                      <Input
-                        value={instructor.name || ''}
-                        onChange={(e) => handleListChange('instructors', index, 'name', e.target.value)}
-                        placeholder="Enter instructor name"
-                        size="sm"
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel fontSize="sm" color={textColor}>Image URL</FormLabel>
-                      <Input
-                        value={instructor.image || ''}
-                        onChange={(e) => handleListChange('instructors', index, 'image', e.target.value)}
-                        placeholder="Enter image URL"
-                        size="sm"
-                      />
-                    </FormControl>
-                    <GridItem colSpan={2}>
-                      <FormControl>
-                        <FormLabel fontSize="sm" color={textColor}>Description</FormLabel>
-                        <Textarea
-                          value={instructor.description || ''}
-                          onChange={(e) => handleListChange('instructors', index, 'description', e.target.value)}
-                          placeholder="Enter instructor description"
-                          rows={3}
-                          size="sm"
-                        />
-                      </FormControl>
-                    </GridItem>
-                  </Grid>
                 </Box>
-              ))}
-            </VStack>
+                  )}
+                </>
+              )}
           </Box>
         );
 
@@ -732,8 +1183,34 @@ const AddCourse = () => {
         return (
           <Box>
             <Heading size="md" color={textColor} mb={4}>Selected Remedies</Heading>
-            <FormControl>
-              <FormLabel color={textColor}>Choose Remedies for this Course</FormLabel>
+               <Text fontSize="sm" color="gray.500" mb={4}>
+                 Choose remedies for this course. You can select multiple remedies.
+               </Text>
+               
+               {/* Search Input */}
+               <FormControl mb={4}>
+                 <FormLabel fontSize="sm" color={textColor}>Search Remedies</FormLabel>
+                 <Input
+                   placeholder="Search by title, disease, or remedy type..."
+                   value={remediesSearch}
+                   onChange={(e) => handleRemediesSearch(e.target.value)}
+                   size="md"
+                 />
+               </FormControl>
+               
+               {isLoadingRemedies ? (
+                <Flex justify="center" align="center" py={8}>
+                  <VStack spacing={4}>
+                    <Spinner size="lg" color="#422afb" thickness="4px" />
+                    <Text color="gray.500">Loading remedies...</Text>
+                  </VStack>
+                </Flex>
+              ) : availableRemedies.length === 0 ? (
+                <Box p={6} textAlign="center" bg="gray.50" borderRadius="lg">
+                  <Text color="gray.500">No remedies available</Text>
+                </Box>
+              ) : (
+                <>
               <VStack spacing={3} align="stretch">
                 {availableRemedies.map((remedy) => (
                   <Box
@@ -744,21 +1221,21 @@ const AddCourse = () => {
                     borderRadius="lg"
                     cursor="pointer"
                     onClick={() => {
-                      const isSelected = formData.selectedRemedies.includes(remedy.title);
+                          const isSelected = formData.selectedRemedies.includes(remedy.id);
                       if (isSelected) {
                         setFormData(prev => ({
                           ...prev,
-                          selectedRemedies: prev.selectedRemedies.filter(r => r !== remedy.title)
+                              selectedRemedies: prev.selectedRemedies.filter(r => r !== remedy.id)
                         }));
                       } else {
                         setFormData(prev => ({
                           ...prev,
-                          selectedRemedies: [...prev.selectedRemedies, remedy.title]
+                              selectedRemedies: [...prev.selectedRemedies, remedy.id]
                         }));
                       }
                     }}
-                    bg={formData.selectedRemedies.includes(remedy.title) ? 'blue.50' : 'transparent'}
-                    _hover={{ bg: formData.selectedRemedies.includes(remedy.title) ? 'blue.100' : 'gray.50' }}
+                        bg={formData.selectedRemedies.includes(remedy.id) ? 'blue.50' : 'transparent'}
+                        _hover={{ bg: formData.selectedRemedies.includes(remedy.id) ? 'blue.100' : 'gray.50' }}
                   >
                     <Flex justify="space-between" align="center">
                       <VStack align="start" spacing={1}>
@@ -767,10 +1244,10 @@ const AddCourse = () => {
                         </Text>
                         <HStack spacing={2}>
                           <Badge colorScheme="blue" size="sm">
-                            {remedy.disease}
+                                {remedy.disease?.name || 'General'}
                           </Badge>
                           <Badge colorScheme="green" size="sm">
-                            {remedy.remedyType}
+                                {remedy.remedy_type?.name || 'Natural'}
                           </Badge>
                         </HStack>
                       </VStack>
@@ -779,203 +1256,57 @@ const AddCourse = () => {
                         h={4}
                         borderRadius="full"
                         border="2px"
-                        borderColor={formData.selectedRemedies.includes(remedy.title) ? 'blue.500' : 'gray.300'}
-                        bg={formData.selectedRemedies.includes(remedy.title) ? 'blue.500' : 'transparent'}
+                            borderColor={formData.selectedRemedies.includes(remedy.id) ? 'blue.500' : 'gray.300'}
+                            bg={formData.selectedRemedies.includes(remedy.id) ? 'blue.500' : 'transparent'}
                       />
                     </Flex>
                   </Box>
                 ))}
               </VStack>
-              {formData.selectedRemedies.length > 0 && (
-                <Box mt={4} p={3} bg="blue.50" borderRadius="lg">
-                  <Text fontSize="sm" color="blue.700" fontWeight="medium">
-                    Selected Remedies: {formData.selectedRemedies.join(', ')}
-                  </Text>
-                </Box>
-              )}
-            </FormControl>
-          </Box>
-        );
-
-      case 5:
-        return (
-          <Box>
-            <Flex justify="space-between" align="center" mb={4}>
-              <Heading size="md" color={textColor}>Sessions Management</Heading>
-              <Button
-                leftIcon={<AddIcon />}
-                size="sm"
-                colorScheme="green"
-                variant="outline"
-                onClick={addSession}
-              >
-                Add Session
-              </Button>
-            </Flex>
-
-            <Accordion allowMultiple>
-              {formData.sessions.map((session, sessionIndex) => (
-                <AccordionItem key={sessionIndex}>
-                  <AccordionButton>
-                    <Box flex="1" textAlign="left">
-                      <HStack>
-                        <Icon as={FaVideo} color="blue.500" />
-                        <Text fontWeight="medium" color={textColor}>
-                          Session {session.day}: {session.title}
+                  
+                  {/* Pagination Info */}
+                  {remediesResponse?.pagination && (
+                    <Box mt={4} p={3} bg="gray.50" borderRadius="lg">
+                      <Flex justify="space-between" align="center">
+                        <Text fontSize="sm" color="gray.600">
+                          Showing {remediesResponse.pagination.from}-{remediesResponse.pagination.to} of {remediesResponse.pagination.total} remedies
                         </Text>
-                      </HStack>
-                    </Box>
-                    <AccordionIcon />
-                  </AccordionButton>
-                  <AccordionPanel pb={4}>
-                    <VStack spacing={4} align="stretch">
-                      <Grid templateColumns="repeat(2, 1fr)" gap={4}>
-                        <FormControl>
-                          <FormLabel fontSize="sm" color={textColor}>Session Title</FormLabel>
-                          <Input
-                            value={session.title}
-                            onChange={(e) => handleSessionChange(sessionIndex, 'title', e.target.value)}
-                            placeholder="Enter session title"
-                            size="sm"
-                          />
-                        </FormControl>
-
-                        <FormControl>
-                          <FormLabel fontSize="sm" color={textColor}>Video URL (Optional)</FormLabel>
-                          <Input
-                            value={session.videoUrl}
-                            onChange={(e) => handleSessionChange(sessionIndex, 'videoUrl', e.target.value)}
-                            placeholder="Enter video URL"
-                            size="sm"
-                          />
-                        </FormControl>
-
-                        <GridItem colSpan={2}>
-                          <FormControl>
-                            <FormLabel fontSize="sm" color={textColor}>Description</FormLabel>
-                            <Textarea
-                              value={session.description}
-                              onChange={(e) => handleSessionChange(sessionIndex, 'description', e.target.value)}
-                              placeholder="Enter session description"
-                              rows={3}
-                              size="sm"
-                            />
-                          </FormControl>
-                        </GridItem>
-
-                        {session.videoUrl && (
-                          <GridItem colSpan={2}>
-                            <FormControl>
-                              <FormLabel fontSize="sm" color={textColor}>Video Description</FormLabel>
-                              <Textarea
-                                value={session.videoDescription}
-                                onChange={(e) => handleSessionChange(sessionIndex, 'videoDescription', e.target.value)}
-                                placeholder="Enter video description"
-                                rows={2}
-                                size="sm"
-                              />
-                            </FormControl>
-                          </GridItem>
-                        )}
-
-                        <GridItem colSpan={2}>
-                          <FormControl>
-                            <FormLabel fontSize="sm" color={textColor}>Tip</FormLabel>
-                            <Textarea
-                              value={session.tip}
-                              onChange={(e) => handleSessionChange(sessionIndex, 'tip', e.target.value)}
-                              placeholder="Enter helpful tip for this session"
-                              rows={2}
-                              size="sm"
-                            />
-                          </FormControl>
-                        </GridItem>
-                      </Grid>
-
-                      {/* Lesson Content for this session */}
-                      <Box>
-                        <Flex justify="space-between" align="center" mb={3}>
-                          <Text fontWeight="medium" fontSize="sm" color={textColor}>
-                            Lesson Content
-                          </Text>
-                          <Button
-                            leftIcon={<AddIcon />}
-                            size="xs"
+                        {remediesResponse.pagination.has_more_pages && (
+              <Button
+                size="sm"
                             colorScheme="blue"
-                            variant="outline"
-                            onClick={() => addSessionLesson(sessionIndex)}
-                          >
-                            Add Lesson
-                          </Button>
-                        </Flex>
-                        <VStack spacing={3} align="stretch">
-                          {session.lessonContent.map((lesson, lessonIndex) => (
-                            <Box key={lessonIndex} p={3} border="1px" borderColor={borderColor} borderRadius="md">
-                              <Flex justify="space-between" align="center" mb={2}>
-                                <Text fontSize="sm" color={textColor}>
-                                  Lesson {lessonIndex + 1}
-                                </Text>
-                                <IconButton
-                                  aria-label="Remove lesson"
-                                  icon={<CloseIcon />}
-                                  size="xs"
-                                  colorScheme="red"
-                                  variant="ghost"
-                                  onClick={() => removeSessionLesson(sessionIndex, lessonIndex)}
-                                  isDisabled={session.lessonContent.length === 1}
-                                />
-                              </Flex>
-                              <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-                                <FormControl>
-                                  <FormLabel fontSize="xs" color={textColor}>Title</FormLabel>
-                                  <Input
-                                    value={lesson.title}
-                                    onChange={(e) => handleSessionLessonChange(sessionIndex, lessonIndex, 'title', e.target.value)}
-                                    placeholder="Enter lesson title"
-                                    size="sm"
-                                  />
-                                </FormControl>
-                                <FormControl>
-                                  <FormLabel fontSize="xs" color={textColor}>Image URL</FormLabel>
-                                  <Input
-                                    value={lesson.image}
-                                    onChange={(e) => handleSessionLessonChange(sessionIndex, lessonIndex, 'image', e.target.value)}
-                                    placeholder="Enter image URL"
-                                    size="sm"
-                                  />
-                                </FormControl>
-                              </Grid>
+                variant="outline"
+                            onClick={handleLoadMoreRemedies}
+                            isLoading={isLoadingRemedies}
+              >
+                            Load More
+              </Button>
+                        )}
+            </Flex>
+                    </Box>
+                  )}
+                  
+                  {formData.selectedRemedies.length > 0 && (
+                    <Box mt={4} p={3} bg="blue.50" borderRadius="lg">
+                      <Text fontSize="sm" color="blue.700" fontWeight="medium">
+                        Selected Remedies: {formData.selectedRemedies.map(id => {
+                          const remedy = availableRemedies.find(r => r.id === id);
+                          return remedy ? remedy.title : `Remedy ${id}`;
+                        }).join(', ')}
+                          </Text>
                             </Box>
-                          ))}
-                        </VStack>
-                      </Box>
-
-                      <Flex justify="space-between">
-                        <Badge colorScheme="blue" variant="subtle">
-                          Day {session.day}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          colorScheme="red"
-                          variant="outline"
-                          onClick={() => removeSession(sessionIndex)}
-                          isDisabled={formData.sessions.length === 1}
-                        >
-                          Remove Session
-                        </Button>
-                      </Flex>
-                    </VStack>
-                  </AccordionPanel>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                  )}
+                </>
+              )}
           </Box>
         );
+
+      
 
       default:
         return null;
     }
-  }, [activeStep, formData, textColor, borderColor, planOptions, statusOptions, availableRemedies, handleInputChange, handleListChange, handleSessionChange, handleSessionLessonChange, addListItem, removeListItem, addSession, addSessionLesson, removeSessionLesson, removeSession]);
+     }, [activeStep, formData, textColor, borderColor, planOptions, statusOptions, availableRemedies, availableInstructors, isLoadingInstructors, isLoadingRemedies, instructorsResponse?.pagination, remediesResponse?.pagination, instructorsSearch, remediesSearch, handleInputChange, handleListChange, handleInstructorSelection, handleInstructorsSearch, handleRemediesSearch, handleLoadMoreInstructors, handleLoadMoreRemedies, addListItem, removeListItem]);
 
   return (
     <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
@@ -1045,7 +1376,7 @@ const AddCourse = () => {
                     <Button
                       onClick={handleSubmit}
                       colorScheme="green"
-                      isLoading={isSubmitting}
+                      isLoading={isSubmitting || isCreating}
                       loadingText="Adding Course"
                     >
                       Add Course
