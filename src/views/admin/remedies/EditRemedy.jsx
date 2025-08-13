@@ -463,7 +463,6 @@ const ListSection = React.memo(({
    }, [remedyData, diseasesData, remedyTypesData, bodySystemsData]);
  
    const visiblePlansOptions = [
-     { value: 'all', label: 'All Plans' },
      { value: 'rookie', label: 'Rookie' },
      { value: 'skilled', label: 'Skilled' },
      { value: 'master', label: 'Master' },

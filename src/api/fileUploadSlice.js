@@ -73,6 +73,13 @@ export const fileUploadApiService = createApi({
          const formData = new FormData();
          formData.append("image", file); // Ensure key matches API expectation ("image")
  
+         console.log('Debug - File being uploaded:', {
+           name: file.name,
+           size: file.size,
+           type: file.type
+         });
+         console.log('Debug - Upload URL:', `${baseUrl}/upload/image`);
+ 
          return {
            url: "/upload/image",
            method: "POST",

@@ -160,37 +160,40 @@ const About = () => {
             </Box>
           </Flex>
 
-          <VStack spacing={6} align="stretch">
-            {/* Main Description */}
-            <FormControl isInvalid={!!errors.mainDescription}>
-              <FormLabel color={textColor} fontWeight="bold">
-                Main Description
-              </FormLabel>
-              <Box border="1px" borderColor="gray.200" borderRadius="md">
-                <ReactQuill
-                  theme="snow"
-                  value={formData.mainDescription}
-                  onChange={(value) => handleInputChange('mainDescription', value)}
-                  placeholder="Enter the about page content..."
-                  style={{ height: '300px' }}
-                  modules={{
-                    toolbar: [
-                      [{ 'header': [1, 2, 3, false] }],
-                      ['bold', 'italic', 'underline', 'strike'],
-                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                      [{ 'color': [] }, { 'background': [] }],
-                      [{ 'align': [] }],
-                      ['link', 'blockquote', 'code-block'],
-                      ['clean']
-                    ],
-                  }}
-                />
-              </Box>
-              <FormErrorMessage>{errors.mainDescription}</FormErrorMessage>
-            </FormControl>
-          </VStack>
+                                           <VStack spacing={6} align="stretch" mt={4}>
+              {/* Main Description */}
+              <FormControl isInvalid={!!errors.mainDescription}>
+                <FormLabel color={textColor} fontWeight="bold">
+                  Main Description
+                </FormLabel>
+                <Box>
+                  <ReactQuill
+                    theme="snow"
+                    value={formData.mainDescription}
+                    onChange={(value) => handleInputChange('mainDescription', value)}
+                    placeholder="Enter the about page content..."
+                    style={{ height: '300px' }}
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'align': [] }],
+                        ['link', 'blockquote', 'code-block'],
+                        ['clean']
+                      ],
+                    }}
+                  />
+                </Box>
+                <FormErrorMessage>{errors.mainDescription}</FormErrorMessage>
+              </FormControl>
+            </VStack>
 
-          <HStack justify="flex-end" spacing={4}>
+            {/* Spacer */}
+            <Box h="40px" />
+
+            <HStack justify="flex-end" spacing={4}>
             <Button
               onClick={handleCancel}
               variant="outline"

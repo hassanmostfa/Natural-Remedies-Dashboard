@@ -138,31 +138,31 @@ const Instructors = () => {
         </VStack>
       ),
     }),
-    columnHelper.accessor('specialization', {
-      id: 'specialization',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Specialization
-        </Text>
-      ),
-      cell: (info) => (
-        <VStack align="start" spacing={1}>
-          <Text color={textColor} fontSize="sm">
-            {info.getValue() || 'Not specified'}
-          </Text>
-          {info.row.original.experience_years && (
-            <Badge colorScheme="blue" fontSize="xs" width="fit-content">
-              {info.row.original.experience_years} years exp.
-            </Badge>
-          )}
-        </VStack>
-      ),
-    }),
+    // columnHelper.accessor('specialization', {
+    //   id: 'specialization',
+    //   header: () => (
+    //     <Text
+    //       justifyContent="space-between"
+    //       align="center"
+    //       fontSize={{ sm: '10px', lg: '12px' }}
+    //       color="gray.400"
+    //     >
+    //       Specialization
+    //     </Text>
+    //   ),
+    //   cell: (info) => (
+    //     <VStack align="start" spacing={1}>
+    //       <Text color={textColor} fontSize="sm">
+    //         {info.getValue() || 'Not specified'}
+    //       </Text>
+    //       {info.row.original.experience_years && (
+    //         <Badge colorScheme="blue" fontSize="xs" width="fit-content">
+    //           {info.row.original.experience_years} years exp.
+    //         </Badge>
+    //       )}
+    //     </VStack>
+    //   ),
+    // }),
     columnHelper.accessor('courses_count', {
       id: 'courses',
       header: () => (

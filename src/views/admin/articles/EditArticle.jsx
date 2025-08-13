@@ -52,6 +52,12 @@ const steps = [
   { title: 'Review', description: 'Review and submit' },
 ];
 
+const planOptions = [
+  { value: 'rookie', label: 'Rookie' },
+  { value: 'skilled', label: 'Skilled' },
+  { value: 'master', label: 'Master' },
+];
+
 const EditArticle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -65,7 +71,7 @@ const EditArticle = () => {
     title: '',
     image: '',
     description: '',
-    plans: ['rookie'],
+    plans: 'rookie',
     status: 'active',
   });
   const [plants, setPlants] = useState([]);
@@ -77,9 +83,20 @@ const EditArticle = () => {
   });
 
   // API hooks
-  const { data: article, isLoading: isLoadingArticle, error: articleError } = useGetArticleQuery(id);
+  const { data: articleResponse, isLoading: isLoadingArticle, error: articleError } = useGetArticleQuery(id);
   const [updateArticle, { isLoading: isUpdating }] = useUpdateArticleMutation();
   const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
+  
+  // Extract article data from API response
+  const article = articleResponse?.data || null;
+  
+  // Debug: Log API response structure
+  useEffect(() => {
+    if (articleResponse) {
+      console.log('Article API Response:', articleResponse);
+      console.log('Extracted article data:', article);
+    }
+  }, [articleResponse, article]);
   
 
 
@@ -89,20 +106,14 @@ const EditArticle = () => {
   const hoverBgColor = useColorModeValue('gray.50', 'gray.700');
   const textColor = useColorModeValue('secondaryGray.900', 'white');
 
-  const planOptions = [
-    { value: 'rookie', label: 'Rookie' },
-    { value: 'skilled', label: 'Skilled' },
-    { value: 'master', label: 'Master' },
-  ];
-
   // Load article data when component mounts
   useEffect(() => {
     if (article) {
-
+      console.log('Article data loaded:', article); // Debug log
       
       // Map old plan values to new ones if needed
       const mapOldPlansToNew = (oldPlans) => {
-        if (!oldPlans || !Array.isArray(oldPlans)) return ['rookie'];
+        if (!oldPlans || !Array.isArray(oldPlans)) return 'rookie';
         
         // If plans are from old system, map them to new ones
         const planMapping = {
@@ -111,20 +122,23 @@ const EditArticle = () => {
           'pro': 'master'
         };
         
-        return oldPlans.map(plan => planMapping[plan] || plan).filter(plan => 
-          planOptions.some(option => option.value === plan)
+        const mappedPlans = oldPlans.map(plan => planMapping[plan] || plan).filter(plan => 
+          ['rookie', 'skilled', 'master'].includes(plan)
         );
+        
+        return mappedPlans.length > 0 ? mappedPlans[0] : 'rookie'; // Take first plan only
       };
       
-      const mappedPlans = mapOldPlansToNew(article.plans);
+      const mappedPlan = mapOldPlansToNew(article.plans);
       
       setBasicInfo({
         title: article.title || '',
         image: article.image || '',
         description: article.description || '',
-        plans: mappedPlans.length > 0 ? mappedPlans : ['rookie'],
+        plans: mappedPlan,
         status: article.status || 'active',
       });
+      
       // Ensure plants have the correct structure
       const formattedPlants = (article.plants || []).map(plant => ({
         title: plant.title || '',
@@ -132,30 +146,41 @@ const EditArticle = () => {
         image: plant.image || '',
       }));
       setPlants(formattedPlants);
+      
+      console.log('Basic info set:', { title: article.title, image: article.image }); // Debug log
+      console.log('Plants set:', formattedPlants); // Debug log
     }
-  }, [article, planOptions]);
+  }, [article]);
 
   const handleBasicInfoChange = (field, value) => {
     setBasicInfo(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePlansChange = (values) => {
-    setBasicInfo(prev => ({ ...prev, plans: values }));
+  const handlePlansChange = (value) => {
+    setBasicInfo(prev => ({ ...prev, plans: value }));
   };
 
   const handleImageUpload = async (file, type = 'main') => {
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      const result = await uploadImage(file).unwrap();
       
-      const result = await uploadImage(formData).unwrap();
-      
+      if (result.success && result.url) {
       if (type === 'main') {
         setBasicInfo(prev => ({ ...prev, image: result.url }));
       } else {
         return result.url;
+        }
+        
+        toast({
+          title: 'Success',
+          description: 'Image uploaded successfully',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
       }
     } catch (error) {
+      console.error('Failed to upload image:', error);
       toast({
         title: 'Upload failed',
         description: error.data?.message || 'Failed to upload image',
@@ -216,6 +241,7 @@ const EditArticle = () => {
     try {
       const articleData = {
         ...basicInfo,
+        plans: basicInfo.plans, // Send as string, not array
         plants,
       };
 
@@ -318,52 +344,20 @@ const EditArticle = () => {
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel color={textColor}>Plans</FormLabel>
-            <Box
-              border="1px solid"
-              borderColor={borderColor}
-              borderRadius="md"
-              p={4}
+            <FormLabel color={textColor}>Plan</FormLabel>
+            <Select
+              value={basicInfo.plans}
+              onChange={(e) => handlePlansChange(e.target.value)}
               bg={bgColor}
+              color={textColor}
+              borderColor={borderColor}
             >
-              <CheckboxGroup value={basicInfo.plans} onChange={handlePlansChange}>
-                <Grid templateColumns="repeat(3, 1fr)" gap={4}>
-                  {planOptions.map((plan) => (
-                    <Box
-                      key={plan.value}
-                      p={3}
-                      border="2px solid"
-                      borderColor={basicInfo.plans.includes(plan.value) ? 'brand.500' : borderColor}
-                      borderRadius="lg"
-                      bg={basicInfo.plans.includes(plan.value) ? 'brand.50' : 'transparent'}
-                      transition="all 0.2s"
-                      _hover={{
-                        borderColor: 'brand.300',
-                        bg: basicInfo.plans.includes(plan.value) ? 'brand.100' : 'gray.50'
-                      }}
-                    >
-                      <Checkbox 
-                        value={plan.value}
-                        colorScheme="brand"
-                        size="lg"
-                        fontWeight="semibold"
-                      >
-                        <VStack align="start" spacing={1}>
-                          <Text fontWeight="bold" color={textColor}>
-                            {plan.label}
-                          </Text>
-                          <Text fontSize="xs" color="gray.500">
-                            {plan.value === 'rookie' && 'Essential content for beginners'}
-                            {plan.value === 'skilled' && 'Advanced features and detailed guides'}
-                            {plan.value === 'master' && 'Complete access to all resources'}
-                          </Text>
-                        </VStack>
-                      </Checkbox>
-                    </Box>
-                  ))}
-                </Grid>
-              </CheckboxGroup>
-            </Box>
+              {planOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
           </FormControl>
 
           <FormControl isRequired>
@@ -618,7 +612,7 @@ const EditArticle = () => {
             <Text><strong>Title:</strong> {basicInfo.title}</Text>
             <Text><strong>Description:</strong> {basicInfo.description}</Text>
             <Text><strong>Status:</strong> {basicInfo.status}</Text>
-            <Text><strong>Plans:</strong> {basicInfo.plans.join(', ')}</Text>
+            <Text><strong>Plan:</strong> {basicInfo.plans}</Text>
             {basicInfo.image && (
               <Box mt={2}>
                 <Text fontWeight="semibold">Main Image:</Text>

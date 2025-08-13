@@ -158,13 +158,24 @@ const EditInstructor = () => {
       setSelectedFile(file);
       setIsUploadingImage(true);
       
+      // Debug: Check authentication
+      const token = localStorage.getItem("admin_token");
+      const tokenExpiry = localStorage.getItem("admin_token_expires_at");
+      console.log('Debug - Token exists:', !!token);
+      console.log('Debug - Token expiry:', tokenExpiry);
+      console.log('Debug - Current time:', new Date().toISOString());
+      
       // Add a small delay to ensure state is set before upload starts
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Add a minimum loading time to make the loading state more visible
       const uploadStartTime = Date.now();
+      console.log('Debug - Starting upload...');
+      
       const response = await uploadImage(file).unwrap();
       const uploadTime = Date.now() - uploadStartTime;
+      
+      console.log('Debug - Upload response:', response);
       
       // Ensure loading state is visible for at least 1 second
       if (uploadTime < 1000) {
@@ -185,17 +196,41 @@ const EditInstructor = () => {
           isClosable: true,
         });
       } else {
-        throw new Error('Upload failed');
+        throw new Error('Upload failed - No success response');
       }
     } catch (error) {
       console.error('Failed to upload image:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        data: error.data,
+        originalStatus: error.originalStatus
+      });
+      
       setImagePreview(null);
       setSelectedFile(null);
+      
+      // More specific error messages
+      let errorMessage = 'Failed to upload image';
+      if (error.status === 'PARSING_ERROR' && error.originalStatus === 500) {
+        errorMessage = 'Server error (500). The upload service is currently unavailable. Please try again later or contact support.';
+      } else if (error.status === 401) {
+        errorMessage = 'Authentication failed. Please log in again.';
+      } else if (error.status === 413) {
+        errorMessage = 'File too large. Please select a smaller image.';
+      } else if (error.status === 415) {
+        errorMessage = 'Invalid file type. Please select a valid image.';
+      } else if (error.status >= 500 || error.originalStatus >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (error.data?.message) {
+        errorMessage = error.data.message;
+      }
+      
       toast({
         title: 'Error',
-        description: error.data?.message || 'Failed to upload image',
+        description: errorMessage,
         status: 'error',
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
     } finally {
@@ -497,7 +532,7 @@ const EditInstructor = () => {
               </FormControl>
 
               {/* Specialization Field */}
-              <FormControl>
+              {/* <FormControl>
                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
                   Specialization
                 </FormLabel>
@@ -511,10 +546,10 @@ const EditInstructor = () => {
                   color={textColor}
                   borderColor={inputBorder}
                 />
-              </FormControl>
+              </FormControl> */}
 
               {/* Experience Years Field */}
-              <FormControl>
+              {/* <FormControl>
                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
                   Experience Years
                 </FormLabel>
@@ -530,10 +565,10 @@ const EditInstructor = () => {
                   min="0"
                   max="50"
                 />
-              </FormControl>
+              </FormControl> */}
 
               {/* Bio Field */}
-              <FormControl>
+              {/* <FormControl>
                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
                   Bio (Optional)
                 </FormLabel>
@@ -547,7 +582,7 @@ const EditInstructor = () => {
                   borderColor={inputBorder}
                   rows={6}
                 />
-              </FormControl>
+              </FormControl> */}
 
               {/* Status Field */}
               <FormControl isRequired>

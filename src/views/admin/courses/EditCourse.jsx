@@ -132,9 +132,9 @@ const EditCourse = () => {
   ];
 
   const planOptions = [
-    { value: 'basic', label: 'Basic' },
-    { value: 'pro', label: 'Pro' },
-    { value: 'premium', label: 'Premium' },
+    { value: 'rookie', label: 'Rookie' },
+    { value: 'skilled', label: 'Skilled' },
+    { value: 'master', label: 'Master' },
   ];
 
   // Get instructors and remedies from API with pagination support

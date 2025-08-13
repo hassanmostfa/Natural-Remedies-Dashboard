@@ -252,7 +252,7 @@
          
          <Box px="25px" pb="25px">
             <form onSubmit={handleSubmit}>
-               <VStack spacing="8" align="stretch" maxW="800px">
+               <VStack spacing="8" align="stretch" w="100%">
                {/* Basic Information */}
                <Box>
                   <VStack spacing="4" align="stretch">

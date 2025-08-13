@@ -66,9 +66,9 @@ const Articles = () => {
   const planItemBg = useColorModeValue('white', 'gray.600');
 
   // API calls
-  const { data: articlesData, isLoading, isError, refetch } = useGetArticlesQuery(
+  const { data: articlesResponse, isLoading, isError, refetch } = useGetArticlesQuery(
     { 
-      search: searchQuery,
+      search: searchQuery || undefined,
       page: currentPage,
       per_page: perPage
     },
@@ -77,25 +77,42 @@ const Articles = () => {
   
   const [deleteArticle, { isLoading: isDeleting }] = useDeleteArticleMutation();
 
+  // Extract data from API response
+  const articlesData = articlesResponse?.data || [];
+  const pagination = articlesResponse?.pagination || null;
+
+  // Debug: Log the API response structure
+  React.useEffect(() => {
+    if (articlesResponse) {
+      console.log('Articles API Response:', articlesResponse);
+      console.log('Articles Data:', articlesData);
+      console.log('Pagination:', pagination);
+    }
+  }, [articlesResponse, articlesData, pagination]);
+
   // Transform API data to match table structure
   const articles = React.useMemo(() => {
-    if (!articlesData) return [];
+    console.log('Transforming articlesData:', articlesData);
+    if (!articlesData || !Array.isArray(articlesData)) return [];
     
-    return articlesData.map(article => ({
+    const transformed = articlesData.map(article => ({
       id: article.id,
       title: article.title,
       image: article.image,
       description: article.description,
-      plans: article.plans,
+      plan: article.plan,
       status: article.status,
       rating: article.average_rating,
       reviewCount: article.review_count,
       createdAt: article.created_at,
       updatedAt: article.updated_at,
     }));
+    
+    console.log('Transformed articles:', transformed);
+    return transformed;
   }, [articlesData]);
 
-  // Handle search input change with debounce
+  // Handle search input change
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1); // Reset to first page when searching
@@ -118,14 +135,22 @@ const Articles = () => {
     onOpen();
   };
 
-  // Debounced search effect
+  // Effect to reset to first page when search changes
   React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      refetch();
-    }, 500);
+    setCurrentPage(1);
+  }, [searchQuery]);
 
-    return () => clearTimeout(timeoutId);
+  // Effect to refetch when search or pagination changes
+  React.useEffect(() => {
+    refetch();
   }, [searchQuery, currentPage, perPage, refetch]);
+
+  // Sync current page with API response
+  React.useEffect(() => {
+    if (pagination && pagination.current_page !== currentPage) {
+      setCurrentPage(pagination.current_page);
+    }
+  }, [pagination, currentPage]);
 
   const columns = [
     columnHelper.accessor('image', {
@@ -175,8 +200,8 @@ const Articles = () => {
       ),
     }),
     
-    columnHelper.accessor('plans', {
-      id: 'plans',
+    columnHelper.accessor('plan', {
+      id: 'plan',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -184,23 +209,55 @@ const Articles = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Plans
+          Plan
         </Text>
       ),
-      cell: (info) => (
-        <HStack 
-          spacing={1} 
-          cursor="pointer" 
-          onClick={() => handlePlansClick(info.getValue())}
-          _hover={{ opacity: 0.8 }}
-          transition="opacity 0.2s"
-        >
-          <Icon as={FaList} color="green.500" size="sm" />
-          <Text color={textColor} fontSize="sm" fontWeight="medium">
-            {info.getValue().length} plans
-          </Text>
-        </HStack>
-      ),
+      cell: (info) => {
+        const plan = info.getValue();
+        const planLabel = plan === 'rookie' ? 'Rookie' : 
+                         plan === 'skilled' ? 'Skilled' : 
+                         plan === 'master' ? 'Master' : 
+                         plan === 'basic' ? 'Basic' :
+                         plan === 'premium' ? 'Premium' :
+                         plan === 'pro' ? 'Pro' : plan;
+        
+        const getBadgeColor = (plan) => {
+          switch (plan) {
+            case 'rookie':
+            case 'basic':
+              return 'green';
+            case 'skilled':
+            case 'premium':
+              return 'blue';
+            case 'master':
+            case 'pro':
+              return 'purple';
+            default:
+              return 'gray';
+          }
+        };
+        
+        return (
+          <Badge
+            colorScheme={getBadgeColor(plan)}
+            px="3"
+            py="1"
+            borderRadius="full"
+            fontSize="xs"
+            fontWeight="600"
+            cursor="pointer" 
+            onClick={() => handlePlansClick([plan])}
+            _hover={{
+              transform: "scale(1.05)",
+              boxShadow: "md",
+              transition: "all 0.2s"
+            }}
+            transition="all 0.2s"
+          >
+            {planLabel}
+          </Badge>
+        );
+      },
     }),
 
     columnHelper.accessor('rating', {
@@ -327,6 +384,12 @@ const Articles = () => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+
+  // Debug: Log table data
+  React.useEffect(() => {
+    console.log('Table data:', articles);
+    console.log('Table rows:', table.getRowModel().rows);
+  }, [articles, table]);
 
   const handleViewArticle = (id) => {
     navigate(`/admin/article/details/${id}`);
@@ -573,7 +636,7 @@ const Articles = () => {
               <VStack spacing={2}>
                 <Icon as={FaList} color="green.500" boxSize={6} />
                 <Text fontSize="lg" fontWeight="600">
-                  Article Subscription Plans
+                  Article Subscription Plan
                 </Text>
               </VStack>
             </ModalHeader>
@@ -592,7 +655,7 @@ const Articles = () => {
                   textAlign="center"
                   mb={2}
                 >
-                  This article is available for the following subscription plans:
+                  This article is available for the following subscription plan:
                 </Text>
                 
                 <Box 
@@ -603,7 +666,8 @@ const Articles = () => {
                   borderColor={borderColor}
                 >
                   <VStack spacing={3} align="stretch">
-                    {selectedPlans.map((plan, index) => (
+                    {selectedPlans && selectedPlans.length > 0 ? (
+                      selectedPlans.map((plan, index) => (
                       <Flex
                         key={index}
                         align="center"
@@ -625,7 +689,7 @@ const Articles = () => {
                             w={3}
                             h={3}
                             borderRadius="full"
-                            bg={plan === 'pro' ? 'purple.500' : plan === 'premium' ? 'blue.500' : 'green.500'}
+                            bg={plan === 'skilled' ? 'blue.500' : plan === 'master' ? 'purple.500' : 'green.500'}
                           />
                           <Text 
                             fontSize="md" 
@@ -639,8 +703,8 @@ const Articles = () => {
                         
                         <Badge
                           colorScheme={
-                            plan === 'pro' ? 'purple' : 
-                            plan === 'premium' ? 'blue' : 
+                            plan === 'skilled' ? 'blue' : 
+                            plan === 'master' ? 'purple' : 
                             'green'
                           }
                           px={3}
@@ -649,12 +713,17 @@ const Articles = () => {
                           fontSize="xs"
                           fontWeight="600"
                         >
-                          {plan === 'pro' ? 'Professional' : 
-                           plan === 'premium' ? 'Premium' : 
-                           'Basic'}
+                          {plan === 'skilled' ? 'Skilled' : 
+                           plan === 'master' ? 'Master' : 
+                           'Rookie'}
                         </Badge>
                       </Flex>
-                    ))}
+                      ))
+                    ) : (
+                      <Text color="gray.500" textAlign="center" py={4}>
+                        No plans assigned to this article
+                      </Text>
+                    )}
                   </VStack>
                 </Box>
                 
@@ -664,7 +733,7 @@ const Articles = () => {
                   textAlign="center"
                   mt={2}
                 >
-                  Users with these subscription levels can access this article
+                  Users with this subscription level can access this article
                 </Text>
               </VStack>
             </ModalBody>
@@ -674,8 +743,35 @@ const Articles = () => {
         {/* Show Article Details Modal */}
         {/* Removed as per edit hint */}
 
+        {/* No data message */}
+        {(!articlesData || articlesData.length === 0) && !isLoading && (
+          <Flex
+            px={{ base: "16px", md: "25px" }}
+            py="40px"
+            justify="center"
+            align="center"
+          >
+            <VStack spacing={3}>
+              <Text color={textColor} fontSize="md">
+                {searchQuery 
+                  ? `No articles found matching "${searchQuery}".`
+                  : "No articles found."
+                }
+              </Text>
+
+              <Button
+                colorScheme="blue"
+                onClick={handleAddArticle}
+                size="sm"
+              >
+                Add First Article
+              </Button>
+            </VStack>
+          </Flex>
+        )}
+
         {/* Pagination Controls */}
-        {articlesData?.pagination && (
+        {pagination && (
           <Flex
             px={{ base: "16px", md: "25px" }}
             py="20px"
@@ -688,7 +784,7 @@ const Articles = () => {
           >
             {/* Page Info */}
             <Text color={textColor} fontSize="sm">
-              Showing {articlesData.pagination.from} to {articlesData.pagination.to} of {articlesData.pagination.total} results
+              Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} results
             </Text>
 
             {/* Pagination Controls */}
@@ -726,7 +822,7 @@ const Articles = () => {
                 </Button>
 
                 {/* Page Numbers */}
-                {Array.from({ length: Math.min(5, articlesData.pagination.last_page) }, (_, i) => {
+                {Array.from({ length: Math.min(5, pagination.last_page || 1) }, (_, i) => {
                   const pageNum = i + 1;
                   const isCurrentPage = pageNum === currentPage;
                   
@@ -747,7 +843,7 @@ const Articles = () => {
                   size="sm"
                   variant="outline"
                   onClick={() => handlePageChange(currentPage + 1)}
-                  isDisabled={currentPage >= articlesData.pagination.last_page}
+                  isDisabled={currentPage >= (pagination.last_page || 1) || !pagination.has_more_pages}
                   rightIcon={<ChevronRightIcon />}
                 >
                   Next
@@ -760,5 +856,6 @@ const Articles = () => {
     </Box>
   );
 };
+
 
 export default Articles;

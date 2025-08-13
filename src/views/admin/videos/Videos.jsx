@@ -110,31 +110,7 @@ const Videos = () => {
         </VStack>
       ),
     }),
-    columnHelper.accessor('ingredients', {
-      id: 'ingredients',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Ingredients
-        </Text>
-      ),
-      cell: (info) => {
-        const ingredients = info.getValue();
-        const count = Array.isArray(ingredients) ? ingredients.length : 0;
-        return (
-          <HStack spacing={1}>
-            <Icon as={FaList} color="green.500" size="sm" />
-            <Text color={textColor} fontSize="sm" fontWeight="medium">
-              {count} items
-            </Text>
-          </HStack>
-        );
-      },
-    }),
+
     columnHelper.accessor('average_rating', {
       id: 'rating',
       header: () => (

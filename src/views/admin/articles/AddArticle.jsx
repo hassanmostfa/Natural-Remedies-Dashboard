@@ -68,7 +68,7 @@ const AddArticle = () => {
     title: '',
     image: '',
     description: '',
-    plans: ['rookie'], // Changed to match API expected values
+    plans: 'rookie', // Changed to single plan selection
     status: 'active',
   });
 
@@ -133,10 +133,10 @@ const AddArticle = () => {
   }, []);
 
   // Handle plan selection changes
-  const handlePlansChange = React.useCallback((selectedPlans) => {
+  const handlePlansChange = React.useCallback((selectedPlan) => {
     setBasicInfo(prev => ({
       ...prev,
-      plans: selectedPlans
+      plans: selectedPlan
     }));
   }, []);
 
@@ -363,10 +363,10 @@ const AddArticle = () => {
           });
           return false;
         }
-        if (basicInfo.plans.length === 0) {
+        if (!basicInfo.plans) {
           toast({
             title: 'Error',
-            description: 'At least one plan must be selected',
+            description: 'A plan must be selected',
             status: 'error',
             duration: 3000,
             isClosable: true,
@@ -425,7 +425,7 @@ const AddArticle = () => {
         title: basicInfo.title,
         image: basicInfo.image,
         description: basicInfo.description,
-        plans: basicInfo.plans,
+        plans: basicInfo.plans, // Send as string, not array
         status: basicInfo.status,
         plants: plants.map(plant => ({
           title: plant.title,
@@ -591,53 +591,21 @@ const AddArticle = () => {
                 </Box>
               </FormControl>
 
-              <FormControl>
-                <FormLabel color={textColor}>Visible to Plans</FormLabel>
-                <Box
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="md"
-                  p={4}
+              <FormControl isRequired>
+                <FormLabel color={textColor}>Visible to Plan</FormLabel>
+                <Select
+                  value={basicInfo.plans}
+                  onChange={(e) => handlePlansChange(e.target.value)}
                   bg={inputBg}
+                  color={textColor}
+                  borderColor={borderColor}
                 >
-                  <CheckboxGroup value={basicInfo.plans} onChange={handlePlansChange}>
-                    <Grid templateColumns="repeat(3, 1fr)" gap={4}>
-                      {planOptions.map(option => (
-                        <Box
-                          key={option.value}
-                          p={3}
-                          border="2px solid"
-                          borderColor={basicInfo.plans.includes(option.value) ? 'brand.500' : borderColor}
-                          borderRadius="lg"
-                          bg={basicInfo.plans.includes(option.value) ? 'brand.50' : 'transparent'}
-                          transition="all 0.2s"
-                          _hover={{
-                            borderColor: 'brand.300',
-                            bg: basicInfo.plans.includes(option.value) ? 'brand.100' : 'gray.50'
-                          }}
-                        >
-                          <Checkbox 
-                            value={option.value}
-                            colorScheme="brand"
-                            size="lg"
-                            fontWeight="semibold"
-                          >
-                            <VStack align="start" spacing={1}>
-                              <Text fontWeight="bold" color={textColor}>
-                                {option.label}
-                              </Text>
-                              <Text fontSize="xs" color="gray.500">
-                                {option.value === 'rookie' && 'Essential content for beginners'}
-                                {option.value === 'skilled' && 'Advanced features and detailed guides'}
-                                {option.value === 'master' && 'Complete access to all resources'}
-                              </Text>
-                            </VStack>
-                          </Checkbox>
-                        </Box>
-                      ))}
-                    </Grid>
-                  </CheckboxGroup>
-                </Box>
+                  {planOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
               </FormControl>
 
               <FormControl>

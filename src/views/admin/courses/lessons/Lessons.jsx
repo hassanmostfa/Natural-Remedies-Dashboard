@@ -229,7 +229,10 @@ const Lessons = () => {
             {info.getValue()}
           </Text>
           <Text color="gray.500" fontSize="xs" noOfLines={2}>
-            {info.row.original.description}
+            {info.row.original.description && info.row.original.description.length > 100 
+              ? `${info.row.original.description.substring(0, 100)}...` 
+              : info.row.original.description
+            }
           </Text>
         </VStack>
       ),
@@ -282,13 +285,53 @@ const Lessons = () => {
       ),
       cell: (info) => {
         const contentBlocks = info.getValue() || [];
+        const hasRemedy = contentBlocks.some(block => block.type === 'remedy' && block.remedy);
+        const hasVideo = contentBlocks.some(block => block.type === 'video' && block.video_url);
+        const hasImage = contentBlocks.some(block => block.type === 'image' && block.image_url);
+        
         return (
-          <HStack spacing={2}>
-            <Icon as={FaTasks} color="blue.500" size="sm" />
-            <Text color={textColor} fontSize="sm" fontWeight="medium">
-              {contentBlocks.length} block{contentBlocks.length !== 1 ? 's' : ''}
-            </Text>
-          </HStack>
+          <VStack align="start" spacing={1}>
+            <HStack spacing={2}>
+              <Icon as={FaTasks} color="blue.500" size="sm" />
+              <Text color={textColor} fontSize="sm" fontWeight="medium">
+                {contentBlocks.length} block{contentBlocks.length !== 1 ? 's' : ''}
+              </Text>
+            </HStack>
+            
+            {/* Show content highlights */}
+            <HStack spacing={1} flexWrap="wrap">
+              {hasVideo && (
+                <Badge size="xs" colorScheme="red" variant="subtle">
+                  Video
+                </Badge>
+              )}
+              {hasImage && (
+                <Badge size="xs" colorScheme="purple" variant="subtle">
+                  Image
+                </Badge>
+              )}
+              {hasRemedy && (
+                <Badge size="xs" colorScheme="green" variant="subtle">
+                  Remedy
+                </Badge>
+              )}
+              {contentBlocks.some(block => block.type === 'text') && (
+                <Badge size="xs" colorScheme="blue" variant="subtle">
+                  Text
+                </Badge>
+              )}
+              {contentBlocks.some(block => block.type === 'ingredients') && (
+                <Badge size="xs" colorScheme="orange" variant="subtle">
+                  Ingredients
+                </Badge>
+              )}
+              {contentBlocks.some(block => block.type === 'instructions') && (
+                <Badge size="xs" colorScheme="teal" variant="subtle">
+                  Instructions
+                </Badge>
+              )}
+            </HStack>
+          </VStack>
         );
       },
     }),
@@ -470,13 +513,13 @@ const Lessons = () => {
         >
           {/* Breadcrumb and Header */}
           <Box px={{ base: "16px", md: "25px" }} py="20px">
-            <Breadcrumb spacing="8px" separator={<BreadcrumbChevron color="gray.500" />} mb={4}>
-              <BreadcrumbItem>
+            <Breadcrumb p={0} spacing="8px" separator={<BreadcrumbChevron color="gray.500" />} mb={4}>
+              <BreadcrumbItem  p={0}>
                 <BreadcrumbLink onClick={handleBackToCourses} color="blue.500" _hover={{ textDecoration: 'underline' }}>
                   Courses
                 </BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbItem isCurrentPage>
+              <BreadcrumbItem  p={0} isCurrentPage>
                 <BreadcrumbLink color={textColor} fontWeight="medium">
                   {courseData?.title || 'Course'} Lessons
                 </BreadcrumbLink>

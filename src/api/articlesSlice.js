@@ -40,8 +40,8 @@ export const articlesApiService = createApi({
         };
       },
       transformResponse: (response) => {
-        // Return the data property if it exists, otherwise return the response as is
-        return response.data || response;
+        // Return the full response to preserve pagination and other metadata
+        return response;
       },
     }),
 
@@ -49,8 +49,8 @@ export const articlesApiService = createApi({
     getArticle: builder.query({
       query: (id) => ({ url: `/articles/${id}` }),
       transformResponse: (response) => {
-        // Return the data property if it exists, otherwise return the response as is
-        return response.data || response;
+        // Return the full response to preserve metadata
+        return response;
       },
     }),
 

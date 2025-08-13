@@ -39,6 +39,8 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
 } from '@chakra-ui/react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -112,6 +114,9 @@ const AddLesson = () => {
     { value: 'remedy', label: 'Remedy', icon: FaLeaf, color: 'green.500' },
     { value: 'ingredients', label: 'Ingredients', icon: FaList, color: 'orange.500' },
     { value: 'instructions', label: 'Instructions', icon: FaListOl, color: 'teal.500' },
+    { value: 'content', label: 'Content', icon: FaList, color: 'cyan.500' },
+    { value: 'tip', label: 'Tip', icon: FaFileAlt, color: 'yellow.500' },
+    { value: 'pdf', label: 'PDF', icon: FaFileAlt, color: 'red.600' },
   ];
 
   const courseData = courseResponse?.data || null;
@@ -229,6 +234,102 @@ const AddLesson = () => {
       ...prev,
       image: ''
     }));
+  };
+
+  // PDF upload function
+  const handlePdfUpload = (files, blockIndex) => {
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      
+      if (!selectedFile.type.includes('pdf')) {
+        toast({
+          title: 'Error',
+          description: 'Please select a PDF file',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        toast({
+          title: 'Error',
+          description: 'PDF size should be less than 10MB',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      handlePdfUploadToServer(selectedFile, blockIndex);
+    }
+  };
+
+  const handlePdfUploadToServer = async (file, blockIndex) => {
+    const uploadKey = `${blockIndex}-pdf_url`;
+    
+    try {
+      setContentImageUploading(prev => ({
+        ...prev,
+        [uploadKey]: true
+      }));
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const uploadStartTime = Date.now();
+      const response = await uploadImage(file).unwrap();
+      const uploadTime = Date.now() - uploadStartTime;
+      
+      if (uploadTime < 1000) {
+        await new Promise(resolve => setTimeout(resolve, 1000 - uploadTime));
+      }
+      
+      if (response.success && response.url) {
+        updateContentBlock(blockIndex, 'pdf_url', response.url);
+        updateContentBlock(blockIndex, 'content', { 
+          ...formData.content_blocks[blockIndex].content,
+          pdf_url: response.url 
+        });
+
+        toast({
+          title: 'Success',
+          description: 'PDF uploaded successfully',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Failed to upload PDF:', error);
+      
+      // Check if the error is due to the API not accepting PDFs
+      let errorMessage = 'Failed to upload PDF';
+      
+      if (error.status === 'PARSING_ERROR' || error.data?.includes('<!DOCTYPE')) {
+        errorMessage = 'PDF upload is not supported by the server. Please contact your administrator to enable PDF uploads or use an external PDF hosting service and provide the URL.';
+      } else if (error.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: 'Upload Error',
+        description: errorMessage,
+        status: 'error',
+        duration: 7000,
+        isClosable: true,
+      });
+    } finally {
+      setContentImageUploading(prev => ({
+        ...prev,
+        [uploadKey]: false
+      }));
+    }
   };
 
   // Content block image upload functions
@@ -466,9 +567,20 @@ const AddLesson = () => {
       title: '',
       description: '',
       order: formData.content_blocks.length,
-      ...(type === 'video' && { video_url: '', image_url: '' }),
-      ...(type === 'image' && { image_url: '' }),
-      ...(type === 'remedy' && { remedy_id: '' }),
+      is_active: true,
+      ...(type === 'video' && { 
+        video_url: '', 
+        image_url: '',
+        content: { video_url: '', title: '', description: '' }
+      }),
+      ...(type === 'image' && { 
+        image_url: '',
+        content: { image_url: '', link_url: '', alt_text: '' }
+      }),
+      ...(type === 'remedy' && { 
+        remedy_id: '',
+        content: { remedy_id: '' }
+      }),
       ...(type === 'ingredients' && { 
         image_url: '', 
         content: { items: [{ title: '', image_url: '' }] } 
@@ -476,6 +588,21 @@ const AddLesson = () => {
       ...(type === 'instructions' && { 
         image_url: '', 
         content: { steps: [{ title: '', image_url: '' }] } 
+      }),
+      ...(type === 'text' && { 
+        image_url: '',
+        content: { image_url: '', html_content: '' }
+      }),
+      ...(type === 'content' && { 
+        content: { items: [{ title: '', image_url: '' }] } 
+      }),
+      ...(type === 'tip' && { 
+        image_url: '',
+        content: { image_url: '', html_content: '' }
+      }),
+      ...(type === 'pdf' && { 
+        pdf_url: '',
+        content: { pdf_url: '', title: '', description: '' }
       }),
     };
 
@@ -523,7 +650,12 @@ const AddLesson = () => {
       ...prev,
       content_blocks: prev.content_blocks.map((block, i) => {
         if (i === blockIndex) {
-          const arrayKey = itemType === 'ingredient' ? 'items' : 'steps';
+          let arrayKey;
+          if (itemType === 'ingredient') arrayKey = 'items';
+          else if (itemType === 'step') arrayKey = 'steps';
+          else if (itemType === 'content') arrayKey = 'items';
+          else arrayKey = 'items';
+          
           return {
             ...block,
             content: {
@@ -542,7 +674,12 @@ const AddLesson = () => {
       ...prev,
       content_blocks: prev.content_blocks.map((block, i) => {
         if (i === blockIndex) {
-          const arrayKey = itemType === 'ingredient' ? 'items' : 'steps';
+          let arrayKey;
+          if (itemType === 'ingredient') arrayKey = 'items';
+          else if (itemType === 'step') arrayKey = 'steps';
+          else if (itemType === 'content') arrayKey = 'items';
+          else arrayKey = 'items';
+          
           return {
             ...block,
             content: {
@@ -563,7 +700,12 @@ const AddLesson = () => {
       ...prev,
       content_blocks: prev.content_blocks.map((block, i) => {
         if (i === blockIndex) {
-          const arrayKey = itemType === 'ingredient' ? 'items' : 'steps';
+          let arrayKey;
+          if (itemType === 'ingredient') arrayKey = 'items';
+          else if (itemType === 'step') arrayKey = 'steps';
+          else if (itemType === 'content') arrayKey = 'items';
+          else arrayKey = 'items';
+          
           return {
             ...block,
             content: {
@@ -1014,6 +1156,214 @@ const AddLesson = () => {
                 </VStack>
               )}
             </Box>
+          </VStack>
+        )}
+
+        {block.type === 'text' && (
+          <FormControl>
+            <FormLabel fontSize="sm" color={textColor}>Content</FormLabel>
+            <Box>
+              <ReactQuill
+                theme="snow"
+                value={block.content?.html_content || ''}
+                onChange={(value) => updateContentBlock(index, 'content', { 
+                  ...block.content, 
+                  html_content: value 
+                })}
+                placeholder="Enter content..."
+                style={{ height: '200px' }}
+                modules={{
+                  toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'align': [] }],
+                    ['link', 'blockquote', 'code-block'],
+                    ['clean']
+                  ],
+                }}
+              />
+            </Box>
+          </FormControl>
+        )}
+
+        {block.type === 'content' && (
+          <VStack spacing={4} align="stretch">
+            <Box>
+              <Flex justify="space-between" align="center" mb={3}>
+                <Text fontWeight="medium" color={textColor}>Content Items</Text>
+                <Button
+                  size="sm"
+                  leftIcon={<AddIcon />}
+                  onClick={() => addContentItem(
+                    index, 
+                    'content',
+                    { title: '', image_url: '' }
+                  )}
+                >
+                  Add Item
+                </Button>
+              </Flex>
+              
+              {block.content && (
+                <VStack spacing={3} align="stretch">
+                  {(block.content.items || []).map((item, itemIndex) => (
+                    <Box key={itemIndex} p={3} border="1px" borderColor="gray.200" borderRadius="md">
+                      <Grid templateColumns="1fr auto" gap={3} alignItems="start" mb={3}>
+                        <FormControl>
+                          <FormLabel fontSize="xs" color={textColor}>Title</FormLabel>
+                          <Input
+                            value={item.title || ''}
+                            onChange={(e) => updateContentItem(
+                              index, 
+                              itemIndex, 
+                              'content',
+                              'title',
+                              e.target.value
+                            )}
+                            placeholder="Enter title"
+                            size="sm"
+                          />
+                        </FormControl>
+                        <IconButton
+                          aria-label="Remove item"
+                          icon={<CloseIcon />}
+                          size="sm"
+                          colorScheme="red"
+                          variant="ghost"
+                          onClick={() => removeContentItem(
+                            index, 
+                            itemIndex, 
+                            'content'
+                          )}
+                          mt={6}
+                        />
+                      </Grid>
+                      <FormControl>
+                        <FormLabel fontSize="xs" color={textColor}>Image</FormLabel>
+                        <ImageUploadContainer
+                          value={item.image_url}
+                          uploadKey={`${index}-${itemIndex}-content`}
+                          onUpload={() => document.getElementById(`item-image-${index}-${itemIndex}-content`).click()}
+                          onClear={() => clearContentItemImage(index, itemIndex, 'content')}
+                          placeholder="Upload Image"
+                          size="sm"
+                        />
+                        <input
+                          type="file"
+                          id={`item-image-${index}-${itemIndex}-content`}
+                          hidden
+                          accept="image/*"
+                          onChange={(e) => handleContentItemImageUpload(e.target.files, index, itemIndex, 'content')}
+                          disabled={contentImageUploading[`${index}-${itemIndex}-content`]}
+                        />
+                      </FormControl>
+                    </Box>
+                  ))}
+                </VStack>
+              )}
+            </Box>
+          </VStack>
+        )}
+
+        {block.type === 'tip' && (
+          <VStack spacing={4} align="stretch">
+            <FormControl>
+              <FormLabel fontSize="sm" color={textColor}>Tip Image</FormLabel>
+              <ImageUploadContainer
+                value={block.image_url}
+                uploadKey={`${index}-image_url`}
+                onUpload={() => document.getElementById(`content-image-${index}-image_url`).click()}
+                onClear={() => clearContentImage(index, 'image_url')}
+                placeholder="Upload Tip Image"
+              />
+              <input
+                type="file"
+                id={`content-image-${index}-image_url`}
+                hidden
+                accept="image/*"
+                onChange={(e) => handleContentImageUpload(e.target.files, index, 'image_url')}
+                disabled={contentImageUploading[`${index}-image_url`]}
+              />
+            </FormControl>
+            
+            <FormControl>
+              <FormLabel fontSize="sm" color={textColor}>Tip Content</FormLabel>
+              <Box>
+                <ReactQuill
+                  theme="snow"
+                  value={block.content?.html_content || ''}
+                  onChange={(value) => updateContentBlock(index, 'content', { 
+                    ...block.content, 
+                    html_content: value 
+                  })}
+                  placeholder="Enter tip content..."
+                  style={{ height: '150px' }}
+                  modules={{
+                    toolbar: [
+                      [{ 'header': [1, 2, 3, false] }],
+                      ['bold', 'italic', 'underline', 'strike'],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      [{ 'color': [] }, { 'background': [] }],
+                      [{ 'align': [] }],
+                      ['link', 'blockquote', 'code-block'],
+                      ['clean']
+                    ],
+                  }}
+                />
+              </Box>
+            </FormControl>
+          </VStack>
+        )}
+
+        {block.type === 'pdf' && (
+          <VStack spacing={4} align="stretch">
+            <FormControl>
+              <FormLabel fontSize="sm" color={textColor}>PDF URL</FormLabel>
+              <Input
+                value={block.pdf_url || ''}
+                onChange={(e) => {
+                  updateContentBlock(index, 'pdf_url', e.target.value);
+                  updateContentBlock(index, 'content', { 
+                    ...block.content,
+                    pdf_url: e.target.value 
+                  });
+                }}
+                placeholder="Enter PDF URL (e.g., https://example.com/document.pdf)"
+                size="sm"
+              />
+              <Text fontSize="xs" color="gray.500" mt={1}>
+                Enter the URL of a PDF hosted on Google Drive, Dropbox, or any other hosting service
+              </Text>
+            </FormControl>
+            
+            <FormControl>
+              <FormLabel fontSize="sm" color={textColor}>PDF Title</FormLabel>
+              <Input
+                value={block.content?.title || ''}
+                onChange={(e) => updateContentBlock(index, 'content', { 
+                  ...block.content, 
+                  title: e.target.value 
+                })}
+                placeholder="Enter PDF title"
+                size="sm"
+              />
+            </FormControl>
+            
+            <FormControl>
+              <FormLabel fontSize="sm" color={textColor}>PDF Description</FormLabel>
+              <Textarea
+                value={block.content?.description || ''}
+                onChange={(e) => updateContentBlock(index, 'content', { 
+                  ...block.content, 
+                  description: e.target.value 
+                })}
+                placeholder="Enter PDF description"
+                rows={3}
+                size="sm"
+              />
+            </FormControl>
           </VStack>
         )}
       </Box>

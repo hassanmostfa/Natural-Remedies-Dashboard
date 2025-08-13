@@ -175,6 +175,28 @@ const routes = [
     showInSidebar: false,
   },
   {
+    name: 'Diseases',
+    layout: '/admin',
+    path: '/disease',
+    icon: <Icon as={FaSkull} width="20px" height="20px" color="inherit" />,
+    component: <Disease />,
+    showInSidebar: true,
+  },
+  {
+    name: 'Diseases',
+    layout: '/admin',
+    path: '/add-disease',
+    component: <AddDisease />,
+    showInSidebar: false,
+  },
+  {
+    name: 'Diseases',
+    layout: '/admin',
+    path: '/edit-disease/:id',
+    component: <EditDisease />,
+    showInSidebar: false,
+  },
+  {
     name: 'Remedies',
     layout: '/admin',
     path: '/remedies',
@@ -334,28 +356,7 @@ const routes = [
     component: <Reviews />,
     showInSidebar: true,
   },
-  {
-    name: 'Diseases',
-    layout: '/admin',
-    path: '/disease',
-    icon: <Icon as={FaSkull} width="20px" height="20px" color="inherit" />,
-    component: <Disease />,
-    showInSidebar: true,
-  },
-  {
-    name: 'Diseases',
-    layout: '/admin',
-    path: '/add-disease',
-    component: <AddDisease />,
-    showInSidebar: false,
-  },
-  {
-    name: 'Diseases',
-    layout: '/admin',
-    path: '/edit-disease/:id',
-    component: <EditDisease />,
-    showInSidebar: false,
-  },
+ 
   {
     name: 'Ads',
     layout: '/admin',

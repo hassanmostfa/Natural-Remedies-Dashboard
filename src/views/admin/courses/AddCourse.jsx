@@ -126,9 +126,9 @@ const AddCourse = () => {
   ];
 
   const planOptions = [
-    { value: 'basic', label: 'Basic' },
-    { value: 'pro', label: 'Pro' },
-    { value: 'premium', label: 'Premium' },
+    { value: 'rookie', label: 'Rookie' },
+    { value: 'skilled', label: 'Skilled' },
+    { value: 'master', label: 'Master' },
   ];
 
 

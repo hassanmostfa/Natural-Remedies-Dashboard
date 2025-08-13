@@ -400,7 +400,6 @@ const AddRemedy = () => {
   const [nextId, setNextId] = React.useState(2);
 
   const visiblePlansOptions = [
-    { value: 'all', label: 'All Plans' },
     { value: 'rookie', label: 'Rookie' },
     { value: 'skilled', label: 'Skilled' },
     { value: 'master', label: 'Master' },

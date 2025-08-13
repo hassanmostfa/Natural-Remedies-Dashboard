@@ -13,6 +13,12 @@ import {
   MdPayment,
   MdTrendingUp,
   MdAccountBalance,
+  MdLocalHospital,
+  MdSchool,
+  MdArticle,
+  MdPeople,
+  MdStar,
+  MdVideoLibrary,
 } from "react-icons/md";
 import CheckTable from "views/admin/default/components/CheckTable";
 import { columnsDataCheck } from "views/admin/default/variables/columnsData";
@@ -34,12 +40,20 @@ export default function UserReports() {
     { name: "Active Subscriptions", value: "1,247", icon: MdTrendingUp },
     { name: "Total Revenue", value: "$266.8K", icon: MdAccountBalance },
     { name: "Payment Success Rate", value: "94.1%", icon: MdPayment },
+    { name: "Total Remedies", value: "342", icon: MdLocalHospital },
+    { name: "Active Courses", value: "18", icon: MdSchool },
+    { name: "Published Articles", value: "156", icon: MdArticle },
+    { name: "Registered Users", value: "8,934", icon: MdPeople },
+    { name: "Average Rating", value: "4.7", icon: MdStar },
+    { name: "Video Content", value: "89", icon: MdVideoLibrary },
+    { name: "Remedy Types", value: "24", icon: MdAssignment },
+    { name: "Instructors", value: "12", icon: MdOutlineGroup },
   ];
 
   return (
     <Box pt={{ base: "130px", md: "80px", xl: "80px" }}>
       {/* Updated Cards Section */}
-      <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} gap="20px" mb="20px">
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap="20px" mb="20px">
         {cardData.map((card, index) => (
           <MiniStatistics
             key={index}
@@ -58,21 +72,21 @@ export default function UserReports() {
       </SimpleGrid>
 
       {/* Subscription Growth and Payment Transactions */}
-      <SimpleGrid columns={{ base: 1, md: 1, xl: 2 }} gap="20px" mb="20px">
+      {/* <SimpleGrid columns={{ base: 1, md: 1, xl: 2 }} gap="20px" mb="20px">
         <SubscriptionGrowth />
         <PaymentTransactions />
-      </SimpleGrid>
+      </SimpleGrid> */}
 
       {/* Total Revenue */}
-      <SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap="20px" mb="20px">
+      {/* <SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap="20px" mb="20px">
         <TotalRevenue />
-      </SimpleGrid>
+      </SimpleGrid> */}
 
       {/* Subscription and Payment Tables */}
-      <SimpleGrid columns={{ base: 1, md: 1, xl: 2 }} gap="20px" mb="20px">
+      {/* <SimpleGrid columns={{ base: 1, md: 1, xl: 2 }} gap="20px" mb="20px">
         <SubscriptionTable />
         <PaymentTable />
-      </SimpleGrid>
+      </SimpleGrid> */}
     </Box>
   );
 }
