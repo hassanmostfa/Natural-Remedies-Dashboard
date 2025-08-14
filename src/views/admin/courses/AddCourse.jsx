@@ -65,7 +65,7 @@ const AddCourse = () => {
     { title: 'Course Overview' },
     { title: 'Course Content' },
     { title: 'Instructor Selection' },
-    { title: 'Remedies Selection' },
+    // { title: 'Remedies Selection' },
   ];
 
   const { activeStep, setActiveStep } = useSteps({
@@ -1174,132 +1174,134 @@ const AddCourse = () => {
                     </Text>
                 </Box>
                   )}
+                  
+
                 </>
               )}
           </Box>
         );
 
-      case 4:
-        return (
-          <Box>
-            <Heading size="md" color={textColor} mb={4}>Selected Remedies</Heading>
-               <Text fontSize="sm" color="gray.500" mb={4}>
-                 Choose remedies for this course. You can select multiple remedies.
-               </Text>
-               
-               {/* Search Input */}
-               <FormControl mb={4}>
-                 <FormLabel fontSize="sm" color={textColor}>Search Remedies</FormLabel>
-                 <Input
-                   placeholder="Search by title, disease, or remedy type..."
-                   value={remediesSearch}
-                   onChange={(e) => handleRemediesSearch(e.target.value)}
-                   size="md"
-                 />
-               </FormControl>
-               
-               {isLoadingRemedies ? (
-                <Flex justify="center" align="center" py={8}>
-                  <VStack spacing={4}>
-                    <Spinner size="lg" color="#422afb" thickness="4px" />
-                    <Text color="gray.500">Loading remedies...</Text>
-                  </VStack>
-                </Flex>
-              ) : availableRemedies.length === 0 ? (
-                <Box p={6} textAlign="center" bg="gray.50" borderRadius="lg">
-                  <Text color="gray.500">No remedies available</Text>
-                </Box>
-              ) : (
-                <>
-              <VStack spacing={3} align="stretch">
-                {availableRemedies.map((remedy) => (
-                  <Box
-                    key={remedy.id}
-                    p={3}
-                    border="1px"
-                    borderColor={borderColor}
-                    borderRadius="lg"
-                    cursor="pointer"
-                    onClick={() => {
-                          const isSelected = formData.selectedRemedies.includes(remedy.id);
-                      if (isSelected) {
-                        setFormData(prev => ({
-                          ...prev,
-                              selectedRemedies: prev.selectedRemedies.filter(r => r !== remedy.id)
-                        }));
-                      } else {
-                        setFormData(prev => ({
-                          ...prev,
-                              selectedRemedies: [...prev.selectedRemedies, remedy.id]
-                        }));
-                      }
-                    }}
-                        bg={formData.selectedRemedies.includes(remedy.id) ? 'blue.50' : 'transparent'}
-                        _hover={{ bg: formData.selectedRemedies.includes(remedy.id) ? 'blue.100' : 'gray.50' }}
-                  >
-                    <Flex justify="space-between" align="center">
-                      <VStack align="start" spacing={1}>
-                        <Text fontWeight="medium" color={textColor}>
-                          {remedy.title}
-                        </Text>
-                        <HStack spacing={2}>
-                          <Badge colorScheme="blue" size="sm">
-                                {remedy.disease?.name || 'General'}
-                          </Badge>
-                          <Badge colorScheme="green" size="sm">
-                                {remedy.remedy_type?.name || 'Natural'}
-                          </Badge>
-                        </HStack>
-                      </VStack>
-                      <Box
-                        w={4}
-                        h={4}
-                        borderRadius="full"
-                        border="2px"
-                            borderColor={formData.selectedRemedies.includes(remedy.id) ? 'blue.500' : 'gray.300'}
-                            bg={formData.selectedRemedies.includes(remedy.id) ? 'blue.500' : 'transparent'}
-                      />
-                    </Flex>
-                  </Box>
-                ))}
-              </VStack>
-                  
-                  {/* Pagination Info */}
-                  {remediesResponse?.pagination && (
-                    <Box mt={4} p={3} bg="gray.50" borderRadius="lg">
-                      <Flex justify="space-between" align="center">
-                        <Text fontSize="sm" color="gray.600">
-                          Showing {remediesResponse.pagination.from}-{remediesResponse.pagination.to} of {remediesResponse.pagination.total} remedies
-                        </Text>
-                        {remediesResponse.pagination.has_more_pages && (
-              <Button
-                size="sm"
-                            colorScheme="blue"
-                variant="outline"
-                            onClick={handleLoadMoreRemedies}
-                            isLoading={isLoadingRemedies}
-              >
-                            Load More
-              </Button>
-                        )}
-            </Flex>
-                    </Box>
-                  )}
-                  
-                  {formData.selectedRemedies.length > 0 && (
-                    <Box mt={4} p={3} bg="blue.50" borderRadius="lg">
-                      <Text fontSize="sm" color="blue.700" fontWeight="medium">
-                        Selected Remedies: {formData.selectedRemedies.map(id => {
-                          const remedy = availableRemedies.find(r => r.id === id);
-                          return remedy ? remedy.title : `Remedy ${id}`;
-                        }).join(', ')}
-                          </Text>
-                            </Box>
-                  )}
-                </>
-              )}
-          </Box>
-        );
+      // case 4:
+      //   return (
+      //     <Box>
+      //       <Heading size="md" color={textColor} mb={4}>Selected Remedies</Heading>
+      //          <Text fontSize="sm" color="gray.500" mb={4}>
+      //            Choose remedies for this course. You can select multiple remedies.
+      //          </Text>
+      //          
+      //          {/* Search Input */}
+      //          <FormControl mb={4}>
+      //            <FormLabel fontSize="sm" color={textColor}>Search Remedies</FormLabel>
+      //            <Input
+      //              placeholder="Search by title, disease, or remedy type..."
+      //              value={remediesSearch}
+      //              onChange={(e) => handleRemediesSearch(e.target.value)}
+      //              size="md"
+      //            />
+      //          </FormControl>
+      //          
+      //          {isLoadingRemedies ? (
+      //           <Flex justify="center" align="center" py={8}>
+      //             <VStack spacing={4}>
+      //               <Spinner size="lg" color="#422afb" thickness="4px" />
+      //               <Text color="gray.500">Loading remedies...</Text>
+      //             </VStack>
+      //           </Flex>
+      //         ) : availableRemedies.length === 0 ? (
+      //           <Box p={6} textAlign="center" bg="gray.50" borderRadius="lg">
+      //             <Text color="gray.500">No remedies available</Text>
+      //           </Box>
+      //         ) : (
+      //           <>
+      //         <VStack spacing={3} align="stretch">
+      //           {availableRemedies.map((remedy) => (
+      //             <Box
+      //               key={remedy.id}
+      //               p={3}
+      //               border="1px"
+      //               borderColor={borderColor}
+      //               borderRadius="lg"
+      //               cursor="pointer"
+      //               onClick={() => {
+      //                     const isSelected = formData.selectedRemedies.includes(remedy.id);
+      //                 if (isSelected) {
+      //                   setFormData(prev => ({
+      //                     ...prev,
+      //                         selectedRemedies: prev.selectedRemedies.filter(r => r !== remedy.id)
+      //                   }));
+      //                 } else {
+      //                   setFormData(prev => ({
+      //                     ...prev,
+      //                         selectedRemedies: [...prev.selectedRemedies, remedy.id]
+      //                   }));
+      //                 }
+      //               }}
+      //                   bg={formData.selectedRemedies.includes(remedy.id) ? 'blue.50' : 'transparent'}
+      //                   _hover={{ bg: formData.selectedRemedies.includes(remedy.id) ? 'blue.100' : 'gray.50' }}
+      //             >
+      //               <Flex justify="space-between" align="center">
+      //                 <VStack align="start" spacing={1}>
+      //                   <Text fontWeight="medium" color={textColor}>
+      //                     {remedy.title}
+      //                   </Text>
+      //                   <HStack spacing={2}>
+      //                     <Badge colorScheme="blue" size="sm">
+      //                           {remedy.disease?.name || 'General'}
+      //                     </Badge>
+      //                     <Badge colorScheme="green" size="sm">
+      //                           {remedy.remedy_type?.name || 'Natural'}
+      //                     </Badge>
+      //                   </HStack>
+      //                 </VStack>
+      //                 <Box
+      //                   w={4}
+      //                   h={4}
+      //                   borderRadius="full"
+      //                   border="2px"
+      //                       borderColor={formData.selectedRemedies.includes(remedy.id) ? 'blue.500' : 'gray.300'}
+      //                       bg={formData.selectedRemedies.includes(remedy.id) ? 'blue.500' : 'transparent'}
+      //                 />
+      //               </Flex>
+      //             </Box>
+      //           ))}
+      //         </VStack>
+      //           
+      //           {/* Pagination Info */}
+      //           {remediesResponse?.pagination && (
+      //             <Box mt={4} p={3} bg="gray.50" borderRadius="lg">
+      //               <Flex justify="space-between" align="center">
+      //                 <Text fontSize="sm" color="gray.600">
+      //                   Showing {remediesResponse.pagination.from}-{remediesResponse.pagination.to} of {remediesResponse.pagination.total} remedies
+      //                 </Text>
+      //                 {remediesResponse.pagination.has_more_pages && (
+      //         <Button
+      //           size="sm"
+      //                       colorScheme="blue"
+      //           variant="outline"
+      //                       onClick={handleLoadMoreRemedies}
+      //                       isLoading={isLoadingRemedies}
+      //         >
+      //                       Load More
+      //         </Button>
+      //                 )}
+      //       </Flex>
+      //             </Box>
+      //           )}
+      //           
+      //           {formData.selectedRemedies.length > 0 && (
+      //             <Box mt={4} p={3} bg="blue.50" borderRadius="lg">
+      //               <Text fontSize="sm" color="blue.700" fontWeight="medium">
+      //                 Selected Remedies: {formData.selectedRemedies.map(id => {
+      //                   const remedy = availableRemedies.find(r => r.id === id);
+      //                   return remedy ? remedy.title : `Remedy ${id}`;
+      //                 }).join(', ')}
+      //                   </Text>
+      //                     </Box>
+      //           )}
+      //         </>
+      //       )}
+      //     </Box>
+      //   );
 
       
 

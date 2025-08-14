@@ -42,7 +42,7 @@ const refreshToken = async () => {
   }
 };
 
-export const fileUploadApiService = createApi({
+ export const fileUploadApiService = createApi({
    reducerPath: "fileUploadApiService",
    baseQuery: fetchBaseQuery({
      baseUrl,
@@ -68,24 +68,79 @@ export const fileUploadApiService = createApi({
      },
    }),
    endpoints: (builder) => ({
+     // Custom mutation using XMLHttpRequest so we can report real upload progress
      uploadImage: builder.mutation({
-       query: (file) => {
-         const formData = new FormData();
-         formData.append("image", file); // Ensure key matches API expectation ("image")
+       queryFn: async (
+         arg,
+       ) => {
+         try {
+           // Accept either a File or an object { file, onProgress }
+           const file = arg?.file || arg;
+           const onProgress = typeof arg === 'object' ? arg.onProgress : undefined;
  
-         console.log('Debug - File being uploaded:', {
-           name: file.name,
-           size: file.size,
-           type: file.type
-         });
-         console.log('Debug - Upload URL:', `${baseUrl}/upload/image`);
+           const formData = new FormData();
+           formData.append("image", file);
  
-         return {
-           url: "/upload/image",
-           method: "POST",
-           body: formData,
-           // No Content-Type header! Let browser handle it.
-         };
+           console.log('Debug - File being uploaded:', {
+             name: file?.name,
+             size: file?.size,
+             type: file?.type
+           });
+           console.log('Debug - Upload URL:', `${baseUrl}/upload/image`);
+ 
+           // Ensure we have a fresh token (mirrors baseQuery behaviour)
+           let token = localStorage.getItem("admin_token");
+           const tokenExpiry = localStorage.getItem("admin_token_expires_at");
+           if (token && isTokenExpired(tokenExpiry)) {
+             try {
+               token = await refreshToken();
+             } catch (error) {
+               window.location.href = "/admin/auth/sign-in";
+               return { error };
+             }
+           }
+ 
+           const xhr = new XMLHttpRequest();
+ 
+           const result = await new Promise((resolve) => {
+             xhr.open('POST', `${baseUrl}/upload/image`);
+             if (token) {
+               xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+             }
+ 
+             xhr.upload.onprogress = (event) => {
+               if (event.lengthComputable && typeof onProgress === 'function') {
+                 const percent = Math.round((event.loaded / event.total) * 100);
+                 onProgress(percent);
+               }
+             };
+ 
+             xhr.onreadystatechange = () => {
+               if (xhr.readyState === 4) {
+                 try {
+                   const json = JSON.parse(xhr.responseText || '{}');
+                   if (xhr.status >= 200 && xhr.status < 300) {
+                     resolve({ data: json });
+                   } else {
+                     resolve({ error: { status: xhr.status, data: json } });
+                   }
+                 } catch (e) {
+                   resolve({ error: { status: 'PARSING_ERROR', data: xhr.responseText } });
+                 }
+               }
+             };
+ 
+             xhr.onerror = () => {
+               resolve({ error: { status: xhr.status || 0, data: xhr.responseText } });
+             };
+ 
+             xhr.send(formData);
+           });
+ 
+           return result;
+         } catch (error) {
+           return { error };
+         }
        },
      }),
    }),
