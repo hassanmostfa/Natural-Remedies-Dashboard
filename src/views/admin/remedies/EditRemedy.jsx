@@ -1,34 +1,39 @@
 import {
-   Box,
-   Button,
-   Flex,
-   FormControl,
-   FormLabel,
-   Input,
-   Textarea,
-   Select,
-   VStack,
-   Text,
-   useColorModeValue,
-   useToast,
-   HStack,
-   IconButton,
-   Avatar,
-   Divider,
-   Heading,
-   Icon,
-   Image,
-   Stepper,
-   Step,
-   StepIcon,
-   StepIndicator,
-   StepNumber,
-   StepStatus,
-   StepTitle,
-   StepDescription,
-   StepSeparator,
-   Spinner,
- } from '@chakra-ui/react';
+  Box,
+  Button,
+  Flex,
+  FormControl,
+  FormLabel,
+  Input,
+  Textarea,
+  Select,
+  VStack,
+  Text,
+  useColorModeValue,
+  useToast,
+  HStack,
+  IconButton,
+  Avatar,
+  Divider,
+  Heading,
+  Icon,
+  Image,
+  Stepper,
+  Step,
+  StepIcon,
+  StepIndicator,
+  StepNumber,
+  StepStatus,
+  StepTitle,
+  StepDescription,
+  StepSeparator,
+  Spinner,
+  Tag,
+  TagLabel,
+  TagCloseButton,
+  Wrap,
+  WrapItem,
+} from '@chakra-ui/react';
  import * as React from 'react';
  import Card from 'components/card/Card';
  import { useNavigate, useParams } from 'react-router-dom';
@@ -89,6 +94,143 @@ const StableInput = React.memo(({ value, onChange, placeholder, size, bg, border
       spellCheck="false"
       {...inputProps}
     />
+  );
+});
+
+// Tag Input Component
+const TagInput = React.memo(({ 
+  label, 
+  placeholder, 
+  options, 
+  selectedIds, 
+  onAdd, 
+  onRemove, 
+  textColor, 
+  borderColor, 
+  cardBg,
+  displayProperty = 'name' // Allow customization of display property
+}) => {
+  const [inputValue, setInputValue] = React.useState('');
+  const [isOpen, setIsOpen] = React.useState(false);
+  const containerRef = React.useRef(null);
+  
+  const getDisplayText = (option) => {
+    return option[displayProperty] || option.name || option.title || '';
+  };
+  
+  const filteredOptions = options?.filter(option => {
+    const displayText = getDisplayText(option);
+    return displayText.toLowerCase().includes(inputValue.toLowerCase()) &&
+           !selectedIds.includes(option.id);
+  }) || [];
+
+  const selectedItems = options?.filter(option => selectedIds.includes(option.id)) || [];
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+    setIsOpen(true);
+  };
+
+  const handleSelectOption = (e, option) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onAdd(option);
+    setInputValue('');
+    // Keep dropdown open - don't set setIsOpen(false)
+  };
+
+  const handleRemoveTag = (itemId) => {
+    onRemove(itemId);
+  };
+
+  // Handle clicks outside to close dropdown
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <FormControl>
+      <FormLabel color={textColor} fontWeight="600">{label}</FormLabel>
+      <Box position="relative" ref={containerRef}>
+        <Input
+          placeholder={placeholder}
+          value={inputValue}
+          onChange={handleInputChange}
+          onFocus={() => setIsOpen(true)}
+          bg={cardBg}
+          border="1px solid"
+          borderColor={borderColor}
+          borderRadius="lg"
+        />
+        
+        {/* Selected Tags */}
+        {selectedItems.length > 0 && (
+          <Wrap mt={2} spacing={2}>
+            {selectedItems.map((item) => (
+              <WrapItem key={item.id}>
+                <Tag size="md" variant="solid" colorScheme="blue">
+                  <TagLabel>{getDisplayText(item)}</TagLabel>
+                  <TagCloseButton onClick={() => handleRemoveTag(item.id)} />
+                </Tag>
+              </WrapItem>
+            ))}
+          </Wrap>
+        )}
+        
+        {/* Dropdown Options */}
+        {isOpen && filteredOptions.length > 0 && (
+          <Box
+            position="absolute"
+            top="100%"
+            left={0}
+            right={0}
+            bg={cardBg}
+            border="1px solid"
+            borderColor={borderColor}
+            borderRadius="md"
+            boxShadow="lg"
+            zIndex={1000}
+            maxH="200px"
+            overflowY="auto"
+            mt={1}
+          >
+            {/* Close button */}
+            <Flex justify="space-between" align="center" p={2} borderBottom="1px solid" borderColor={borderColor}>
+              <Text fontSize="xs" color="gray.500">Select items (click outside to close)</Text>
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={() => setIsOpen(false)}
+                _hover={{ bg: "red.50" }}
+              >
+                ✕
+              </Button>
+            </Flex>
+            
+            {filteredOptions.map((option) => (
+              <Box
+                key={option.id}
+                p={3}
+                cursor="pointer"
+                _hover={{ bg: "blue.50" }}
+                onMouseDown={(e) => handleSelectOption(e, option)}
+              >
+                <Text fontSize="sm">{getDisplayText(option)}</Text>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
+    </FormControl>
   );
 });
 // Top-level memoized list item to keep component identity stable across renders
@@ -339,10 +481,25 @@ const ListSection = React.memo(({
    // Fetch the remedy data by ID using RTK Query
    const { data: remedyData, isLoading: isRemedyLoading, isError: isRemedyError , refetch } = useGetRemedyQuery(id);
    
-   // Fetch options from API
-   const { data: diseasesData } = useGetDiseasesQuery();
-   const { data: remedyTypesData } = useGetRemedyTypesQuery();
-   const { data: bodySystemsData } = useGetBodySystemsQuery();
+     // Fetch options from API - Try to get all items, fallback to smaller number if needed
+  const { data: diseasesData, error: diseasesError, isLoading: diseasesLoading } = useGetDiseasesQuery({ per_page: 500 });
+  const { data: remedyTypesData, error: remedyTypesError, isLoading: remedyTypesLoading } = useGetRemedyTypesQuery({ per_page: 500 });
+  const { data: bodySystemsData, error: bodySystemsError, isLoading: bodySystemsLoading } = useGetBodySystemsQuery({ per_page: 500 });
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('EditRemedy API Data Debug:', {
+      diseasesData: diseasesData,
+      remedyTypesData: remedyTypesData,
+      bodySystemsData: bodySystemsData,
+      diseasesCount: diseasesData?.diseases?.length || diseasesData?.data?.length,
+      remedyTypesCount: remedyTypesData?.remedy_types?.length || remedyTypesData?.data?.length,
+      bodySystemsCount: bodySystemsData?.body_systems?.length || bodySystemsData?.data?.length,
+      diseasesError,
+      remedyTypesError,
+      bodySystemsError
+    });
+  }, [diseasesData, remedyTypesData, bodySystemsData, diseasesError, remedyTypesError, bodySystemsError]);
  
    // Color mode values
    const textColor = useColorModeValue('secondaryGray.900', 'white');
@@ -358,21 +515,22 @@ const ListSection = React.memo(({
      cardBg
    }), [textColor, borderColor, inputBg, cardBg]);
  
-   const [formData, setFormData] = React.useState({
-     title: '',
-     disease_id: '',
-     remedy_type_id: '',
-     body_system_id: '',
-     main_image_url: '',
-     description: '',
-     visible_to_plan: 'all',
-     status: 'active',
-     product_link: '',
-     ingredients: [{ id: 1, image_url: '', name: '' }],
-     instructions: [{ id: 1, image_url: '', name: '' }],
-     benefits: [{ id: 1, image_url: '', name: '' }],
-     precautions: [{ id: 1, image_url: '', name: '' }],
-   });
+     const [formData, setFormData] = React.useState({
+    title: '',
+    disease: '',
+    disease_id: [],
+    remedy_type_id: [],
+    body_system_id: [],
+    main_image_url: '',
+    description: '',
+    visible_to_plan: 'rookie',
+    status: 'active',
+    product_link: '',
+    ingredients: [{ id: 1, image_url: '', name: '' }],
+    instructions: [{ id: 1, image_url: '', name: '' }],
+    benefits: [{ id: 1, image_url: '', name: '' }],
+    precautions: [{ id: 1, image_url: '', name: '' }],
+  });
 
    const [activeStep, setActiveStep] = React.useState(0);
    const [completedSteps, setCompletedSteps] = React.useState([]);
@@ -405,40 +563,53 @@ const ListSection = React.memo(({
    React.useEffect(() =>{
       refetch();
    }, [refetch])
-   // Populate form with existing data when loaded
-   React.useEffect(() => {
-     if (remedyData?.data && diseasesData?.data && remedyTypesData?.data && bodySystemsData?.data) {
+     // Populate form with existing data when loaded
+  React.useEffect(() => {
+    if (remedyData?.data && 
+        (diseasesData?.diseases || diseasesData?.data) && 
+        (remedyTypesData?.remedy_types || remedyTypesData?.data) && 
+        (bodySystemsData?.body_systems || bodySystemsData?.data)) {
        const remedy = remedyData.data;
        
-       // Find the disease ID by matching the disease name
-       const diseaseId = diseasesData.data.find(d => d.name === remedy.disease_relation?.name)?.id || '';
-       
-       // Find the remedy type ID by matching the remedy type name
-       const remedyTypeId = remedyTypesData.data.find(t => t.name === remedy.remedy_type?.name)?.id || '';
-       
-       // Find the body system ID by matching the body system title
-       const bodySystemId = bodySystemsData.data.find(s => s.title === remedy.body_system?.title)?.id || '';
+             // Get the appropriate data arrays
+      const diseases = diseasesData?.diseases || diseasesData?.data || [];
+      const remedyTypes = remedyTypesData?.remedy_types || remedyTypesData?.data || [];
+      const bodySystems = bodySystemsData?.body_systems || bodySystemsData?.data || [];
+
+      // Extract IDs from the remedy data - handle the actual API response structure
+      const diseaseIds = remedy.disease_ids || remedy.disease_id || [];
+      const remedyTypeIds = remedy.remedy_type_ids || remedy.remedy_type_id || [];
+      const bodySystemIds = remedy.body_system_ids || remedy.body_system_id || [];
+
+      // Debug: Log the extracted IDs
+      console.log('Extracted IDs from remedy data:', {
+        diseaseIds,
+        remedyTypeIds,
+        bodySystemIds,
+        remedy: remedy
+      });
        
        // Add IDs to existing items
        const addIdsToItems = (items) => {
          return items?.map((item, index) => ({ ...item, id: index + 1 })) || [{ id: 1, image_url: '', name: '' }];
        };
        
-       const newFormData = {
-         title: remedy.title || '',
-         disease_id: diseaseId,
-         remedy_type_id: remedyTypeId,
-         body_system_id: bodySystemId,
-         main_image_url: remedy.main_image_url || '',
-         description: remedy.description || '',
-         visible_to_plan: remedy.visible_to_plan || 'all',
-         status: remedy.status || 'active',
-         product_link: remedy.product_link || '',
-         ingredients: addIdsToItems(remedy.ingredients),
-         instructions: addIdsToItems(remedy.instructions),
-         benefits: addIdsToItems(remedy.benefits),
-         precautions: addIdsToItems(remedy.precautions),
-       };
+             const newFormData = {
+        title: remedy.title || '',
+        disease: remedy.disease || (remedy.diseases && remedy.diseases.length > 0 ? remedy.diseases[0].name : ''),
+        disease_id: diseaseIds,
+        remedy_type_id: remedyTypeIds,
+        body_system_id: bodySystemIds,
+        main_image_url: remedy.main_image_url || '',
+        description: remedy.description || '',
+        visible_to_plan: remedy.visible_to_plan || 'rookie',
+        status: remedy.status || 'active',
+        product_link: remedy.product_link || '',
+        ingredients: addIdsToItems(remedy.ingredients),
+        instructions: addIdsToItems(remedy.instructions),
+        benefits: addIdsToItems(remedy.benefits),
+        precautions: addIdsToItems(remedy.precautions),
+      };
        
        setFormData(newFormData);
        
@@ -473,12 +644,33 @@ const ListSection = React.memo(({
      { value: 'inactive', label: 'Inactive' },
    ];
  
-   const handleInputChange = (field, value) => {
-     setFormData(prev => ({
-       ...prev,
-       [field]: value
-     }));
-   };
+     const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Helper functions for tag inputs
+  const addTag = React.useCallback((field, item) => {
+    setFormData(prev => {
+      const currentIds = prev[field] || [];
+      if (!currentIds.includes(item.id)) {
+        return {
+          ...prev,
+          [field]: [...currentIds, item.id]
+        };
+      }
+      return prev;
+    });
+  }, []);
+
+  const removeTag = React.useCallback((field, itemId) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field].filter(id => id !== itemId)
+    }));
+  }, []);
  
      const handleListChange = (listName, index, field, value) => {
     setFormData(prev => {
@@ -696,10 +888,10 @@ const ListSection = React.memo(({
      };
    }, [imagePreviews]);
  
-   const handleSubmit = async (e) => {
-     e.preventDefault();
-     return; // Temporarily disable form submission
-   };
+     const handleSubmit = async (e) => {
+    e.preventDefault();
+    await handleUpdateRemedy();
+  };
  
    const handleUpdateRemedy = async () => {
      try {
@@ -726,38 +918,49 @@ const ListSection = React.memo(({
          return;
        }
  
-       if (!formData.disease_id) {
-         toast({
-           title: 'Error',
-           description: 'Disease is required',
-           status: 'error',
-           duration: 3000,
-           isClosable: true,
-         });
-         return;
-       }
- 
-       if (!formData.remedy_type_id) {
-         toast({
-           title: 'Error',
-           description: 'Remedy type is required',
-           status: 'error',
-           duration: 3000,
-           isClosable: true,
-         });
-         return;
-       }
- 
-       if (!formData.body_system_id) {
-         toast({
-           title: 'Error',
-           description: 'Body system is required',
-           status: 'error',
-           duration: 3000,
-           isClosable: true,
-         });
-         return;
-       }
+             if (!formData.disease.trim()) {
+        toast({
+          title: 'Error',
+          description: 'Disease name is required',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (formData.disease_id.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'At least one disease must be selected',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (formData.remedy_type_id.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'At least one remedy type must be selected',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (formData.body_system_id.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'At least one body system must be selected',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
  
        // Check if any image is still uploading
        const isUploading = uploading.main_image || 
@@ -777,23 +980,24 @@ const ListSection = React.memo(({
          return;
        }
  
-       // Prepare the data for API submission
-       const submissionData = {
-         id,
-         title: formData.title,
-         disease_id: formData.disease_id,
-         remedy_type_id: formData.remedy_type_id,
-         body_system_id: formData.body_system_id,
-         main_image_url: formData.main_image_url,
-         description: formData.description,
-         visible_to_plan: formData.visible_to_plan,
-         status: formData.status,
-         product_link: formData.product_link,
-         ingredients: formData.ingredients.map(({ id, ...item }) => item),
-         instructions: formData.instructions.map(({ id, ...item }) => item),
-         benefits: formData.benefits.map(({ id, ...item }) => item),
-         precautions: formData.precautions.map(({ id, ...item }) => item),
-       };
+             // Prepare the data for API submission
+      const submissionData = {
+        id,
+        title: formData.title,
+        main_image_url: formData.main_image_url,
+        disease: formData.disease,
+        disease_id: formData.disease_id,
+        remedy_type_id: formData.remedy_type_id,
+        body_system_id: formData.body_system_id,
+        description: formData.description,
+        visible_to_plan: formData.visible_to_plan,
+        status: formData.status,
+        product_link: formData.product_link,
+        ingredients: formData.ingredients.map(({ id, ...item }) => item),
+        instructions: formData.instructions.map(({ id, ...item }) => item),
+        benefits: formData.benefits.map(({ id, ...item }) => item),
+        precautions: formData.precautions.map(({ id, ...item }) => item),
+      };
  
        console.log('Submitting update:', submissionData);
        // Call the API
@@ -845,30 +1049,31 @@ const ListSection = React.memo(({
      return completedSteps.includes(stepIndex);
    };
 
-   const canProceedToNext = () => {
-     switch (activeStep) {
-       case 0:
-         return formData.title.trim() && 
-                formData.disease_id && 
-                formData.remedy_type_id && 
-                formData.body_system_id && 
-                formData.description.trim();
-       case 1:
-         return formData.ingredients.length > 0 && 
-                formData.ingredients.every(item => item.name.trim());
-       case 2:
-         return formData.instructions.length > 0 && 
-                formData.instructions.every(item => item.name.trim());
-       case 3:
-         return formData.benefits.length > 0 && 
-                formData.benefits.every(item => item.name.trim());
-       case 4:
-         return formData.precautions.length > 0 && 
-                formData.precautions.every(item => item.name.trim());
-       default:
-         return true;
-          }
-   };
+     const canProceedToNext = () => {
+    switch (activeStep) {
+      case 0:
+        return formData.title.trim() && 
+               formData.disease.trim() &&
+               formData.disease_id.length > 0 && 
+               formData.remedy_type_id.length > 0 && 
+               formData.body_system_id.length > 0 && 
+               formData.description.trim();
+      case 1:
+        return formData.ingredients.length > 0 && 
+               formData.ingredients.every(item => item.name.trim());
+      case 2:
+        return formData.instructions.length > 0 && 
+               formData.instructions.every(item => item.name.trim());
+      case 3:
+        return formData.benefits.length > 0 && 
+               formData.benefits.every(item => item.name.trim());
+      case 4:
+        return formData.precautions.length > 0 && 
+               formData.precautions.every(item => item.name.trim());
+      default:
+        return true;
+    }
+  };
 
    const steps = [
      { title: 'Basic Information', description: 'Remedy details' },
@@ -995,75 +1200,85 @@ const ListSection = React.memo(({
                      </Box>
                </FormControl>
 
-               <FormControl isRequired>
-                 <FormLabel color={memoizedColors.textColor} fontWeight="600">Title</FormLabel>
-                 <Input
-                   placeholder="Enter remedy title"
-                   value={formData.title}
-                   onChange={(e) => handleInputChange('title', e.target.value)}
-                   bg={memoizedColors.cardBg}
-                   border="1px solid"
-                   borderColor={memoizedColors.borderColor}
-                   borderRadius="lg"
-                 />
-               </FormControl>
- 
-                                      <HStack spacing="4">
-                                           <FormControl isRequired>
-                   <FormLabel color={memoizedColors.textColor} fontWeight="600">Disease</FormLabel>
-                        <Select
-                          value={formData.disease_id}
-                          onChange={(e) => handleInputChange('disease_id', e.target.value)}
-                     bg={memoizedColors.cardBg}
-                          border="1px solid"
-                     borderColor={memoizedColors.borderColor}
-                          borderRadius="lg"
-                          placeholder="Select disease"
-                        >
-                          {diseasesData?.data?.map((disease) => (
-                            <option key={disease.id} value={disease.id}>
-                              {disease.name}
-                            </option>
-                          ))}
-                        </Select>
-                      </FormControl>
-                     <FormControl isRequired>
-                   <FormLabel color={memoizedColors.textColor} fontWeight="600">Remedy Type</FormLabel>
-                       <Select
-                         value={formData.remedy_type_id}
-                         onChange={(e) => handleInputChange('remedy_type_id', e.target.value)}
-                     bg={memoizedColors.cardBg}
-                         border="1px solid"
-                     borderColor={memoizedColors.borderColor}
-                         borderRadius="lg"
-                         placeholder="Select remedy type"
-                       >
-                         {remedyTypesData?.data?.map((type) => (
-                           <option key={type.id} value={type.id}>
-                             {type.name}
-                           </option>
-                         ))}
-                       </Select>
-                     </FormControl>
-                     <FormControl isRequired>
-                   <FormLabel color={memoizedColors.textColor} fontWeight="600">Body System</FormLabel>
-                       <Select
-                         value={formData.body_system_id}
-                         onChange={(e) => handleInputChange('body_system_id', e.target.value)}
-                     bg={memoizedColors.cardBg}
-                         border="1px solid"
-                     borderColor={memoizedColors.borderColor}
-                         borderRadius="lg"
-                         placeholder="Select body system"
-                       >
-                         {bodySystemsData?.data?.map((system) => (
-                           <option key={system.id} value={system.id}>
-                             {system.title}
-                           </option>
-                         ))}
-                       </Select>
-                     </FormControl>
-                   </HStack>
+                             <FormControl isRequired>
+                <FormLabel color={memoizedColors.textColor} fontWeight="600">Title</FormLabel>
+                <Input
+                  placeholder="Enter remedy title"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  bg={memoizedColors.cardBg}
+                  border="1px solid"
+                  borderColor={memoizedColors.borderColor}
+                  borderRadius="lg"
+                />
+              </FormControl>
+
+              {/* <FormControl isRequired>
+                <FormLabel color={memoizedColors.textColor} fontWeight="600">Disease Name</FormLabel>
+                <Input
+                  placeholder="Enter disease name"
+                  value={formData.disease}
+                  onChange={(e) => handleInputChange('disease', e.target.value)}
+                  bg={memoizedColors.cardBg}
+                  border="1px solid"
+                  borderColor={memoizedColors.borderColor}
+                  borderRadius="lg"
+                />
+              </FormControl> */}
+
+              <HStack spacing="4" align="flex-start">
+                <TagInput
+                  label="Diseases"
+                  placeholder={diseasesLoading ? "Loading diseases..." : "Search and select diseases..."}
+                  options={diseasesData?.diseases || diseasesData?.data || []}
+                  selectedIds={formData.disease_id}
+                  onAdd={(item) => addTag('disease_id', item)}
+                  onRemove={(itemId) => removeTag('disease_id', itemId)}
+                  textColor={memoizedColors.textColor}
+                  borderColor={memoizedColors.borderColor}
+                  cardBg={memoizedColors.cardBg}
+                />
+                
+                <TagInput
+                  label="Remedy Types"
+                  placeholder={remedyTypesLoading ? "Loading remedy types..." : "Search and select remedy types..."}
+                  options={remedyTypesData?.remedy_types || remedyTypesData?.data || []}
+                  selectedIds={formData.remedy_type_id}
+                  onAdd={(item) => addTag('remedy_type_id', item)}
+                  onRemove={(itemId) => removeTag('remedy_type_id', itemId)}
+                  textColor={memoizedColors.textColor}
+                  borderColor={memoizedColors.borderColor}
+                  cardBg={memoizedColors.cardBg}
+                />
+                
+                <TagInput
+                  label="Body Systems"
+                  placeholder={bodySystemsLoading ? "Loading body systems..." : "Search and select body systems..."}
+                  options={bodySystemsData?.body_systems || bodySystemsData?.data || []}
+                  selectedIds={formData.body_system_id}
+                  onAdd={(item) => addTag('body_system_id', item)}
+                  onRemove={(itemId) => removeTag('body_system_id', itemId)}
+                  textColor={memoizedColors.textColor}
+                  borderColor={memoizedColors.borderColor}
+                  cardBg={memoizedColors.cardBg}
+                  displayProperty="title"
+                />
+              </HStack>
+
+              {/* Debug Info for Development */}
+              {(diseasesError || remedyTypesError || bodySystemsError) && (
+                <Box p="4" bg="red.50" borderRadius="md" border="1px solid red.200">
+                  <Text color="red.500" fontSize="sm" fontWeight="bold" mb="2">API Loading Issues:</Text>
+                  {diseasesError && <Text color="red.500" fontSize="xs">Diseases: {JSON.stringify(diseasesError)}</Text>}
+                  {remedyTypesError && <Text color="red.500" fontSize="xs">Remedy Types: {JSON.stringify(remedyTypesError)}</Text>}
+                  {bodySystemsError && <Text color="red.500" fontSize="xs">Body Systems: {JSON.stringify(bodySystemsError)}</Text>}
+                  <Text color="red.500" fontSize="xs" mt="2">
+                    Counts: Diseases: {diseasesData?.diseases?.length || diseasesData?.data?.length || 0}, 
+                    Types: {remedyTypesData?.remedy_types?.length || remedyTypesData?.data?.length || 0}, 
+                    Systems: {bodySystemsData?.body_systems?.length || bodySystemsData?.data?.length || 0}
+                  </Text>
+                </Box>
+              )}
  
                    <FormControl isRequired>
                  <FormLabel color={memoizedColors.textColor} fontWeight="600">Description</FormLabel>

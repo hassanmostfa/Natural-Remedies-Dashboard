@@ -528,10 +528,85 @@ const AddLesson = () => {
         description: formData.description,
         image: formData.image,
         status: formData.status,
-        content_blocks: formData.content_blocks.map(block => ({
-          ...block,
-          order: block.order
-        }))
+        content_blocks: formData.content_blocks.map((block, index) => {
+          // Handle different content types
+          switch (block.type) {
+            case 'text':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  html_content: block.content?.html_content || ''
+                }
+              };
+            
+            case 'video':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  video_url: block.video_url || block.content?.video_url || '',
+                  title: block.title || block.content?.title || ''
+                }
+              };
+            
+            case 'remedy':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  remedy_id: block.remedy_id || block.content?.remedy_id || ''
+                }
+              };
+            
+            case 'tip':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  image_url: block.image_url || block.content?.image_url || '',
+                  html_content: block.content?.html_content || '',
+                  alt_text: block.content?.alt_text || ''
+                }
+              };
+            
+            case 'image':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  image_url: block.image_url || block.content?.image_url || '',
+                  link_url: block.link_url || block.content?.link_url || '',
+                  alt_text: block.content?.alt_text || ''
+                }
+              };
+            
+            case 'pdf':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  pdf_url: block.pdf_url || block.content?.pdf_url || ''
+                }
+              };
+            
+            case 'content':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  items: block.content?.items || []
+                }
+              };
+            
+            default:
+              return {
+                type: block.type,
+                order: index,
+                content: block.content || {}
+              };
+          }
+        })
       };
 
       await createLesson(lessonData).unwrap();

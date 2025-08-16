@@ -100,13 +100,88 @@ const EditLesson = () => {
   // Load lesson data when component mounts
   React.useEffect(() => {
     if (lessonData && !isDataLoaded) {
+      // Transform content blocks to match form structure
+      const transformedContentBlocks = lessonData.content_blocks?.map(block => {
+        const transformedBlock = {
+          type: block.type,
+          title: block.title || '',
+          description: block.description || '',
+          order: block.order || 0,
+          is_active: block.is_active !== false
+        };
+
+        // Handle different content types and extract data from content object
+        switch (block.type) {
+          case 'text':
+            transformedBlock.content = {
+              html_content: block.content?.html_content || ''
+            };
+            break;
+          
+          case 'video':
+            transformedBlock.video_url = block.content?.video_url || '';
+            transformedBlock.title = block.content?.title || '';
+            transformedBlock.content = {
+              video_url: block.content?.video_url || '',
+              title: block.content?.title || ''
+            };
+            break;
+          
+          case 'remedy':
+            transformedBlock.remedy_id = block.content?.remedy_id || '';
+            transformedBlock.content = {
+              remedy_id: block.content?.remedy_id || ''
+            };
+            break;
+          
+          case 'tip':
+            transformedBlock.image_url = block.content?.image_url || '';
+            transformedBlock.content = {
+              image_url: block.content?.image_url || '',
+              html_content: block.content?.html_content || '',
+              alt_text: block.content?.alt_text || ''
+            };
+            break;
+          
+          case 'image':
+            transformedBlock.image_url = block.content?.image_url || '';
+            transformedBlock.link_url = block.content?.link_url || '';
+            transformedBlock.content = {
+              image_url: block.content?.image_url || '',
+              link_url: block.content?.link_url || '',
+              alt_text: block.content?.alt_text || ''
+            };
+            break;
+          
+          case 'pdf':
+            transformedBlock.pdf_url = block.content?.pdf_url || '';
+            transformedBlock.content = {
+              pdf_url: block.content?.pdf_url || ''
+            };
+            break;
+          
+          case 'content':
+            transformedBlock.content = {
+              items: block.content?.items || []
+            };
+            break;
+          
+          default:
+            transformedBlock.content = block.content || {};
+        }
+
+        return transformedBlock;
+      }) || [];
+
+      console.log('Transformed content blocks:', transformedContentBlocks);
+
       setFormData({
         course_id: lessonData.course_id || actualCourseId,
         title: lessonData.title || '',
         description: lessonData.description || '',
         image: lessonData.image || '',
         status: lessonData.status || 'active',
-        content_blocks: lessonData.content_blocks || []
+        content_blocks: transformedContentBlocks
       });
 
       // Set image preview if exists
@@ -118,9 +193,16 @@ const EditLesson = () => {
       if (lessonData.content_blocks) {
         const previews = {};
         lessonData.content_blocks.forEach((block, blockIndex) => {
-          // Handle block-level images
-          if (block.image_url) {
-            previews[`${blockIndex}-image_url`] = block.image_url;
+          // Handle block-level images from content object
+          if (block.content?.image_url) {
+            previews[`${blockIndex}-image_url`] = block.content.image_url;
+            console.log(`Setting image preview for block ${blockIndex}:`, block.content.image_url);
+          }
+          
+          // Handle PDF files from content object
+          if (block.content?.pdf_url) {
+            previews[`${blockIndex}-pdf_url`] = block.content.pdf_url;
+            console.log(`Setting PDF preview for block ${blockIndex}:`, block.content.pdf_url);
           }
           
           // Handle content items (ingredients, steps, etc.)
@@ -135,6 +217,7 @@ const EditLesson = () => {
             });
           }
         });
+        console.log('Final content image previews:', previews);
         setContentImagePreviews(previews);
       }
 
@@ -443,31 +526,31 @@ const EditLesson = () => {
             return false;
           }
           
-          if (block.type === 'video' && (!block.video_url || !block.video_url.trim())) {
-            if (showToast) {
-              toast({
-                title: 'Error',
-                description: `Video content block #${i + 1} must have a video URL`,
-                status: 'error',
-                duration: 3000,
-                isClosable: true,
-              });
-            }
-            return false;
-          }
+                     if (block.type === 'video' && (!block.video_url || String(block.video_url).trim() === '')) {
+             if (showToast) {
+               toast({
+                 title: 'Error',
+                 description: `Video content block #${i + 1} must have a video URL`,
+                 status: 'error',
+                 duration: 3000,
+                 isClosable: true,
+               });
+             }
+             return false;
+           }
           
-          if (block.type === 'remedy' && (!block.remedy_id || !block.remedy_id.trim())) {
-            if (showToast) {
-              toast({
-                title: 'Error',
-                description: `Remedy content block #${i + 1} must have a remedy selected`,
-                status: 'error',
-                duration: 3000,
-                isClosable: true,
-              });
-            }
-            return false;
-          }
+                     if (block.type === 'remedy' && (!block.remedy_id || String(block.remedy_id).trim() === '')) {
+             if (showToast) {
+               toast({
+                 title: 'Error',
+                 description: `Remedy content block #${i + 1} must have a remedy selected`,
+                 status: 'error',
+                 duration: 3000,
+                 isClosable: true,
+               });
+             }
+             return false;
+           }
           
           if (block.type === 'tip' && (!block.content?.html_content || block.content.html_content.trim() === '')) {
             if (showToast) {
@@ -482,31 +565,31 @@ const EditLesson = () => {
             return false;
           }
           
-          if (block.type === 'image' && (!block.image_url || !block.image_url.trim())) {
-            if (showToast) {
-              toast({
-                title: 'Error',
-                description: `Image content block #${i + 1} must have an image`,
-                status: 'error',
-                duration: 3000,
-                isClosable: true,
-              });
-            }
-            return false;
-          }
-          
-          if (block.type === 'pdf' && (!block.pdf_url || !block.pdf_url.trim())) {
-            if (showToast) {
-              toast({
-                title: 'Error',
-                description: `PDF content block #${i + 1} must have a PDF file`,
-                status: 'error',
-                duration: 3000,
-                isClosable: true,
-              });
-            }
-            return false;
-          }
+                     if (block.type === 'image' && (!block.image_url || String(block.image_url).trim() === '')) {
+             if (showToast) {
+               toast({
+                 title: 'Error',
+                 description: `Image content block #${i + 1} must have an image`,
+                 status: 'error',
+                 duration: 3000,
+                 isClosable: true,
+               });
+             }
+             return false;
+           }
+           
+           if (block.type === 'pdf' && (!block.pdf_url || String(block.pdf_url).trim() === '')) {
+             if (showToast) {
+               toast({
+                 title: 'Error',
+                 description: `PDF content block #${i + 1} must have a PDF file`,
+                 status: 'error',
+                 duration: 3000,
+                 isClosable: true,
+               });
+             }
+             return false;
+           }
           
           if (block.type === 'content') {
             const items = block.content?.items || [];
@@ -580,10 +663,85 @@ const EditLesson = () => {
         description: formData.description,
         image: formData.image,
         status: formData.status,
-        content_blocks: formData.content_blocks.map(block => ({
-          ...block,
-          order: block.order
-        }))
+        content_blocks: formData.content_blocks.map((block, index) => {
+          // Handle different content types
+          switch (block.type) {
+            case 'text':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  html_content: block.content?.html_content || ''
+                }
+              };
+            
+            case 'video':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  video_url: block.video_url || block.content?.video_url || '',
+                  title: block.title || block.content?.title || ''
+                }
+              };
+            
+            case 'remedy':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  remedy_id: block.remedy_id || block.content?.remedy_id || ''
+                }
+              };
+            
+            case 'tip':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  image_url: block.image_url || block.content?.image_url || '',
+                  html_content: block.content?.html_content || '',
+                  alt_text: block.content?.alt_text || ''
+                }
+              };
+            
+            case 'image':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  image_url: block.image_url || block.content?.image_url || '',
+                  link_url: block.link_url || block.content?.link_url || '',
+                  alt_text: block.content?.alt_text || ''
+                }
+              };
+            
+            case 'pdf':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  pdf_url: block.pdf_url || block.content?.pdf_url || ''
+                }
+              };
+            
+            case 'content':
+              return {
+                type: block.type,
+                order: index,
+                content: {
+                  items: block.content?.items || []
+                }
+              };
+            
+            default:
+              return {
+                type: block.type,
+                order: index,
+                content: block.content || {}
+              };
+          }
+        })
       };
 
       await updateLesson({ id: actualLessonId, lesson }).unwrap();

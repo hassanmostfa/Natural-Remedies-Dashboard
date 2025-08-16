@@ -45,6 +45,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useGetArticleQuery, useUpdateArticleMutation } from '../../../api/articlesSlice';
 import { useUploadImageMutation } from '../../../api/fileUploadSlice';
 import { FiPlus, FiX, FiUpload, FiEdit3 } from 'react-icons/fi';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const steps = [
   { title: 'Basic Info', description: 'Article details' },
@@ -83,22 +85,16 @@ const EditArticle = () => {
   });
 
   // API hooks
-  const { data: articleResponse, isLoading: isLoadingArticle, error: articleError } = useGetArticleQuery(id);
+  const { data: articleResponse, isLoading: isLoadingArticle, error: articleError , refetch } = useGetArticleQuery(id);
   const [updateArticle, { isLoading: isUpdating }] = useUpdateArticleMutation();
   const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
   
   // Extract article data from API response
   const article = articleResponse?.data || null;
   
-  // Debug: Log API response structure
   useEffect(() => {
-    if (articleResponse) {
-      console.log('Article API Response:', articleResponse);
-      console.log('Extracted article data:', article);
-    }
-  }, [articleResponse, article]);
-  
-
+    refetch();
+  }, [refetch]);
 
   // Color mode values
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -109,7 +105,6 @@ const EditArticle = () => {
   // Load article data when component mounts
   useEffect(() => {
     if (article) {
-      console.log('Article data loaded:', article); // Debug log
       
       // Map old plan values to new ones if needed
       const mapOldPlansToNew = (oldPlans) => {
@@ -335,12 +330,28 @@ const EditArticle = () => {
 
           <FormControl isRequired>
             <FormLabel color={textColor}>Description</FormLabel>
-            <Textarea
-              value={basicInfo.description}
-              onChange={(e) => handleBasicInfoChange('description', e.target.value)}
-              placeholder="Enter article description"
-              rows={4}
-            />
+            <Box border="1px solid" borderColor={borderColor} borderRadius="md">
+              <ReactQuill
+                value={basicInfo.description}
+                onChange={(value) => handleBasicInfoChange('description', value)}
+                placeholder="Enter article description..."
+                modules={{
+                  toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                  ],
+                }}
+                style={{
+                  height: '200px',
+                  marginBottom: '42px' // Space for toolbar
+                }}
+              />
+            </Box>
           </FormControl>
 
           <FormControl isRequired>

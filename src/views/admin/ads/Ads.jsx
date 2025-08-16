@@ -20,6 +20,7 @@ import {
   VStack,
   useToast,
   Switch,
+  Badge,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -149,6 +150,48 @@ const Ads = () => {
           {info.getValue() || 'No URL'}
         </Text>
       ),
+    }),
+    columnHelper.accessor('type', {
+      id: 'type',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Type
+        </Text>
+      ),
+      cell: (info) => {
+        const type = info.getValue();
+        const getTypeColor = (type) => {
+          switch (type) {
+            case 'home':
+              return 'blue';
+            case 'video':
+              return 'green';
+            case 'remedy':
+              return 'orange';
+            case 'course':
+              return 'purple';
+            default:
+              return 'gray';
+          }
+        };
+        return (
+          <Badge 
+            colorScheme={getTypeColor(type)}
+            px="2"
+            py="1"
+            borderRadius="full"
+            fontSize="xs"
+            textTransform="capitalize"
+          >
+            {type}
+          </Badge>
+        );
+      },
     }),
     columnHelper.accessor('status', {
       id: 'status',

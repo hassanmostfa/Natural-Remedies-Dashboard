@@ -19,6 +19,7 @@ import {
   Avatar,
   useToast,
   HStack,
+  VStack,
   Select,
 } from '@chakra-ui/react';
 import {
@@ -72,8 +73,9 @@ const Remedies = () => {
       id: remedy.id,
       title: remedy.title,
       disease: remedy.disease,
-      remedyType: remedy.remedy_type,
-      bodySystem: remedy.body_system,
+      diseases: remedy.diseases || [],
+      remedyTypes: remedy.remedy_types || [],
+      bodySystems: remedy.body_systems || [],
       image: remedy.main_image_url,
       description: remedy.description,
       status: remedy.status,
@@ -182,78 +184,9 @@ const Remedies = () => {
         </Text>
       ),
     }),
-    columnHelper.accessor('disease', {
-      id: 'disease',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Disease
-        </Text>
-      ),
-      cell: (info) => (
-        <Badge 
-          colorScheme="blue"
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-        >
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor('remedyType', {
-      id: 'remedyType',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Type
-        </Text>
-      ),
-      cell: (info) => (
-        <Badge 
-          colorScheme="green"
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-        >
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor('bodySystem', {
-      id: 'bodySystem',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Body System
-        </Text>
-      ),
-      cell: (info) => (
-        <Badge 
-          colorScheme="purple"
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-        >
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
+
+
+
     columnHelper.accessor('visibleToPlan', {
       id: 'visibleToPlan',
       header: () => (
@@ -266,18 +199,35 @@ const Remedies = () => {
           Visibility
         </Text>
       ),
-      cell: (info) => (
-        <Badge 
-          colorScheme={info.getValue() === 'all' ? 'green' : 'orange'}
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-          textTransform="capitalize"
-        >
-          {info.getValue()}
-        </Badge>
-      ),
+             cell: (info) => {
+         const getPlanColor = (plan) => {
+           switch (plan) {
+             case 'all':
+               return 'blue';
+             case 'rookie':
+               return 'green';
+             case 'skilled':
+               return 'orange';
+             case 'master':
+               return 'purple';
+             default:
+               return 'gray';
+           }
+         };
+         
+         return (
+           <Badge 
+             colorScheme={getPlanColor(info.getValue())}
+             px="2"
+             py="1"
+             borderRadius="full"
+             fontSize="xs"
+             textTransform="capitalize"
+           >
+             {info.getValue()}
+           </Badge>
+         );
+       },
     }),
     columnHelper.accessor('status', {
       id: 'status',

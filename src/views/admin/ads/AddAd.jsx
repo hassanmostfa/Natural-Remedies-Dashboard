@@ -21,6 +21,9 @@ import { useNavigate } from 'react-router-dom';
 import Card from 'components/card/Card';
 import { useCreateAdMutation } from 'api/adsSlice';
 import { useUploadImageMutation } from 'api/fileUploadSlice';
+import { useGetVideosQuery } from 'api/videosSlice';
+import { useGetRemediesQuery } from 'api/remediesSlice';
+import { useGetCoursesQuery } from 'api/coursesSlice';
 
 const AddAd = () => {
   const navigate = useNavigate();
@@ -32,12 +35,19 @@ const AddAd = () => {
   // API hooks
   const [createAd, { isLoading: isCreating }] = useCreateAdMutation();
   const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
+  
+  // Data fetching hooks
+  const { data: videosData, isLoading: isLoadingVideos } = useGetVideosQuery({ per_page: 1000 });
+  const { data: remediesData, isLoading: isLoadingRemedies } = useGetRemediesQuery({ per_page: 1000 });
+  const { data: coursesData, isLoading: isLoadingCourses } = useGetCoursesQuery({ per_page: 1000 });
 
   const [formData, setFormData] = useState({
     title: '',
     url: '',
     status: 'active',
     image: '',
+    type: 'home',
+    element_id: null,
   });
 
   const [imagePreview, setImagePreview] = useState(null);
@@ -50,11 +60,20 @@ const AddAd = () => {
     { value: 'inactive', label: 'Inactive' },
   ];
 
+  const typeOptions = [
+    { value: 'home', label: 'Home' },
+    { value: 'video', label: 'Video' },
+    { value: 'remedy', label: 'Remedy' },
+    { value: 'course', label: 'Course' },
+  ];
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
+      // Reset element_id when type changes to home
+      ...(name === 'type' && value === 'home' && { element_id: null }),
     });
   };
 
@@ -192,6 +211,16 @@ const AddAd = () => {
       });
       return false;
     }
+    if (formData.type !== 'home' && !formData.element_id) {
+      toast({
+        title: 'Error',
+        description: `Please select a ${formData.type}`,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return false;
+    }
     return true;
   };
 
@@ -208,6 +237,8 @@ const AddAd = () => {
         title: formData.title,
         image: formData.image,
         url: formData.url || null,
+        type: formData.type,
+        ...(formData.type !== 'home' && formData.element_id && { element_id: parseInt(formData.element_id) }),
       };
 
       await createAd(adData).unwrap();
@@ -396,6 +427,86 @@ const AddAd = () => {
                   borderColor={inputBorder}
                 />
               </FormControl>
+
+              {/* Type Field */}
+              <FormControl isRequired>
+                <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                  Ad Type
+                </FormLabel>
+                <Select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleInputChange}
+                  bg={inputBg}
+                  color={textColor}
+                  borderColor={inputBorder}
+                  icon={<ChevronDownIcon />}
+                >
+                  {typeOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+
+                             {/* Element Selection - Only show for non-home types */}
+               {formData.type !== 'home' && (
+                 <FormControl isRequired>
+                   <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                     Select {formData.type.charAt(0).toUpperCase() + formData.type.slice(1)}
+                   </FormLabel>
+                   <Select
+                     name="element_id"
+                     value={formData.element_id || ''}
+                     onChange={handleInputChange}
+                     bg={inputBg}
+                     color={textColor}
+                     borderColor={inputBorder}
+                     icon={<ChevronDownIcon />}
+                     isLoading={
+                       (formData.type === 'video' && isLoadingVideos) ||
+                       (formData.type === 'remedy' && isLoadingRemedies) ||
+                       (formData.type === 'course' && isLoadingCourses)
+                     }
+                   >
+                     <option value="">Select a {formData.type}</option>
+                     
+                                           {/* Video Options */}
+                      {formData.type === 'video' && videosData?.data
+                        ?.filter((video, index, self) => 
+                          index === self.findIndex(v => v.id === video.id)
+                        )
+                        ?.map(video => (
+                          <option key={video.id} value={video.id}>
+                            {video.title}
+                          </option>
+                        ))}
+                      
+                      {/* Remedy Options */}
+                      {formData.type === 'remedy' && remediesData?.data
+                        ?.filter((remedy, index, self) => 
+                          index === self.findIndex(r => r.id === remedy.id)
+                        )
+                        ?.map(remedy => (
+                          <option key={remedy.id} value={remedy.id}>
+                            {remedy.title}
+                          </option>
+                        ))}
+                      
+                      {/* Course Options */}
+                      {formData.type === 'course' && coursesData?.data
+                        ?.filter((course, index, self) => 
+                          index === self.findIndex(c => c.id === course.id)
+                        )
+                        ?.map(course => (
+                          <option key={course.id} value={course.id}>
+                            {course.title}
+                          </option>
+                        ))}
+                   </Select>
+                 </FormControl>
+               )}
 
               {/* Status Field */}
               <FormControl isRequired>

@@ -49,7 +49,6 @@ const exportToExcel = (data, filename) => {
   const exportData = data.map(user => ({
     'ID': user.id,
     'Name': user.name,
-    'Full Name': user.full_name,
     'Email': user.email,
     'Subscription Plan': user.subscription_plan,
     'Account Status': user.account_status,

@@ -39,6 +39,8 @@ import { AddIcon, CloseIcon } from '@chakra-ui/icons';
 import { FaLeaf, FaUpload } from 'react-icons/fa6';
 import { useCreateArticleMutation } from 'api/articlesSlice';
 import { useUploadImageMutation } from 'api/fileUploadSlice';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const AddArticle = () => {
   const navigate = useNavigate();
@@ -636,12 +638,28 @@ const AddArticle = () => {
               <GridItem colSpan={2}>
                 <FormControl>
                   <FormLabel color={textColor}>Description</FormLabel>
-                  <Textarea
-                    value={basicInfo.description}
-                    onChange={(e) => handleBasicInfoChange('description', e.target.value)}
-                    placeholder="Enter article description"
-                    rows={4}
-                  />
+                  <Box border="1px solid" borderColor={borderColor} borderRadius="md">
+                    <ReactQuill
+                      value={basicInfo.description}
+                      onChange={(value) => handleBasicInfoChange('description', value)}
+                      placeholder="Enter article description..."
+                      modules={{
+                        toolbar: [
+                          [{ 'header': [1, 2, 3, false] }],
+                          ['bold', 'italic', 'underline', 'strike'],
+                          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                          [{ 'color': [] }, { 'background': [] }],
+                          [{ 'align': [] }],
+                          ['link', 'image'],
+                          ['clean']
+                        ],
+                      }}
+                      style={{
+                        height: '200px',
+                        marginBottom: '42px' // Space for toolbar
+                      }}
+                    />
+                  </Box>
                 </FormControl>
               </GridItem>
             </Grid>

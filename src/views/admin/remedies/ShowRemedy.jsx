@@ -220,23 +220,44 @@ const ShowRemedy = () => {
                 <Text fontSize="lg" opacity="0.9" maxW="600px">
                   {remedy.description}
                 </Text>
-                <HStack spacing={6} pt={2}>
-                  {remedy.disease_relation && (
+                <HStack spacing={6} pt={2} wrap="wrap">
+                  {remedy.diseases && remedy.diseases.length > 0 && (
                     <HStack spacing={2}>
                       <Icon as={FaHeart} color="red.300" />
-                      <Text fontSize="sm">{remedy.disease_relation.name}</Text>
+                      <VStack spacing={1} align="start">
+                        {remedy.diseases.slice(0, 3).map((disease, index) => (
+                          <Text key={disease.id || index} fontSize="sm">{disease.name}</Text>
+                        ))}
+                        {remedy.diseases.length > 3 && (
+                          <Text fontSize="xs" color="gray.400">+{remedy.diseases.length - 3} more diseases</Text>
+                        )}
+                      </VStack>
                     </HStack>
                   )}
-                  {remedy.remedy_type && (
+                  {remedy.remedy_types && remedy.remedy_types.length > 0 && (
                     <HStack spacing={2}>
                       <Icon as={FaLeaf} color="green.300" />
-                      <Text fontSize="sm">{remedy.remedy_type.name}</Text>
+                      <VStack spacing={1} align="start">
+                        {remedy.remedy_types.slice(0, 3).map((type, index) => (
+                          <Text key={type.id || index} fontSize="sm">{type.name}</Text>
+                        ))}
+                        {remedy.remedy_types.length > 3 && (
+                          <Text fontSize="xs" color="gray.400">+{remedy.remedy_types.length - 3} more types</Text>
+                        )}
+                      </VStack>
                     </HStack>
                   )}
-                  {remedy.body_system && (
+                  {remedy.body_systems && remedy.body_systems.length > 0 && (
                     <HStack spacing={2}>
                       <Icon as={FaShieldAlt} color="blue.300" />
-                      <Text fontSize="sm">{remedy.body_system.title}</Text>
+                      <VStack spacing={1} align="start">
+                        {remedy.body_systems.slice(0, 3).map((system, index) => (
+                          <Text key={system.id || index} fontSize="sm">{system.title}</Text>
+                        ))}
+                        {remedy.body_systems.length > 3 && (
+                          <Text fontSize="xs" color="gray.400">+{remedy.body_systems.length - 3} more systems</Text>
+                        )}
+                      </VStack>
                     </HStack>
                   )}
                 </HStack>
@@ -454,30 +475,57 @@ const ShowRemedy = () => {
                     </Badge>
                   </HStack>
                   
-                  {remedy.disease_relation && (
+                  {remedy.diseases && remedy.diseases.length > 0 && (
                     <HStack justify="space-between">
-                      <Text color={mutedText} fontSize="sm">Disease</Text>
-                      <Text fontSize="sm" color={textColor}>
-                        {remedy.disease_relation.name}
-                      </Text>
+                      <Text color={mutedText} fontSize="sm">Diseases</Text>
+                      <VStack align="end" spacing={1}>
+                        {remedy.diseases.slice(0, 2).map((disease, index) => (
+                          <Text key={disease.id || index} fontSize="sm" color={textColor}>
+                            {disease.name}
+                          </Text>
+                        ))}
+                        {remedy.diseases.length > 2 && (
+                          <Text fontSize="xs" color="gray.400">
+                            +{remedy.diseases.length - 2} more
+                          </Text>
+                        )}
+                      </VStack>
                     </HStack>
                   )}
                   
-                  {remedy.remedy_type && (
+                  {remedy.remedy_types && remedy.remedy_types.length > 0 && (
                     <HStack justify="space-between">
-                      <Text color={mutedText} fontSize="sm">Type</Text>
-                      <Text fontSize="sm" color={textColor}>
-                        {remedy.remedy_type.name}
-                      </Text>
+                      <Text color={mutedText} fontSize="sm">Types</Text>
+                      <VStack align="end" spacing={1}>
+                        {remedy.remedy_types.slice(0, 2).map((type, index) => (
+                          <Text key={type.id || index} fontSize="sm" color={textColor}>
+                            {type.name}
+                          </Text>
+                        ))}
+                        {remedy.remedy_types.length > 2 && (
+                          <Text fontSize="xs" color="gray.400">
+                            +{remedy.remedy_types.length - 2} more
+                          </Text>
+                        )}
+                      </VStack>
                     </HStack>
                   )}
                   
-                  {remedy.body_system && (
+                  {remedy.body_systems && remedy.body_systems.length > 0 && (
                     <HStack justify="space-between">
-                      <Text color={mutedText} fontSize="sm">Body System</Text>
-                      <Text fontSize="sm" color={textColor}>
-                        {remedy.body_system.title}
-                      </Text>
+                      <Text color={mutedText} fontSize="sm">Body Systems</Text>
+                      <VStack align="end" spacing={1}>
+                        {remedy.body_systems.slice(0, 2).map((system, index) => (
+                          <Text key={system.id || index} fontSize="sm" color={textColor}>
+                            {system.title}
+                          </Text>
+                        ))}
+                        {remedy.body_systems.length > 2 && (
+                          <Text fontSize="xs" color="gray.400">
+                            +{remedy.body_systems.length - 2} more
+                          </Text>
+                        )}
+                      </VStack>
                     </HStack>
                   )}
                   

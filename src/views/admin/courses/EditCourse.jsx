@@ -85,7 +85,7 @@ const EditCourse = () => {
     duration: '',
     sessionsNumber: 1,
     price: 0,
-    plan: '',
+    plan: 'rookie', // Set default plan
     overview: '',
     courseContent: [{ title: '', image: '' }],
     instructor_ids: [],
@@ -166,7 +166,7 @@ const EditCourse = () => {
         duration: course.duration || '',
         sessionsNumber: course.sessionsNumber || 1,
         price: parseFloat(course.price) || 0,
-        plan: course.plan || '',
+        plan: course.plan || 'rookie', // Set default to 'rookie' if no plan exists
         overview: course.overview || '',
         courseContent: course.courseContent && course.courseContent.length > 0 ? course.courseContent : [{ title: '', image: '' }],
         instructor_ids: instructorIds,

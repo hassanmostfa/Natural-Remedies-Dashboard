@@ -91,27 +91,6 @@ const Disease = () => {
   }, [searchQuery, currentPage, perPage, refetch]);
 
   const columns = [
-    columnHelper.accessor('image', {
-      id: 'image',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Image
-        </Text>
-      ),
-      cell: (info) => (
-        <Avatar
-          src={info.getValue()}
-          size="md"
-          borderRadius="lg"
-          fallback={<Icon as={FaThermometerHalf} color="red.500" />}
-        />
-      ),
-    }),
     columnHelper.accessor('name', {
       id: 'name',
       header: () => (

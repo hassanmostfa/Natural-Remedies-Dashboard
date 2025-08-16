@@ -132,6 +132,72 @@ import {
    }, [searchQuery, currentPage, pageSize, refetch]);
  
    const columns = [
+     columnHelper.accessor('image', {
+       id: 'image',
+       header: () => (
+         <Text
+           justifyContent="space-between"
+           align="center"
+           fontSize={{ sm: '10px', lg: '12px' }}
+           color="gray.400"
+         >
+           Image
+         </Text>
+       ),
+       cell: (info) => (
+         <Box>
+           {info.getValue() ? (
+             <Box
+               w="50px"
+               h="50px"
+               borderRadius="8px"
+               overflow="hidden"
+               border="1px solid"
+               borderColor={borderColor}
+             >
+               <img
+                 src={info.getValue()}
+                 alt="Remedy type"
+                 style={{
+                   width: '100%',
+                   height: '100%',
+                   objectFit: 'cover'
+                 }}
+                 onError={(e) => {
+                   e.target.style.display = 'none';
+                   e.target.nextSibling.style.display = 'flex';
+                 }}
+               />
+               <Flex
+                 w="100%"
+                 h="100%"
+                 bg="gray.100"
+                 align="center"
+                 justify="center"
+                 display="none"
+                 fontSize="xs"
+                 color="gray.500"
+               >
+                 No Image
+               </Flex>
+             </Box>
+           ) : (
+             <Flex
+               w="50px"
+               h="50px"
+               bg="gray.100"
+               borderRadius="8px"
+               align="center"
+               justify="center"
+               fontSize="xs"
+               color="gray.500"
+             >
+               No Image
+             </Flex>
+           )}
+         </Box>
+       ),
+     }),
      columnHelper.accessor('name', {
        id: 'name',
        header: () => (
@@ -166,6 +232,30 @@ import {
          <Text color={textColor} fontSize="sm" maxW="200px" noOfLines={2}>
            {info.getValue()}
          </Text>
+       ),
+     }),
+     columnHelper.accessor('remedies_count', {
+       id: 'remedies_count',
+       header: () => (
+         <Text
+           justifyContent="space-between"
+           align="center"
+           fontSize={{ sm: '10px', lg: '12px' }}
+           color="gray.400"
+         >
+           Remedies Count
+         </Text>
+       ),
+       cell: (info) => (
+         <Badge 
+           colorScheme="blue"
+           px="2"
+           py="1"
+           borderRadius="full"
+           fontSize="xs"
+         >
+           {info.getValue() || 0}
+         </Badge>
        ),
      }),
      columnHelper.accessor('status', {

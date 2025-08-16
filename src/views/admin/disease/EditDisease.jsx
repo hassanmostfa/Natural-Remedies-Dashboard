@@ -34,8 +34,8 @@ import * as React from 'react';
 import Card from 'components/card/Card';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
-import { FaImage, FaUpload } from 'react-icons/fa';
-import { useUploadImageMutation } from 'api/fileUploadSlice';
+
+
 import { useGetDiseaseQuery, useUpdateDiseaseMutation } from 'api/diseasesSlice';
 
 const EditDisease = () => {
@@ -48,7 +48,6 @@ const EditDisease = () => {
   const inputBg = useColorModeValue('white', 'gray.700');
 
   // API hooks
-  const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
   const [updateDisease, { isLoading: isUpdating }] = useUpdateDiseaseMutation();
   
   // Get disease data
@@ -67,15 +66,11 @@ const EditDisease = () => {
   // Separate state for each section to prevent re-renders
   const [basicInfo, setBasicInfo] = React.useState({
     name: '',
-    image: '',
     description: '',
     status: 'active',
   });
 
-  // Image upload states
-  const [imagePreview, setImagePreview] = React.useState(null);
-  const [isDragging, setIsDragging] = React.useState(false);
-  const [isUploadingImage, setIsUploadingImage] = React.useState(false);
+
 
   const [symptoms, setSymptoms] = React.useState([
     { id: 1, name: '' }
@@ -95,7 +90,6 @@ const EditDisease = () => {
       const disease = diseaseResponse.data;
       setBasicInfo({
         name: disease.name || '',
-        image: disease.image || '',
         description: disease.description || '',
         status: disease.status || 'active',
       });
@@ -141,115 +135,7 @@ const EditDisease = () => {
     setSymptoms(prev => prev.filter(item => item.id !== id));
   }, []);
 
-  // Image upload functions (matching AddRemedy pattern)
-  const handleImageUpload = (files) => {
-    if (files && files.length > 0) {
-      const selectedFile = files[0];
-      
-      if (!selectedFile.type.startsWith('image/')) {
-        toast({
-          title: 'Error',
-          description: 'Please select an image file (JPEG, PNG, etc.)',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-        return;
-      }
 
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        toast({
-          title: 'Error',
-          description: 'Image size should be less than 5MB',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-        return;
-      }
-
-      handleImageUploadToServer(selectedFile);
-    }
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = e.dataTransfer.files;
-    handleImageUpload(files);
-  };
-
-  const handleFileInputChange = (e) => {
-    const files = e.target.files;
-    handleImageUpload(files);
-  };
-
-  const handleImageUploadToServer = async (file) => {
-    try {
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-      setIsUploadingImage(true);
-      
-      // Add a small delay to ensure state is set before upload starts
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Add a minimum loading time to make the loading state more visible
-      const uploadStartTime = Date.now();
-      const response = await uploadImage(file).unwrap();
-      const uploadTime = Date.now() - uploadStartTime;
-      
-      // Ensure loading state is visible for at least 1 second
-      if (uploadTime < 1000) {
-        await new Promise(resolve => setTimeout(resolve, 1000 - uploadTime));
-      }
-      
-      if (response.success && response.url) {
-        setBasicInfo(prev => ({
-          ...prev,
-          image: response.url
-        }));
-
-        toast({
-          title: 'Success',
-          description: 'Image uploaded successfully',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-      } else {
-        throw new Error('Upload failed');
-      }
-    } catch (error) {
-      console.error('Failed to upload image:', error);
-      setImagePreview(null);
-      toast({
-        title: 'Error',
-        description: error.data?.message || 'Failed to upload image',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
-  const clearImage = () => {
-    setImagePreview(null);
-    setBasicInfo(prev => ({
-      ...prev,
-      image: ''
-    }));
-  };
 
   const validateStep = (step) => {
     switch (step) {
@@ -274,16 +160,7 @@ const EditDisease = () => {
           });
           return false;
         }
-        if (!basicInfo.image.trim()) {
-          toast({
-            title: 'Error',
-            description: 'Please upload an image for the disease',
-            status: 'error',
-            duration: 3000,
-            isClosable: true,
-          });
-          return false;
-        }
+
 
         return true;
       case 1: // Symptoms
@@ -402,114 +279,7 @@ const EditDisease = () => {
           <Box>
             <Heading size="md" color={textColor} mb={4}>Basic Information</Heading>
             <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-              <GridItem colSpan={2}>
-                <FormControl>
-                  <FormLabel color={textColor}>Disease Image</FormLabel>
-                  <Box
-                    border="1px dashed"
-                    borderColor={isDragging ? 'brand.500' : 'gray.300'}
-                    borderRadius="md"
-                    p={4}
-                    textAlign="center"
-                    backgroundColor={isDragging ? 'brand.50' : inputBg}
-                    cursor="pointer"
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    mb={4}
-                    position="relative"
-                  >
-                    {imagePreview || basicInfo.image ? (
-                      <Flex direction="column" align="center">
-                        <Image
-                          src={imagePreview || basicInfo.image}
-                          alt="Disease Image"
-                          maxH="200px"
-                          mb={2}
-                          borderRadius="md"
-                          fallback={<Icon as={FaImage} color="gray.500" boxSize="100px" />}
-                        />
-                        <Button
-                          variant="outline"
-                          colorScheme="red"
-                          size="sm"
-                          onClick={clearImage}
-                        >
-                          Remove Image
-                        </Button>
-                      </Flex>
-                    ) : (
-                      <>
-                        {isUploadingImage && (
-                          <Box
-                            position="absolute"
-                            top="0"
-                            left="0"
-                            right="0"
-                            bottom="0"
-                            backgroundColor="rgba(0, 0, 0, 0.9)"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                            borderRadius="md"
-                            zIndex="50"
-                            backdropFilter="blur(5px)"
-                            border="2px solid #422afb"
-                          >
-                            <VStack spacing="4">
-                              <Spinner size="xl" color="white" thickness="8px" speed="0.6s" />
-                              <Text color="white" fontSize="lg" fontWeight="bold">Uploading Image...</Text>
-                              <Text color="white" fontSize="sm" opacity="0.9">Please wait while we upload your image</Text>
-                            </VStack>
-                          </Box>
-                        )}
-                        {isUploadingImage ? (
-                          <VStack spacing="2">
-                            <Spinner size="lg" color="#422afb" thickness="6px" speed="0.6s" />
-                            <Text color="#422afb" fontSize="sm" fontWeight="bold">Uploading...</Text>
-                            <Text color="#422afb" fontSize="xs" opacity="0.8">Please wait</Text>
-                          </VStack>
-                        ) : (
-                          <>
-                            <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />
-                            <Text color="gray.500" mb={2}>
-                              Drag & Drop Image Here
-                            </Text>
-                            <Text color="gray.500" mb={2}>
-                              or
-                            </Text>
-                          </>
-                        )}
-                        <Button
-                          variant="outline"
-                          border="none"
-                          onClick={() => document.getElementById('image-upload').click()}
-                          isLoading={isUploadingImage}
-                          loadingText="Uploading..."
-                          leftIcon={isUploadingImage ? <Spinner size="sm" color="white" /> : undefined}
-                          disabled={isUploadingImage}
-                          _disabled={{
-                            opacity: 0.6,
-                            cursor: 'not-allowed'
-                          }}
-                          bg={isUploadingImage ? "blue.500" : "transparent"}
-                          color={isUploadingImage ? "white" : "#422afb"}
-                        >
-                          {isUploadingImage ? '🔄 Uploading...' : 'Upload Image'}
-                          <input
-                            type="file"
-                            id="image-upload"
-                            hidden
-                            accept="image/*"
-                            onChange={handleFileInputChange}
-                            disabled={isUploadingImage}
-                          />
-                        </Button>
-                      </>
-                    )}
-                  </Box>
-                </FormControl>
-              </GridItem>
+
 
               <GridItem colSpan={2}>
                 <FormControl>
