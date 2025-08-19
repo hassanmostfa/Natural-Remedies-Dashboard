@@ -2,8 +2,6 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const baseUrl = "https://remdy.mediagrafico.com/api";
 
-const createRequest = (url) => ({ url });
-
 const isTokenExpired = (tokenExpiry) => {
   if (!tokenExpiry) return true;
   return new Date(tokenExpiry) <= new Date();
@@ -44,8 +42,8 @@ const refreshToken = async () => {
   }
 };
 
-export const policiesApiService = createApi({
-  reducerPath: "policiesApiService",
+export const staticsApi = createApi({
+  reducerPath: "staticsApi",
   baseQuery: fetchBaseQuery({
     baseUrl,
     prepareHeaders: async (headers) => {
@@ -67,81 +65,40 @@ export const policiesApiService = createApi({
       return headers;
     },
   }),
-
-  tagTypes: ['Policy'],
-
+  tagTypes: ['Statics'],
   endpoints: (builder) => ({
-    // Get all policies with optional search and pagination
-    getPolicies: builder.query({
+    // Get all statics with optional search and pagination
+    getStatics: builder.query({
       query: (searchParams = {}) => {
         const params = new URLSearchParams();
-        if (searchParams.title) {
-          params.append("title", searchParams.title);
-        }
-        // Always include type parameter - default to 'terms' if not specified
-        const type = searchParams.type || 'terms';
-        params.append("type", type);
         if (searchParams.page) {
           params.append("page", String(searchParams.page));
         }
         if (searchParams.per_page) {
           params.append("per_page", String(searchParams.per_page));
         }
+        if (searchParams.search) {
+          params.append("search", searchParams.search);
+        }
+        if (searchParams.status) {
+          params.append("status", searchParams.status);
+        }
         const queryString = params.toString();
         return {
-          url: `/policies?${queryString}`,
+          url: `/dashboard/statics${queryString ? `?${queryString}` : ""}`,
         };
       },
       transformResponse: (response) => {
         // Return the full response to access both data and pagination
         return response;
       },
-      providesTags: ['Policy'],
-    }),
-
-    // Get a single policy by ID
-    getPolicy: builder.query({
-      query: (id) => createRequest(`/policies/${id}`),
-      providesTags: (result, error, id) => [{ type: 'Policy', id }],
-    }),
-
-    // Create policy
-    createPolicy: builder.mutation({
-      query: (policy) => ({
-        url: "/policies",
-        method: "POST",
-        body: policy,
-      }),
-      invalidatesTags: ['Policy'],
-    }),
-
-    // Update policy
-    updatePolicy: builder.mutation({
-      query: ({ id, policy }) => ({
-        url: `/policies/${id}`,
-        method: "PUT",
-        body: policy,
-      }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Policy', id }, 'Policy'],
-    }),
-
-    // Delete policy
-    deletePolicy: builder.mutation({
-      query: (id) => ({
-        url: `/policies/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ['Policy'],
+      providesTags: (result) => [{ type: 'Statics', id: 'LIST' }],
     }),
   }),
 });
 
 export const {
-  useGetPoliciesQuery,
-  useGetPolicyQuery,
-  useCreatePolicyMutation,
-  useUpdatePolicyMutation,
-  useDeletePolicyMutation,
-} = policiesApiService;
+  useGetStaticsQuery,
+} = staticsApi;
 
 export { refreshToken, isTokenExpired };

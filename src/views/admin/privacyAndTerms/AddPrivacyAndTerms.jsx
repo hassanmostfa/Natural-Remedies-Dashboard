@@ -118,9 +118,8 @@ const AddPrivacyAndTerms = () => {
             value={formData.type}
             onChange={(e) => handleInputChange('type', e.target.value)}
           >
-            <option value="privacy">Privacy</option>
-            <option value="policy">Policy</option>
-            <option value="term">Term</option>
+            <option value="privacy">Privacy Policy</option>
+            <option value="terms">Terms & Conditions</option>
           </Select>
           <FormErrorMessage>{errors.type}</FormErrorMessage>
         </FormControl>

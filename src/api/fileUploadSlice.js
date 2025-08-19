@@ -101,7 +101,8 @@ const refreshToken = async () => {
            }
  
            const xhr = new XMLHttpRequest();
- 
+           const uploadStartTime = Date.now();
+
            const result = await new Promise((resolve) => {
              xhr.open('POST', `${baseUrl}/upload/image`);
              if (token) {
@@ -111,6 +112,7 @@ const refreshToken = async () => {
              xhr.upload.onprogress = (event) => {
                if (event.lengthComputable && typeof onProgress === 'function') {
                  const percent = Math.round((event.loaded / event.total) * 100);
+                 console.log('XHR Progress:', percent + '%');
                  onProgress(percent);
                }
              };
@@ -120,7 +122,17 @@ const refreshToken = async () => {
                  try {
                    const json = JSON.parse(xhr.responseText || '{}');
                    if (xhr.status >= 200 && xhr.status < 300) {
-                     resolve({ data: json });
+                     // Ensure minimum upload time for better UX
+                     const uploadTime = Date.now() - uploadStartTime;
+                     const minUploadTime = 1500; // 1.5 seconds minimum
+                     
+                     if (uploadTime < minUploadTime) {
+                       setTimeout(() => {
+                         resolve({ data: json });
+                       }, minUploadTime - uploadTime);
+                     } else {
+                       resolve({ data: json });
+                     }
                    } else {
                      resolve({ error: { status: xhr.status, data: json } });
                    }

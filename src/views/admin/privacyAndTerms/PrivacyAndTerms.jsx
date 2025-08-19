@@ -2,118 +2,190 @@ import {
   Box,
   Button,
   Flex,
-  Icon,
-  Table,
-  Tbody,
-  Td,
   Text,
-  Th,
-  Thead,
-  Tr,
   useColorModeValue,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  IconButton,
-  HStack,
   VStack,
+  HStack,
+  FormControl,
+  FormLabel,
+  Card,
   Badge,
-  Spinner,
+  Icon,
   useToast,
+  Spinner,
+  Divider,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
 } from '@chakra-ui/react';
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import * as React from 'react';
-import Card from 'components/card/Card';
-import { ChevronLeftIcon, ChevronRightIcon, EditIcon, SearchIcon } from '@chakra-ui/icons';
-import { FaEye, FaTrash, FaShieldAlt, FaFileContract, FaPlus } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import Swal from 'sweetalert2';
-import { useGetPoliciesQuery, useDeletePolicyMutation } from 'api/policiesSlice';
-
-const columnHelper = createColumnHelper();
+import { FaShieldAlt, FaFileContract, FaSave } from 'react-icons/fa';
+import { useGetPoliciesQuery, useUpdatePolicyMutation } from 'api/policiesSlice';
 
 const PrivacyAndTerms = () => {
-  const navigate = useNavigate();
   const toast = useToast();
-  const [sorting, setSorting] = React.useState([]);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [perPage, setPerPage] = React.useState(15);
 
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
-  const searchBg = useColorModeValue('secondaryGray.300', 'gray.700');
-  const searchColor = useColorModeValue('gray.700', 'white');
+  const cardBg = useColorModeValue('white', 'navy.800');
 
-  // API query parameters
-  const queryParams = React.useMemo(() => {
-    const params = {
-      page: currentPage,
-      per_page: perPage,
-    };
-    
-    if (searchQuery.trim()) {
-      params.content = searchQuery.trim();
+  // API hooks for both policy types
+  const { data: privacyResponse, isLoading: isLoadingPrivacy, refetch: refetchPrivacy } = useGetPoliciesQuery({ type: 'privacy' });
+  const { data: termsResponse, isLoading: isLoadingTerms, refetch: refetchTerms } = useGetPoliciesQuery({ type: 'terms' });
+  
+  const [updatePolicy, { isLoading: isUpdating }] = useUpdatePolicyMutation();
+
+  // Form states
+  const [privacyForm, setPrivacyForm] = React.useState({
+    content: '',
+    status: 'active',
+  });
+
+  const [termsForm, setTermsForm] = React.useState({
+    content: '',
+    status: 'active',
+  });
+
+  const [errors, setErrors] = React.useState({});
+  const [activeTab, setActiveTab] = React.useState(0);
+
+  // Load privacy policy data
+  React.useEffect(() => {
+    if (privacyResponse?.data) {
+      const policyData = privacyResponse.data;
+      setPrivacyForm({
+        content: policyData.content || '',
+        status: policyData.status || 'active',
+      });
     }
+  }, [privacyResponse?.data]);
+
+  // Load terms policy data
+  React.useEffect(() => {
+    if (termsResponse?.data) {
+      const policyData = termsResponse.data;
+      setTermsForm({
+        content: policyData.content || '',
+        status: policyData.status || 'active',
+      });
+    }
+  }, [termsResponse?.data]);
+
+  const handlePrivacyChange = (field, value) => {
+    setPrivacyForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
     
-    return params;
-  }, [currentPage, perPage, searchQuery]);
+    if (errors[`privacy_${field}`]) {
+      setErrors(prev => ({
+        ...prev,
+        [`privacy_${field}`]: ''
+      }));
+    }
+  };
 
-  // API hooks
-  const { data: policiesResponse, isLoading, isError, refetch } = useGetPoliciesQuery(queryParams, { refetchOnMountOrArgChange: true });
-  const [deletePolicy, { isLoading: isDeleting }] = useDeletePolicyMutation();
+  const handleTermsChange = (field, value) => {
+    setTermsForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    if (errors[`terms_${field}`]) {
+      setErrors(prev => ({
+        ...prev,
+        [`terms_${field}`]: ''
+      }));
+    }
+  };
 
-  const policies = policiesResponse?.data || [];
-  const pagination = policiesResponse?.pagination || null;
+  const validateForm = (formData, prefix) => {
+    const newErrors = {};
+    
+    if (!formData.content.trim()) {
+      newErrors[`${prefix}_content`] = 'Content is required';
+    }
 
-  // Effect to reset to first page when search changes
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+    setErrors(prev => ({ ...prev, ...newErrors }));
+    return Object.keys(newErrors).length === 0;
+  };
 
-  // Effect to refetch when search or pagination changes
-  React.useEffect(() => {
-    refetch();
-  }, [searchQuery, currentPage, perPage, refetch]);
+  const handlePrivacySubmit = async () => {
+    if (!validateForm(privacyForm, 'privacy')) {
+      return;
+    }
 
-  const columns = [
-    columnHelper.accessor('id', {
-      id: 'id',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          ID
-        </Text>
-      ),
-      cell: (info) => (
-        <Text color={textColor} fontWeight="bold" fontSize="sm">
-          {info.getValue()}
-        </Text>
-      ),
-    }),
-    columnHelper.accessor('type', {
-      id: 'type',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Type
-        </Text>
-      ),
-      cell: (info) => {
+    try {
+      const policyData = {
+        type: 'privacy',
+        content: privacyForm.content,
+        status: privacyForm.status,
+      };
+
+      await updatePolicy({ id: privacyResponse.data.id, policy: policyData }).unwrap();
+
+      toast({
+        title: 'Success',
+        description: 'Privacy Policy updated successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      refetchPrivacy();
+    } catch (error) {
+      console.error('Failed to update privacy policy:', error);
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to update privacy policy. Please try again.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleTermsSubmit = async () => {
+    if (!validateForm(termsForm, 'terms')) {
+      return;
+    }
+
+    try {
+      const policyData = {
+        type: 'terms',
+        content: termsForm.content,
+        status: termsForm.status,
+      };
+
+      await updatePolicy({ id: termsResponse.data.id, policy: policyData }).unwrap();
+
+      toast({
+        title: 'Success',
+        description: 'Terms & Conditions updated successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      refetchTerms();
+    } catch (error) {
+      console.error('Failed to update terms policy:', error);
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to update terms policy. Please try again.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const renderPolicyForm = (type, formData, onChange, onSubmit, isLoading, isUpdating, errors) => {
+    const isPrivacy = type === 'privacy';
         const typeColors = {
           privacy: 'blue',
           terms: 'green'
@@ -123,210 +195,83 @@ const PrivacyAndTerms = () => {
           privacy: FaShieldAlt,
           terms: FaFileContract
         };
+    
+    const typeLabels = {
+      privacy: 'Privacy Policy',
+      terms: 'Terms & Conditions'
+    };
         
         return (
-          <HStack spacing={2}>
-            <Icon as={typeIcons[info.getValue()]} color={`${typeColors[info.getValue()]}.500`} />
+         <VStack spacing={8} align="stretch">
+          {/* Header */}
+          <HStack spacing={3}>
+            <Icon as={typeIcons[type]} color={`${typeColors[type]}.500`} boxSize={6} />
+            <Text color={textColor} fontSize="xl" fontWeight="bold">
+              {typeLabels[type]}
+            </Text>
             <Badge 
-              colorScheme={typeColors[info.getValue()] || 'gray'}
-              px="2"
+              colorScheme={typeColors[type]}
+              px="3"
               py="1"
               borderRadius="full"
-              fontSize="xs"
-              textTransform="capitalize"
+              fontSize="sm"
             >
-              {info.getValue()}
+              {formData.status}
             </Badge>
           </HStack>
-        );
-      },
-    }),
 
-    columnHelper.accessor('content', {
-      id: 'content',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Content
+             {/* Content Editor */}
+           <FormControl isInvalid={!!errors[`${type}_content`]}>
+             <FormLabel color={textColor} fontWeight="bold">
+               Content *
+             </FormLabel>
+             <Box mb={10}>
+               <ReactQuill
+                 theme="snow"
+                 value={formData.content}
+                 onChange={(value) => onChange('content', value)}
+                 placeholder={`Enter the ${typeLabels[type].toLowerCase()} content...`}
+                 style={{ height: '200px' , border:'none' }}
+                 modules={{
+                   toolbar: [
+                     [{ 'header': [1, 2, 3, false] }],
+                     ['bold', 'italic', 'underline', 'strike'],
+                     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                     [{ 'color': [] }, { 'background': [] }],
+                     [{ 'align': [] }],
+                     ['link', 'blockquote', 'code-block'],
+                     ['clean']
+                   ],
+                 }}
+               />
+             </Box>
+             {errors[`${type}_content`] && (
+               <Text color="red.500" fontSize="sm" mt={1}>
+                 {errors[`${type}_content`]}
         </Text>
-      ),
-      cell: (info) => (
-        <VStack align="start" spacing={1}>
-          <Text color={textColor} fontWeight="bold" fontSize="sm" noOfLines={1}>
-            {info.row.original.type === 'privacy' ? 'Privacy Policy' : 'Terms & Conditions'}
-          </Text>
-          <Text color="gray.500" fontSize="xs" noOfLines={2}>
-            {info.getValue()?.replace(/<[^>]*>/g, '') || 'No content available'}
-          </Text>
-        </VStack>
-      ),
-    }),
-    
-    columnHelper.accessor('status', {
-      id: 'status',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Status
-        </Text>
-      ),
-      cell: (info) => (
-        <Badge 
-          colorScheme={info.getValue() === 'active' ? 'green' : 'red'}
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-        >
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
-    
-    columnHelper.accessor('updated_at', {
-      id: 'updated_at',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Last Updated
-        </Text>
-      ),
-      cell: (info) => (
-        <Text color={textColor} fontSize="sm">
-          {new Date(info.getValue()).toLocaleDateString()}
-        </Text>
-      ),
-    }),
-    
-    columnHelper.accessor('id', {
-      id: 'actions',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Actions
-        </Text>
-      ),
-      cell: (info) => (
-        <Flex align="center">
-          <Icon
-            w="18px"
-            h="18px"
-            me="10px"
-            color="red.500"
-            as={FaTrash}
-            cursor="pointer"
-            onClick={() => handleDeletePolicy(info.getValue())}
-          />
-          <Icon
-            w="18px"
-            h="18px"
-            me="10px"
-            color="green.500"
-            as={EditIcon}
-            cursor="pointer"
-            onClick={() => handleEditPolicy(info.getValue())}
-          />
-          {/* <Icon
-            w="18px"
-            h="18px"
-            me="10px"
-            color="blue.500"
-            as={FaEye}
-            cursor="pointer"
-            onClick={() => handleViewPolicy(info.getValue())}
-          /> */}
-        </Flex>
-      ),
-    }),
-  ];
+             )}
+           </FormControl>
 
-  const table = useReactTable({
-    data: policies,
-    columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
-
-  const handleViewPolicy = (id) => {
-    navigate(`/admin/policy/details/${id}`);
-  };
-
-  const handleEditPolicy = (id) => {
-    navigate(`/admin/edit-policy/${id}`);
-  };
-
-  const handleDeletePolicy = async (id) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await deletePolicy(id).unwrap();
-
-        toast({
-          title: 'Success',
-          description: 'Policy deleted successfully',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-
-        // Refetch the data to update the table
-        refetch();
-      } catch (error) {
-        console.error('Failed to delete policy:', error);
-        toast({
-          title: 'Error',
-          description: error.data?.message || 'Failed to delete policy. Please try again.',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-      }
-    }
-  };
-
-  const handleAddPolicy = () => {
-    navigate('/admin/add-policy');
+          {/* Submit Button */}
+          <Button
+            onClick={onSubmit}
+            colorScheme={typeColors[type]}
+            isLoading={isUpdating}
+            loadingText="Updating..."
+            leftIcon={<FaSave />}
+            size="lg"
+          >
+            Update {typeLabels[type]}
+                     </Button>
+         </VStack>
+     );
   };
 
   // Loading state
-  if (isLoading) {
+  if (isLoadingPrivacy || isLoadingTerms) {
     return (
       <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
-        <Card
-          flexDirection="column"
-          w="100%"
-          px="0px"
-          overflowX={{ sm: 'scroll', lg: 'hidden' }}
-        >
+        <Card p={6}>
           <Flex justify="center" align="center" h="200px">
             <VStack spacing={4}>
               <Spinner size="xl" color="#422afb" thickness="4px" />
@@ -338,267 +283,99 @@ const PrivacyAndTerms = () => {
     );
   }
 
-  // Error state
-  if (isError) {
     return (
       <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
-        <Card
-          flexDirection="column"
-          w="100%"
-          px="0px"
-          overflowX={{ sm: 'scroll', lg: 'hidden' }}
-        >
-          <Flex justify="center" align="center" h="200px">
-            <Text color="red.500">Error loading policies. Please try again.</Text>
-          </Flex>
-        </Card>
-      </Box>
-    );
-  }
-
-  return (
-    <Box mt="80px">
-      <Card
-        flexDirection="column"
-        w="100%"
-        px="0px"
-        overflowX={{ sm: 'scroll', lg: 'hidden' }}
-      >
-        <Flex
-          px={{ base: "16px", md: "25px" }}
-          mb="8px"
-          direction={{ base: "column", md: "row" }}
-          justifyContent="space-between"
-          align={{ base: "stretch", md: "center" }}
-          gap={{ base: 4, md: 0 }}
-        >
-          <Text
-            color={textColor}
-            fontSize="22px"
-            fontWeight="700"
-            lineHeight="100%"
-          >
+      <VStack spacing={8} align="stretch">
+        {/* Page Header */}
+        <Box>
+          <Text color={textColor} fontSize="3xl" fontWeight="bold" mb={2}>
             Privacy & Terms Management
           </Text>
-
-          <HStack spacing={4} w={{ base: "100%", md: "auto" }}>
-            {/* Search Input */}
-            <InputGroup w={{ base: "100%", md: "400px" }}>
-              <InputLeftElement>
-                <IconButton
-                  bg="inherit"
-                  borderRadius="inherit"
-                  _hover="none"
-                  _active={{
-                    bg: "inherit",
-                    transform: "none",
-                    borderColor: "transparent",
-                  }}
-                  _focus={{
-                    boxShadow: "none",
-                  }}
-                  icon={<SearchIcon w="15px" h="15px" />}
-                />
-              </InputLeftElement>
-              <Input
-                variant="search"
-                fontSize="sm"
-                bg={searchBg}
-                color={searchColor}
-                fontWeight="500"
-                _placeholder={{ color: "gray.400", fontSize: "14px" }}
-                borderRadius="30px"
-                placeholder="Search policies..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </InputGroup>
-
-
-
-            {/* Add Policy Button */}
-            <Button
-              leftIcon={<FaPlus />}
-              variant='darkBrand'
-              color='white'
-              fontSize='sm'
-              fontWeight='500'
-              borderRadius='70px'
-              px='24px'
-              py='5px'
-              onClick={handleAddPolicy}
-              w={{ base: "100%", md: "200px" }}
-            >
-              Add New Policy
-            </Button>
-          </HStack>
-        </Flex>
-
-        <Box>
-          <Table variant="simple" color="gray.500" mb="24px" mt="12px">
-            <Thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <Tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <Th
-                        key={header.id}
-                        colSpan={header.colSpan}
-                        pe="10px"
-                        borderColor={borderColor}
-                        cursor="pointer"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        <Flex
-                          justifyContent="space-between"
-                          align="center"
-                          fontSize={{ sm: '10px', lg: '12px' }}
-                          color="gray.400"
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          {{
-                            asc: ' 🔼',
-                            desc: ' 🔽',
-                          }[header.column.getIsSorted()] ?? null}
-                        </Flex>
-                      </Th>
-                    );
-                  })}
-                </Tr>
-              ))}
-            </Thead>
-            <Tbody>
-              {table.getRowModel().rows.map((row) => {
-                return (
-                  <Tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <Td
-                          key={cell.id}
-                          fontSize={{ sm: '14px' }}
-                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                          borderColor="transparent"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </Td>
-                      );
-                    })}
-                  </Tr>
-                );
-              })}
-            </Tbody>
-          </Table>
+          <Text color="gray.500">
+            Update your privacy policy and terms & conditions content
+          </Text>
         </Box>
 
-        {/* Pagination Controls */}
-        {pagination && (
-          <Flex
-            px={{ base: "16px", md: "25px" }}
-            py="20px"
-            justify="space-between"
-            align="center"
-            borderTop="1px solid"
-            borderColor={borderColor}
-            direction={{ base: "column", md: "row" }}
-            gap={{ base: 4, md: 0 }}
-          >
-            {/* Page Info */}
-            <Text color={textColor} fontSize="sm">
-              Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} results
-            </Text>
-
-            {/* Pagination Controls */}
-            <HStack spacing="3">
-              {/* Page Size Selector */}
-              <HStack spacing="2">
-                <Text fontSize="sm" color={textColor}>
-                  Show:
-                </Text>
-                <select
-                  size="sm"
-                  value={perPage}
-                  onChange={(e) => {
-                    setPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '4px',
-                    fontSize: '14px'
-                  }}
-                >
-                  <option value={10}>10</option>
-                  <option value={15}>15</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                </select>
+                 {/* Tabs */}
+         <Card p={6} bg={cardBg} border="1px solid" borderColor={borderColor} borderRadius="xl" boxShadow="lg">
+           <Tabs index={activeTab} onChange={setActiveTab} variant="soft-rounded" colorScheme="blue" size="lg">
+             <TabList bg="gray.50" p={2} borderRadius="xl" border="1px solid" borderColor="gray.200">
+               <Tab 
+                 _selected={{ 
+                   bg: "blue.500", 
+                   color: "white", 
+                   boxShadow: "lg",
+                   transform: "translateY(-2px)",
+                   transition: "all 0.2s"
+                 }}
+                 _hover={{ 
+                   bg: "blue.400", 
+                   transform: "translateY(-1px)",
+                   transition: "all 0.2s"
+                 }}
+                 borderRadius="lg"
+                 fontWeight="semibold"
+                 transition="all 0.2s"
+               >
+                 <HStack spacing={3}>
+                   <Icon as={FaShieldAlt} boxSize={5} />
+                   <Text fontSize="md">Privacy Policy</Text>
+          </HStack>
+               </Tab>
+               <Tab 
+                 _selected={{ 
+                   bg: "green.500", 
+                   color: "white", 
+                   boxShadow: "lg",
+                   transform: "translateY(-2px)",
+                   transition: "all 0.2s"
+                 }}
+                 _hover={{ 
+                   bg: "green.400", 
+                   transform: "translateY(-1px)",
+                   transition: "all 0.2s"
+                 }}
+                 borderRadius="lg"
+                 fontWeight="semibold"
+                 transition="all 0.2s"
+               >
+                 <HStack spacing={3}>
+                   <Icon as={FaFileContract} boxSize={5} />
+                   <Text fontSize="md">Terms & Conditions</Text>
               </HStack>
+               </Tab>
+             </TabList>
 
-              {/* Page Navigation */}
-              <HStack spacing="2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  isDisabled={currentPage <= 1}
-                  leftIcon={<ChevronLeftIcon />}
-                >
-                  Previous
-                </Button>
+                         <TabPanels>
+               {/* Privacy Policy Tab */}
+               <TabPanel pt={8}>
+                 {renderPolicyForm(
+                   'privacy',
+                   privacyForm,
+                   handlePrivacyChange,
+                   handlePrivacySubmit,
+                   isLoadingPrivacy,
+                   isUpdating,
+                   errors
+                 )}
+               </TabPanel>
 
-                {/* Page Numbers */}
-                {Array.from({ length: Math.min(5, pagination.last_page || 1) }, (_, i) => {
-                  const pageNum = i + 1;
-                  const isCurrentPage = pageNum === currentPage;
-                  
-                  return (
-                    <Button
-                      key={pageNum}
-                      size="sm"
-                      variant={isCurrentPage ? "solid" : "outline"}
-                      colorScheme={isCurrentPage ? "blue" : "gray"}
-                      onClick={() => setCurrentPage(pageNum)}
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
-
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  isDisabled={currentPage >= (pagination.last_page || 1)}
-                  rightIcon={<ChevronRightIcon />}
-                >
-                  Next
-                </Button>
-              </HStack>
-            </HStack>
-          </Flex>
-        )}
-
-        {/* No data message */}
-        {(!policies || policies.length === 0) && !isLoading && (
-          <Flex
-            px={{ base: "16px", md: "25px" }}
-            py="40px"
-            justify="center"
-            align="center"
-          >
-            <Text color={textColor} fontSize="md">
-              No policies found with the current search.
-            </Text>
-          </Flex>
-        )}
+               {/* Terms & Conditions Tab */}
+               <TabPanel pt={8}>
+                 {renderPolicyForm(
+                   'terms',
+                   termsForm,
+                   handleTermsChange,
+                   handleTermsSubmit,
+                   isLoadingTerms,
+                   isUpdating,
+                   errors
+                 )}
+               </TabPanel>
+             </TabPanels>
+          </Tabs>
       </Card>
+      </VStack>
     </Box>
   );
 };

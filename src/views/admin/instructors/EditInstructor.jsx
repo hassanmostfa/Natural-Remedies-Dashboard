@@ -20,6 +20,7 @@ import {
   Spinner,
   Alert,
   AlertIcon,
+  Progress,
 } from '@chakra-ui/react';
 import { AddIcon, ChevronDownIcon, ArrowBackIcon } from '@chakra-ui/icons';
 import { FaGraduationCap, FaUpload } from 'react-icons/fa6';
@@ -58,6 +59,7 @@ const EditInstructor = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [originalData, setOriginalData] = useState(null);
 
   const statusOptions = [
@@ -69,6 +71,7 @@ const EditInstructor = () => {
   useEffect(() => {
     if (instructorData?.data) {
       const instructor = instructorData.data;
+      
       setFormData({
         name: instructor.name || '',
         description: instructor.description || '',
@@ -153,10 +156,11 @@ const EditInstructor = () => {
 
   const handleImageUploadToServer = async (file) => {
     try {
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
       setSelectedFile(file);
       setIsUploadingImage(true);
+      setUploadProgress(0);
+      
+      // Don't set image preview immediately - wait until upload is complete
       
       // Debug: Check authentication
       const token = localStorage.getItem("admin_token");
@@ -164,25 +168,32 @@ const EditInstructor = () => {
       console.log('Debug - Token exists:', !!token);
       console.log('Debug - Token expiry:', tokenExpiry);
       console.log('Debug - Current time:', new Date().toISOString());
-      
-      // Add a small delay to ensure state is set before upload starts
-      await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Add a minimum loading time to make the loading state more visible
-      const uploadStartTime = Date.now();
       console.log('Debug - Starting upload...');
+      console.log('Debug - File size:', file.size, 'bytes');
       
-      const response = await uploadImage(file).unwrap();
-      const uploadTime = Date.now() - uploadStartTime;
+      // Force a small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Upload with real progress tracking
+      const response = await uploadImage({
+        file,
+        onProgress: (percent) => {
+          console.log('Upload progress:', percent + '%');
+          setUploadProgress(percent);
+        }
+      }).unwrap();
       
       console.log('Debug - Upload response:', response);
       
-      // Ensure loading state is visible for at least 1 second
-      if (uploadTime < 1000) {
-        await new Promise(resolve => setTimeout(resolve, 1000 - uploadTime));
-      }
+      // Small delay to show 100% completion
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       if (response.success && response.url) {
+        // Set the image preview to the uploaded URL
+        setImagePreview(response.url);
+        
+        // Update both the form data and image preview with the new URL
         setFormData(prev => ({
           ...prev,
           image: response.url
@@ -235,6 +246,7 @@ const EditInstructor = () => {
       });
     } finally {
       setIsUploadingImage(false);
+      setUploadProgress(0);
     }
   };
 
@@ -299,6 +311,11 @@ const EditInstructor = () => {
         status: formData.status,
         image: formData.image || null,
       };
+
+      // Debug: Log the data being sent
+      console.log('Debug - Submitting instructor data:', instructorData);
+      console.log('Debug - Current formData.image:', formData.image);
+      console.log('Debug - Current imagePreview:', imagePreview);
 
       await updateInstructor({ id, instructor: instructorData }).unwrap();
 
@@ -406,56 +423,66 @@ const EditInstructor = () => {
                   onDrop={handleDrop}
                   position="relative"
                 >
-                  {imagePreview ? (
-                    <Flex direction="column" align="center">
-                      <Image
-                        src={imagePreview}
-                        alt="Profile Preview"
-                        maxH="200px"
-                        mb={2}
-                        borderRadius="md"
-                        fallback={<Icon as={FaGraduationCap} color="gray.500" boxSize="100px" />}
-                      />
-                      <Button
-                        variant="outline"
-                        colorScheme="red"
-                        size="sm"
-                        onClick={clearImage}
-                      >
-                        Remove Image
-                      </Button>
-                    </Flex>
-                  ) : (
+                                     {imagePreview ? (
+                     <Flex direction="column" align="center">
+                       <Image
+                         src={imagePreview}
+                         alt="Profile Preview"
+                         maxH="200px"
+                         mb={2}
+                         borderRadius="md"
+                         fallback={<Icon as={FaGraduationCap} color="gray.500" boxSize="100px" />}
+                       />
+                       <Button
+                         variant="outline"
+                         colorScheme="red"
+                         size="sm"
+                         onClick={clearImage}
+                       >
+                         Remove Image
+                       </Button>
+                     </Flex>
+                   ) : (
                     <>
-                      {isUploadingImage && (
-                        <Box
-                          position="absolute"
-                          top="0"
-                          left="0"
-                          right="0"
-                          bottom="0"
-                          backgroundColor="rgba(0, 0, 0, 0.9)"
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          borderRadius="md"
-                          zIndex="50"
-                          backdropFilter="blur(5px)"
-                          border="2px solid #422afb"
-                        >
-                          <VStack spacing="4">
+                      {isUploadingImage ? (
+                                                 <Box
+                           position="absolute"
+                           top="0"
+                           left="0"
+                           right="0"
+                           bottom="0"
+                           backgroundColor="rgba(0, 0, 0, 0.9)"
+                           display="flex"
+                           alignItems="center"
+                           justifyContent="center"
+                           borderRadius="md"
+                           zIndex="9999"
+                           backdropFilter="blur(5px)"
+                           border="2px solid #422afb"
+                         >
+                          <VStack spacing="4" w="90%">
                             <Spinner size="xl" color="white" thickness="8px" speed="0.6s" />
                             <Text color="white" fontSize="lg" fontWeight="bold">Uploading Image...</Text>
+                            
+                            {/* Progress Bar */}
+                            <Box w="100%" maxW="300px">
+                              <Progress 
+                                value={uploadProgress} 
+                                colorScheme="blue" 
+                                size="lg" 
+                                borderRadius="full"
+                                hasStripe
+                                isAnimated
+                                bg="rgba(255,255,255,0.2)"
+                              />
+                              <Text color="white" fontSize="sm" textAlign="center" mt={2} fontWeight="bold">
+                                {Math.round(uploadProgress)}% Complete
+                              </Text>
+                            </Box>
+                            
                             <Text color="white" fontSize="sm" opacity="0.9">Please wait while we upload your image</Text>
                           </VStack>
                         </Box>
-                      )}
-                      {isUploadingImage ? (
-                        <VStack spacing="2">
-                          <Spinner size="lg" color="#422afb" thickness="6px" speed="0.6s" />
-                          <Text color="#422afb" fontSize="sm" fontWeight="bold">Uploading...</Text>
-                          <Text color="#422afb" fontSize="xs" opacity="0.8">Please wait</Text>
-                        </VStack>
                       ) : (
                         <>
                           <Icon as={FaUpload} w={8} h={8} color="#422afb" mb={2} />

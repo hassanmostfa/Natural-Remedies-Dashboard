@@ -73,9 +73,10 @@ import About from 'views/admin/about/About';
 import Ads from 'views/admin/ads/Ads';
 import AddAd from 'views/admin/ads/AddAd';
 import EditAd from 'views/admin/ads/EditAd';
+import Feedbacks from 'views/admin/feedback/Feedbacks';
+
 
 import { GiGrassMushroom } from "react-icons/gi";
-
 
 const routes = [
   {
@@ -439,6 +440,13 @@ const routes = [
         path: '/faqs',
         icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
         component: <Faqs />,
+        showInSidebar: true,
+      },
+      {
+        name:'Feedbacks',
+        path: '/feedbacks',
+        icon: <Icon as={TiMinus} width="20px" height="20px" color="inherit" />,
+        component: <Feedbacks />,
         showInSidebar: true,
       },
       {

@@ -44,8 +44,8 @@ const refreshToken = async () => {
   }
 };
 
-export const policiesApiService = createApi({
-  reducerPath: "policiesApiService",
+export const subscriptionsApi = createApi({
+  reducerPath: "subscriptionsApi",
   baseQuery: fetchBaseQuery({
     baseUrl,
     prepareHeaders: async (headers) => {
@@ -67,81 +67,49 @@ export const policiesApiService = createApi({
       return headers;
     },
   }),
-
-  tagTypes: ['Policy'],
-
+  tagTypes: ['Subscription'],
   endpoints: (builder) => ({
-    // Get all policies with optional search and pagination
-    getPolicies: builder.query({
+    // Get all subscriptions with optional search and pagination
+    getSubscriptions: builder.query({
       query: (searchParams = {}) => {
         const params = new URLSearchParams();
-        if (searchParams.title) {
-          params.append("title", searchParams.title);
-        }
-        // Always include type parameter - default to 'terms' if not specified
-        const type = searchParams.type || 'terms';
-        params.append("type", type);
         if (searchParams.page) {
           params.append("page", String(searchParams.page));
         }
         if (searchParams.per_page) {
           params.append("per_page", String(searchParams.per_page));
         }
+        if (searchParams.search) {
+          params.append("search", searchParams.search);
+        }
+        if (searchParams.status) {
+          params.append("status", searchParams.status);
+        }
+        if (searchParams.plan_id) {
+          params.append("plan_id", String(searchParams.plan_id));
+        }
         const queryString = params.toString();
         return {
-          url: `/policies?${queryString}`,
+          url: `/subscriptions${queryString ? `?${queryString}` : ""}`,
         };
       },
       transformResponse: (response) => {
         // Return the full response to access both data and pagination
         return response;
       },
-      providesTags: ['Policy'],
-    }),
-
-    // Get a single policy by ID
-    getPolicy: builder.query({
-      query: (id) => createRequest(`/policies/${id}`),
-      providesTags: (result, error, id) => [{ type: 'Policy', id }],
-    }),
-
-    // Create policy
-    createPolicy: builder.mutation({
-      query: (policy) => ({
-        url: "/policies",
-        method: "POST",
-        body: policy,
-      }),
-      invalidatesTags: ['Policy'],
-    }),
-
-    // Update policy
-    updatePolicy: builder.mutation({
-      query: ({ id, policy }) => ({
-        url: `/policies/${id}`,
-        method: "PUT",
-        body: policy,
-      }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Policy', id }, 'Policy'],
-    }),
-
-    // Delete policy
-    deletePolicy: builder.mutation({
-      query: (id) => ({
-        url: `/policies/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ['Policy'],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.data.map(({ id }) => ({ type: 'Subscription', id })),
+              { type: 'Subscription', id: 'LIST' },
+            ]
+          : [{ type: 'Subscription', id: 'LIST' }],
     }),
   }),
 });
 
 export const {
-  useGetPoliciesQuery,
-  useGetPolicyQuery,
-  useCreatePolicyMutation,
-  useUpdatePolicyMutation,
-  useDeletePolicyMutation,
-} = policiesApiService;
+  useGetSubscriptionsQuery,
+} = subscriptionsApi;
 
 export { refreshToken, isTokenExpired };

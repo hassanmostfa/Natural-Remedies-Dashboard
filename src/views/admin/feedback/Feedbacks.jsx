@@ -2,21 +2,21 @@ import {
   Box,
   Button,
   Flex,
-  Icon,
-  Table,
-  Tbody,
-  Td,
   Text,
-  Th,
-  Thead,
-  Tr,
   useColorModeValue,
-  Avatar,
-  HStack,
   VStack,
+  HStack,
   Badge,
+  Icon,
   useToast,
   Spinner,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Avatar,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -27,21 +27,21 @@ import {
 } from '@tanstack/react-table';
 import * as React from 'react';
 import Card from 'components/card/Card';
-import { FaCrown, FaAward, FaSeedling, FaUser } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import { useGetSubscriptionsQuery } from 'api/subscriptionsSlice';
+import { FaUser, FaMobile, FaDesktop } from 'react-icons/fa';
+import { useGetFeedbackQuery } from 'api/feedbackSlice';
 
 const columnHelper = createColumnHelper();
 
-const SubscriptionPlans = () => {
-  const navigate = useNavigate();
+const Feedbacks = () => {
   const toast = useToast();
-  const [sorting, setSorting] = React.useState([]);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [perPage, setPerPage] = React.useState(15);
 
+  const [sorting, setSorting] = React.useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+
+  // State for pagination
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(15);
 
   // API query parameters
   const queryParams = React.useMemo(() => {
@@ -54,54 +54,51 @@ const SubscriptionPlans = () => {
   }, [currentPage, perPage]);
 
   // API hooks
-  const { data: subscriptionsResponse, isLoading, isError, refetch } = useGetSubscriptionsQuery(queryParams, { refetchOnMountOrArgChange: true });
+  const { data: feedbackResponse, isLoading, isError, refetch } = useGetFeedbackQuery(queryParams, { refetchOnMountOrArgChange: true });
 
-  const subscriptionsData = subscriptionsResponse?.data || [];
-  const pagination = subscriptionsResponse?.pagination || null;
+  const feedbacksData = feedbackResponse?.data || [];
+  const pagination = feedbackResponse?.pagination || null;
 
   // Effect to refetch when pagination changes
   React.useEffect(() => {
     refetch();
   }, [currentPage, perPage, refetch]);
 
-  // Helper functions for plan data
-  const getPlanConfig = (planName) => {
-    const plans = {
-      'rookie': {
-        name: 'Rookie',
-        icon: FaSeedling,
-        colorScheme: 'green'
-      },
-      'skilled': {
-        name: 'Skilled',
-        icon: FaAward,
-        colorScheme: 'blue'
-      },
-      'master': {
-        name: 'Master',
-        icon: FaCrown,
-        colorScheme: 'purple'
-      }
+  // Rating color mapping
+  const getRatingColor = (rating) => {
+    const ratingColors = {
+      'Excellent': 'green',
+      'Good': 'blue',
+      'Okay': 'yellow',
+      'Poor': 'orange',
+      'Very Poor': 'red'
     };
-    return plans[planName.toLowerCase()] || { name: planName, icon: FaUser, colorScheme: 'gray' };
+    return ratingColors[rating] || 'gray';
   };
 
-  const getStatusColor = (status) => {
-    const statusColors = {
-      'active': 'green',
-      'inactive': 'red',
-      'suspended': 'orange'
+  // Rating icon mapping
+  const getRatingIcon = (rating) => {
+    const ratingIcons = {
+      'Excellent': '⭐⭐⭐⭐⭐',
+      'Good': '⭐⭐⭐⭐',
+      'Okay': '⭐⭐⭐',
+      'Poor': '⭐⭐',
+      'Very Poor': '⭐'
     };
-    return statusColors[status] || 'gray';
+    return ratingIcons[rating] || '⭐';
   };
 
+  // Format date
   const formatDate = (dateString) => {
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
-        day: '2-digit'
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
       });
     } catch (error) {
       return 'Invalid date';
@@ -109,6 +106,69 @@ const SubscriptionPlans = () => {
   };
 
   const columns = [
+    columnHelper.accessor('id', {
+      id: 'id',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          ID
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor} fontWeight="bold" fontSize="sm">
+          #{info.getValue()}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor('rating', {
+      id: 'rating',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Rating
+        </Text>
+      ),
+      cell: (info) => (
+        <HStack spacing={2}>
+          <Badge 
+            colorScheme={getRatingColor(info.getValue())}
+            px="3"
+            py="1"
+            borderRadius="full"
+            fontSize="sm"
+          >
+            {info.getValue()}
+          </Badge>
+          <Text fontSize="sm">{getRatingIcon(info.getValue())}</Text>
+        </HStack>
+      ),
+    }),
+    columnHelper.accessor('message', {
+      id: 'message',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Message
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor} noOfLines={2} maxW="300px">
+          {info.getValue() || 'No message'}
+        </Text>
+      ),
+    }),
     columnHelper.accessor('user_id', {
       id: 'user',
       header: () => (
@@ -122,26 +182,25 @@ const SubscriptionPlans = () => {
         </Text>
       ),
       cell: (info) => (
-        <HStack spacing={3}>
-          <Avatar
-            size="sm"
-            name={info.row.original.full_name}
-            bg="blue.500"
-            color="white"
-          />
-          <VStack align="start" spacing={0}>
-            <Text color={textColor} fontWeight="bold" fontSize="sm">
-              {info.row.original.full_name}
+        info.getValue() ? (
+          <HStack spacing={2}>
+            <Avatar size="sm" name="User" />
+            <Text color={textColor} fontSize="sm">
+              User #{info.getValue()}
             </Text>
-            <Text color="gray.500" fontSize="xs">
-              {info.row.original.email}
+          </HStack>
+        ) : (
+          <HStack spacing={2}>
+            <Icon as={FaUser} color="gray.400" />
+            <Text color="gray.500" fontSize="sm">
+              Anonymous
             </Text>
-          </VStack>
-        </HStack>
+          </HStack>
+        )
       ),
     }),
-    columnHelper.accessor('plan', {
-      id: 'plan',
+    columnHelper.accessor('device', {
+      id: 'device',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -149,28 +208,29 @@ const SubscriptionPlans = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Plan
+          Device
         </Text>
       ),
-      cell: (info) => {
-        const planConfig = getPlanConfig(info.getValue());
-        return (
+      cell: (info) => (
+        info.getValue() ? (
           <HStack spacing={2}>
-            <Icon as={planConfig.icon} color={`${planConfig.colorScheme}.500`} boxSize="16px" />
-            <VStack align="start" spacing={0}>
-              <Text color={textColor} fontWeight="bold" fontSize="sm">
-                {planConfig.name}
-              </Text>
-              <Text color="gray.500" fontSize="xs">
-                {info.row.original.interval ? `${info.row.original.interval}ly` : 'No interval'}
-              </Text>
-            </VStack>
+            <Icon as={FaMobile} color="blue.500" />
+            <Text color={textColor} fontSize="sm">
+              {info.getValue()}
+            </Text>
           </HStack>
-        );
-      },
+        ) : (
+          <HStack spacing={2}>
+            <Icon as={FaDesktop} color="gray.400" />
+            <Text color="gray.500" fontSize="sm">
+              Unknown
+            </Text>
+          </HStack>
+        )
+      ),
     }),
-    columnHelper.accessor('started_at', {
-      id: 'started_at',
+    columnHelper.accessor('app_version', {
+      id: 'app_version',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -178,17 +238,17 @@ const SubscriptionPlans = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Started At
+          App Version
         </Text>
       ),
       cell: (info) => (
         <Text color={textColor} fontSize="sm">
-          {info.getValue() ? formatDate(info.getValue()) : 'Not started'}
+          {info.getValue() || 'N/A'}
         </Text>
       ),
     }),
-    columnHelper.accessor('ends_at', {
-      id: 'ends_at',
+    columnHelper.accessor('created_at', {
+      id: 'date',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -196,80 +256,19 @@ const SubscriptionPlans = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Ends At
-        </Text>
-      ),
-      cell: (info) => {
-        const date = info.getValue();
-        if (!date) {
-          return (
-            <Text color="gray.500" fontSize="sm">
-              No end date
-            </Text>
-          );
-        }
-        return (
-            <Text color={textColor} fontSize="sm">
-            {formatDate(date)}
-              </Text>
-        );
-      },
-    }),
-    columnHelper.accessor('is_active', {
-      id: 'is_active',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Subscription Status
+          Date
         </Text>
       ),
       cell: (info) => (
-        <Badge 
-          colorScheme={info.getValue() ? 'green' : 'red'}
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-        >
-          {info.getValue() ? 'Active' : 'Inactive'}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor('account_status', {
-      id: 'account_status',
-      header: () => (
-        <Text
-          justifyContent="space-between"
-          align="center"
-          fontSize={{ sm: '10px', lg: '12px' }}
-          color="gray.400"
-        >
-          Account Status
+        <Text color={textColor} fontSize="sm">
+          {formatDate(info.getValue())}
         </Text>
       ),
-      cell: (info) => (
-        <Badge 
-          colorScheme={getStatusColor(info.getValue())}
-          px="2"
-          py="1"
-          borderRadius="full"
-          fontSize="xs"
-          textTransform="capitalize"
-        >
-          {info.getValue()}
-        </Badge>
-      ),
     }),
-
-
   ];
 
   const table = useReactTable({
-    data: subscriptionsData,
+    data: feedbacksData,
     columns,
     state: {
       sorting,
@@ -278,8 +277,6 @@ const SubscriptionPlans = () => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
-
-
 
   // Loading state
   if (isLoading) {
@@ -294,7 +291,7 @@ const SubscriptionPlans = () => {
           <Flex justify="center" align="center" h="200px">
             <VStack spacing={4}>
               <Spinner size="xl" color="#422afb" thickness="4px" />
-              <Text color={textColor}>Loading subscriptions...</Text>
+              <Text color={textColor}>Loading feedback...</Text>
             </VStack>
           </Flex>
         </Card>
@@ -313,22 +310,22 @@ const SubscriptionPlans = () => {
           overflowX={{ sm: 'scroll', lg: 'hidden' }}
         >
           <Flex justify="center" align="center" h="200px">
-            <Text color="red.500">Error loading subscriptions. Please try again.</Text>
+            <Text color="red.500">Error loading feedback. Please try again.</Text>
           </Flex>
         </Card>
       </Box>
     );
   }
 
-  return (
+    return (
     <Box mt="80px">
       <Card
         flexDirection="column"
-          w="100%"
+        w="100%"
         px="0px"
-          overflowX={{ sm: 'scroll', lg: 'hidden' }}
-        >
-          <Flex
+        overflowX={{ sm: 'scroll', lg: 'hidden' }}
+      >
+        <Flex
           px={{ base: "16px", md: "25px" }}
           mb="8px"
           direction={{ base: "column", md: "row" }}
@@ -342,15 +339,15 @@ const SubscriptionPlans = () => {
             fontWeight="700"
             lineHeight="100%"
           >
-            Subscriptions Management
-            </Text>
-          </Flex>
+            Feedback Management
+          </Text>
+        </Flex>
 
         <Box>
           <Table variant="simple" color="gray.500" mb="24px" mt="12px">
-              <Thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <Tr key={headerGroup.id}>
+            <Thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <Tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     return (
                       <Th
@@ -379,34 +376,34 @@ const SubscriptionPlans = () => {
                       </Th>
                     );
                   })}
-                  </Tr>
-                ))}
-              </Thead>
-              <Tbody>
+                </Tr>
+              ))}
+            </Thead>
+            <Tbody>
               {table.getRowModel().rows.map((row) => {
                 return (
                   <Tr key={row.id}>
                     {row.getVisibleCells().map((cell) => {
                       return (
-                      <Td
-                        key={cell.id}
-                        fontSize={{ sm: '14px' }}
-                        minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                        borderColor="transparent"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
+                        <Td
+                          key={cell.id}
+                          fontSize={{ sm: '14px' }}
+                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                          borderColor="transparent"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
                             cell.getContext(),
-                        )}
-                      </Td>
+                          )}
+                        </Td>
                       );
                     })}
                   </Tr>
                 );
               })}
-              </Tbody>
-            </Table>
-          </Box>
+            </Tbody>
+          </Table>
+        </Box>
 
         {/* Pagination Controls */}
         {pagination && (
@@ -496,7 +493,7 @@ const SubscriptionPlans = () => {
         )}
 
         {/* No data message */}
-        {(!subscriptionsData || subscriptionsData.length === 0) && !isLoading && (
+        {(!feedbacksData || feedbacksData.length === 0) && !isLoading && (
           <Flex
             px={{ base: "16px", md: "25px" }}
             py="40px"
@@ -504,13 +501,13 @@ const SubscriptionPlans = () => {
             align="center"
           >
             <Text color={textColor} fontSize="md">
-              No subscriptions found.
+              No feedback found.
             </Text>
-        </Flex>
+          </Flex>
         )}
       </Card>
     </Box>
   );
 };
 
-export default SubscriptionPlans;
+export default Feedbacks;
