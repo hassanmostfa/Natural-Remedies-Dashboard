@@ -554,6 +554,7 @@ const AddLesson = () => {
               return {
                 type: block.type,
                 order: index,
+                remedy_id: block.remedy_id || block.content?.remedy_id || '',
                 content: {
                   remedy_id: block.remedy_id || block.content?.remedy_id || ''
                 }
