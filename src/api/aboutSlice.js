@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const baseUrl = "https://remdy.mediagrafico.com/api";
+const baseUrl = "https://api.naturalremediesapp.com/api";
 
 const isTokenExpired = (tokenExpiry) => {
   if (!tokenExpiry) return true;

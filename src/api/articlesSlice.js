@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { refreshToken, isTokenExpired } from "./remediesSlice";
 
-const baseUrl = "https://remdy.mediagrafico.com/api";
+const baseUrl = "https://api.naturalremediesapp.com/api";
 
 export const articlesApiService = createApi({
   reducerPath: "articlesApiService",

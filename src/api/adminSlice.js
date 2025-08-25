@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 // Define your base URL
-const baseUrl = "https://remdy.mediagrafico.com/api"; // Replace with your actual base URL
+const baseUrl = "https://api.naturalremediesapp.com/api"; // Replace with your actual base URL
 
 // Function to create request
 const createRequest = (url) => ({ url });
