@@ -33,13 +33,21 @@ import {
   TagCloseButton,
   Wrap,
   WrapItem,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from '@chakra-ui/react';
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { useNavigate } from 'react-router-dom';
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
 import { FaLeaf, FaUpload } from 'react-icons/fa6';
-import { useCreateRemedyMutation } from 'api/remediesSlice';
+import { useCreateRemedyMutation, useGetRemedyAiSuggestionMutation } from 'api/remediesSlice';
 import { useGetDiseasesQuery } from 'api/diseasesSlice';
 import { useGetRemedyTypesQuery } from 'api/remediesTypesSlice';
 import { useGetBodySystemsQuery } from 'api/bodySystemsSlice';
@@ -477,6 +485,13 @@ const AddRemedy = () => {
   const toast = useToast();
   const [addRemedy, { isLoading: isAdding }] = useCreateRemedyMutation();
   const [uploadImage] = useUploadImageMutation();
+  
+  // Add AI suggestion mutation
+  const [getAiSuggestion, { isLoading: isAiLoading }] = useGetRemedyAiSuggestionMutation();
+  
+  // Modal state
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [aiQuery, setAiQuery] = React.useState('');
   
   // Fetch options from API - Try to get all items, fallback to smaller number if needed
   const { data: diseasesData, error: diseasesError, isLoading: diseasesLoading } = useGetDiseasesQuery({ per_page: 500 });
@@ -1008,10 +1023,14 @@ const AddRemedy = () => {
   };
 
   const handleAutoFill = () => {
-    if (!diseasesData?.data || !remedyTypesData?.data || !bodySystemsData?.data) {
+    onOpen();
+  };
+
+  const handleAiSubmit = async () => {
+    if (!aiQuery.trim()) {
       toast({
         title: 'Error',
-        description: 'Cannot auto-fill until options are loaded',
+        description: 'Please enter a query for the AI',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -1019,53 +1038,72 @@ const AddRemedy = () => {
       return;
     }
 
-    const sampleDisease = diseasesData.data[0];
-    const sampleRemedyType = remedyTypesData.data[0];
-    const sampleBodySystem = bodySystemsData.data[0];
-
-    setFormData({
-      title: 'Ginger Honey Tea',
-      disease: 'Common Cold',
-      disease_id: [sampleDisease.id],
-      remedy_type_id: [sampleRemedyType.id],
-      body_system_id: [sampleBodySystem.id],
-      main_image_url: '',
-      description: 'A soothing herbal tea made with fresh ginger root and natural honey. This remedy helps relieve cold symptoms, soothes sore throat, and boosts the immune system.',
-      visible_to_plan: 'rookie',
-      status: 'active',
-      product_link: 'http://127.0.0.1:8000',
-      ingredients: [
-        { id: 1, image_url: '', name: 'Fresh Ginger Root' },
-        { id: 2, image_url: '', name: 'Natural Honey' },
-        { id: 3, image_url: '', name: 'Lemon Juice' }
-      ],
-      instructions: [
-        { id: 1, image_url: '', name: 'Peel and slice fresh ginger root' },
-        { id: 2, image_url: '', name: 'Boil water and add ginger slices' },
-        { id: 3, image_url: '', name: 'Add honey and lemon juice' }
-      ],
-      benefits: [
-        { id: 1, image_url: '', name: 'Relieves cold symptoms' },
-        { id: 2, image_url: '', name: 'Soothes sore throat' },
-        { id: 3, image_url: '', name: 'Boosts immune system' }
-      ],
-      precautions: [
-        { id: 1, image_url: '', name: 'Not for children under 1' },
-        { id: 2, image_url: '', name: 'Avoid if allergic to ginger' }
-      ],
-    });
-
-    setNextId(4);
-
-    toast({
-      title: 'Auto Fill Complete',
-      description: 'Form has been populated with sample data for testing.',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+    try {
+      const response = await getAiSuggestion(aiQuery).unwrap();
+      
+      if (response.success) {
+        const aiData = response.data;
+        
+        // Populate form with AI data
+        setFormData(prev => ({
+          ...prev,
+          title: aiData.title || '',
+          description: aiData.description || '',
+          ingredients: aiData.ingredients?.map((ingredient, index) => ({
+            id: index + 1,
+            image_url: '',
+            name: ingredient.name || ''
+          })) || [{ id: 1, image_url: '', name: '' }],
+          instructions: aiData.instructions?.map((instruction, index) => ({
+            id: index + 1,
+            image_url: '',
+            name: instruction.name || ''
+          })) || [{ id: 1, image_url: '', name: '' }],
+          benefits: aiData.benefits?.map((benefit, index) => ({
+            id: index + 1,
+            image_url: '',
+            name: benefit.name || ''
+          })) || [{ id: 1, image_url: '', name: '' }],
+          precautions: aiData.precautions?.map((precaution, index) => ({
+            id: index + 1,
+            image_url: '',
+            name: precaution.name || ''
+          })) || [{ id: 1, image_url: '', name: '' }],
+        }));
+        
+        // Set next ID based on the number of items
+        const maxItems = Math.max(
+          aiData.ingredients?.length || 0,
+          aiData.instructions?.length || 0,
+          aiData.benefits?.length || 0,
+          aiData.precautions?.length || 0
+        );
+        setNextId(maxItems + 2);
+        
+        toast({
+          title: 'AI Auto Fill Complete',
+          description: 'Form has been populated with AI-generated data.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+        
+        onClose();
+        setAiQuery('');
+      } else {
+        throw new Error(response.message || 'Failed to get AI suggestion');
+      }
+    } catch (error) {
+      console.error('AI suggestion error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to get AI suggestion. Please try again.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
-
 
   const handleRemoveImage = React.useCallback((listName, index) => {
     setImagePreviews(prev => ({
@@ -1220,7 +1258,7 @@ const AddRemedy = () => {
                 />
               </FormControl>
 
-              {/* <FormControl isRequired>
+              <FormControl isRequired>
                 <FormLabel color={memoizedColors.textColor} fontWeight="600">Disease Name</FormLabel>
                 <Input
                   placeholder="Enter disease name"
@@ -1231,7 +1269,7 @@ const AddRemedy = () => {
                   borderColor={memoizedColors.borderColor}
                   borderRadius="lg"
                 />
-              </FormControl> */}
+              </FormControl>
 
               <HStack spacing="4" align="flex-start">
                 <TagInput
@@ -1598,6 +1636,39 @@ const AddRemedy = () => {
           </form>
         </Box>
       </Card>
+
+      {/* AI Suggestion Modal */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>AI Remedy Suggestion</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl>
+              <FormLabel>Describe the remedy you need</FormLabel>
+              <Textarea
+                placeholder="e.g., A natural remedy for headaches using common herbs"
+                value={aiQuery}
+                onChange={(e) => setAiQuery(e.target.value)}
+                rows={4}
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="blue"
+              onClick={handleAiSubmit}
+              isLoading={isAiLoading}
+              loadingText="Generating..."
+            >
+              Generate Suggestion
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };

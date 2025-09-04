@@ -121,6 +121,15 @@ export const remediesApiService = createApi({
         method: "DELETE",
       }),
     }),
+
+    // AI remedy suggestion endpoint
+    getRemedyAiSuggestion: builder.mutation({
+      query: (query) => ({
+        url: "/remedy-ai",
+        method: "POST",
+        body: { query },
+      }),
+    }),
   }),
 });
 
@@ -130,6 +139,7 @@ export const {
   useCreateRemedyMutation,
   useUpdateRemedyMutation,
   useDeleteRemedyMutation,
+  useGetRemedyAiSuggestionMutation, // New export for the AI endpoint
 } = remediesApiService;
 
 export { refreshToken, isTokenExpired };
