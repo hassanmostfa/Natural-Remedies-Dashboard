@@ -65,7 +65,7 @@ export const staticsApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Statics'],
+  tagTypes: ['Statics', 'Stats'],
   endpoints: (builder) => ({
     // Get all statics with optional search and pagination
     getStatics: builder.query({
@@ -94,11 +94,22 @@ export const staticsApi = createApi({
       },
       providesTags: (result) => [{ type: 'Statics', id: 'LIST' }],
     }),
+    // Get dashboard stats
+    getStats: builder.query({
+      query: () => ({
+        url: '/dashboard/stats',
+      }),
+      transformResponse: (response) => {
+        return response;
+      },
+      providesTags: (result) => [{ type: 'Stats', id: 'LIST' }],
+    }),
   }),
 });
 
 export const {
   useGetStaticsQuery,
+  useGetStatsQuery,
 } = staticsApi;
 
 export { refreshToken, isTokenExpired };
