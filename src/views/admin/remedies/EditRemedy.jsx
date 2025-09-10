@@ -918,16 +918,6 @@ const ListSection = React.memo(({
          return;
        }
  
-             if (!formData.disease.trim()) {
-        toast({
-          title: 'Error',
-          description: 'Disease name is required',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-        return;
-      }
 
       if (formData.disease_id.length === 0) {
         toast({
@@ -1053,7 +1043,6 @@ const ListSection = React.memo(({
     switch (activeStep) {
       case 0:
         return formData.title.trim() && 
-               formData.disease.trim() &&
                formData.disease_id.length > 0 && 
                formData.remedy_type_id.length > 0 && 
                formData.body_system_id.length > 0 && 
@@ -1213,18 +1202,6 @@ const ListSection = React.memo(({
                 />
               </FormControl>
 
-              {/* <FormControl isRequired>
-                <FormLabel color={memoizedColors.textColor} fontWeight="600">Disease Name</FormLabel>
-                <Input
-                  placeholder="Enter disease name"
-                  value={formData.disease}
-                  onChange={(e) => handleInputChange('disease', e.target.value)}
-                  bg={memoizedColors.cardBg}
-                  border="1px solid"
-                  borderColor={memoizedColors.borderColor}
-                  borderRadius="lg"
-                />
-              </FormControl> */}
 
               <HStack spacing="4" align="flex-start">
                 <TagInput
