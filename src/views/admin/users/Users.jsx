@@ -50,6 +50,7 @@ const exportToExcel = (data, filename) => {
     'ID': user.id,
     'Name': user.name,
     'Email': user.email,
+    'Phone': user.phone || 'N/A',
     'Subscription Plan': user.subscription_plan,
     'Account Status': user.account_status,
     'Email Verified': user.email_verified_at ? 'Yes' : 'No',
@@ -187,6 +188,24 @@ const Users = () => {
             {/* {info.row.original.email_verified_at ? 'Verified' : 'Not Verified'} */}
           </Badge>
         </VStack>
+      ),
+    }),
+    columnHelper.accessor('phone', {
+      id: 'phone',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Phone
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor} fontSize="sm">
+          {info.getValue() || 'N/A'}
+        </Text>
       ),
     }),
     columnHelper.accessor('subscription_plan', {

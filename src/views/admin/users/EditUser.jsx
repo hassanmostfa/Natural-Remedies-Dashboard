@@ -47,6 +47,7 @@ const EditUser = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     full_name: '',
     subscription_plan: 'rookie',
     profile_image: '',
@@ -79,6 +80,7 @@ const EditUser = () => {
              setFormData({
          name: user.name || '',
          email: user.email || '',
+         phone: user.phone || '',
          full_name: user.full_name || '',
          subscription_plan: user.subscription_plan || 'rookie',
          profile_image: user.profile_image || '',
@@ -255,6 +257,7 @@ const EditUser = () => {
        const userData = {
          name: formData.name,
          email: formData.email,
+         phone: formData.phone || null,
          full_name: formData.full_name || formData.name, // Use name as fallback
          subscription_plan: formData.subscription_plan,
          profile_image: formData.profile_image || null,
@@ -504,6 +507,23 @@ const EditUser = () => {
                    name="email"
                    placeholder="Enter user's email"
                    value={formData.email}
+                   onChange={handleInputChange}
+                   bg={inputBg}
+                   color={textColor}
+                   borderColor={inputBorder}
+                 />
+               </FormControl>
+
+               {/* Phone Field */}
+               <FormControl>
+                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                   Phone Number (Optional)
+                 </FormLabel>
+                 <Input
+                   type="tel"
+                   name="phone"
+                   placeholder="Enter user's phone number"
+                   value={formData.phone}
                    onChange={handleInputChange}
                    bg={inputBg}
                    color={textColor}

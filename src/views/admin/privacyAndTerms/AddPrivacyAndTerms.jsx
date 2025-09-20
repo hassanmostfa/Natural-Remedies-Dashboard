@@ -17,6 +17,7 @@ import {
 } from '@chakra-ui/react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import Quill from 'quill';
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSave, FaEdit } from 'react-icons/fa';
@@ -39,6 +40,19 @@ const AddPrivacyAndTerms = () => {
   });
 
   const [errors, setErrors] = React.useState({});
+
+  // Register custom line-height attribute
+  React.useEffect(() => {
+    try {
+      const LineHeightStyle = Quill.import('attributors/style/line-height');
+      if (LineHeightStyle) {
+        LineHeightStyle.whitelist = ['1', '1.2', '1.4', '1.6', '1.8', '2'];
+        Quill.register(LineHeightStyle, true);
+      }
+    } catch (error) {
+      console.log('Line-height attribute registration skipped:', error);
+    }
+  }, []);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -142,22 +156,52 @@ const AddPrivacyAndTerms = () => {
             Policy Content *
           </FormLabel>
           <Box border="1px" borderColor={borderColor} borderRadius="md">
+            <style>
+              {`
+                .ql-editor {
+                  line-height: 1.6 !important;
+                }
+                .ql-editor p {
+                  margin-bottom: 1em;
+                }
+                .ql-editor h1, .ql-editor h2, .ql-editor h3, .ql-editor h4, .ql-editor h5, .ql-editor h6 {
+                  margin-top: 1em;
+                  margin-bottom: 0.5em;
+                }
+              `}
+            </style>
             <ReactQuill
               theme="snow"
               value={formData.content}
               onChange={(value) => handleInputChange('content', value)}
               placeholder="Enter the detailed policy content..."
-              style={{ height: '300px' }}
+              formats={[
+                'header', 'bold', 'italic', 'underline', 'strike',
+                'list', 'bullet', 'indent',
+                'color', 'background', 'align', 'lineHeight',
+                'code-block', 'blockquote', 'code',
+                'link', 'image', 'clean'
+              ]}
               modules={{
                 toolbar: [
-                  [{ 'header': [1, 2, 3, false] }],
+                  [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
                   ['bold', 'italic', 'underline', 'strike'],
                   [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                  [{ 'indent': '-1'}, { 'indent': '+1' }],
                   [{ 'color': [] }, { 'background': [] }],
                   [{ 'align': [] }],
-                  ['link', 'blockquote', 'code-block'],
+                  [{ 'lineHeight': ['1', '1.2', '1.4', '1.6', '1.8', '2'] }],
+                  ['blockquote', 'code-block'],
+                  ['link', 'image'],
                   ['clean']
                 ],
+                clipboard: {
+                  matchVisual: false,
+                }
+              }}
+              style={{ 
+                height: '350px',
+                marginBottom: '50px'
               }}
             />
           </Box>
