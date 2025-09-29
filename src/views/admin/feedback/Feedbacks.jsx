@@ -67,10 +67,13 @@ const Feedbacks = () => {
   // Rating color mapping
   const getRatingColor = (rating) => {
     const ratingColors = {
+      'Amazing': 'green',
       'Excellent': 'green',
+      'good': 'blue',
       'Good': 'blue',
       'Okay': 'yellow',
       'Poor': 'orange',
+      'Bad': 'red',
       'Very Poor': 'red'
     };
     return ratingColors[rating] || 'gray';
@@ -79,10 +82,13 @@ const Feedbacks = () => {
   // Rating icon mapping
   const getRatingIcon = (rating) => {
     const ratingIcons = {
+      'Amazing': '⭐⭐⭐⭐⭐',
       'Excellent': '⭐⭐⭐⭐⭐',
+      'good': '⭐⭐⭐⭐',
       'Good': '⭐⭐⭐⭐',
       'Okay': '⭐⭐⭐',
       'Poor': '⭐⭐',
+      'Bad': '⭐',
       'Very Poor': '⭐'
     };
     return ratingIcons[rating] || '⭐';
@@ -169,7 +175,7 @@ const Feedbacks = () => {
         </Text>
       ),
     }),
-    columnHelper.accessor('user_id', {
+    columnHelper.accessor('user', {
       id: 'user',
       header: () => (
         <Text
@@ -181,13 +187,23 @@ const Feedbacks = () => {
           User
         </Text>
       ),
-      cell: (info) => (
-        info.getValue() ? (
+      cell: (info) => {
+        const user = info.getValue();
+        return user ? (
           <HStack spacing={2}>
-            <Avatar size="sm" name="User" />
-            <Text color={textColor} fontSize="sm">
-              User #{info.getValue()}
-            </Text>
+            <Avatar 
+              size="sm" 
+              name={user.name || user.full_name} 
+              src={user.profile_image}
+            />
+            <VStack spacing={0} align="start">
+              <Text color={textColor} fontSize="sm" fontWeight="medium">
+                {user.name || user.full_name}
+              </Text>
+              <Text color="gray.500" fontSize="xs">
+                {user.email}
+              </Text>
+            </VStack>
           </HStack>
         ) : (
           <HStack spacing={2}>
@@ -196,8 +212,8 @@ const Feedbacks = () => {
               Anonymous
             </Text>
           </HStack>
-        )
-      ),
+        );
+      },
     }),
     columnHelper.accessor('device', {
       id: 'device',
