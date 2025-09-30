@@ -43,6 +43,7 @@ import AddRemedy from 'views/admin/remedies/AddRemedy';
 import EditRemedy from 'views/admin/remedies/EditRemedy';
 import ShowRemedy from 'views/admin/remedies/ShowRemedy';
 import Notifications from 'views/admin/notifications/Notifications';
+import AddNotification from 'views/admin/notifications/AddNotification';
 import Instructors from 'views/admin/instructors/Instructors';
 import AddInstructor from 'views/admin/instructors/AddInstructor';
 import EditInstructor from 'views/admin/instructors/EditInstructor';
@@ -236,6 +237,13 @@ const routes = [
     icon: <Icon as={FaBell} width="20px" height="20px" color="inherit" />,
     component: <Notifications />,
     showInSidebar: true,
+  },
+  {
+    name: 'Add Notification',
+    layout: '/admin',
+    path: '/notifications/add',
+    component: <AddNotification />,
+    showInSidebar: false,
   },
   {
     name: 'Instructors',

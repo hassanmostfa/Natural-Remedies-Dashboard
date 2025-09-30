@@ -69,6 +69,24 @@ export const notificationsApi = createApi({
   }),
   tagTypes: ['Notifications'],
   endpoints: (builder) => ({
+    getNotifications: builder.query({
+      query: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        
+        if (params.page) {
+          queryParams.append("page", params.page);
+        }
+        if (params.per_page) {
+          queryParams.append("per_page", params.per_page);
+        }
+        
+        const queryString = queryParams.toString();
+        return {
+          url: `/get-notifications${queryString ? `?${queryString}` : ""}`,
+        };
+      },
+      providesTags: ['Notifications'],
+    }),
     sendNotification: builder.mutation({
       query: (notificationData) => ({
         url: '/send-notification',
@@ -81,6 +99,7 @@ export const notificationsApi = createApi({
 });
 
 export const {
+  useGetNotificationsQuery,
   useSendNotificationMutation,
 } = notificationsApi;
 

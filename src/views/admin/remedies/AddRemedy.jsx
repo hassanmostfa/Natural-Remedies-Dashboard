@@ -1084,11 +1084,23 @@ const AddRemedy = () => {
       }
     } catch (error) {
       console.error('AI suggestion error:', error);
+      
+      let errorMessage = 'Failed to get AI suggestion. Please try again.';
+      
+      // Check if the error is due to HTML response (endpoint doesn't exist)
+      if (error?.data?.includes('<!DOCTYPE html>') || error?.status === 'PARSING_ERROR') {
+        errorMessage = 'AI Suggestion feature is not available. The backend endpoint "/api/remedy-ai" is not configured. Please contact your backend developer to implement this endpoint.';
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to get AI suggestion. Please try again.',
+        title: 'AI Suggestion Error',
+        description: errorMessage,
         status: 'error',
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
     }
