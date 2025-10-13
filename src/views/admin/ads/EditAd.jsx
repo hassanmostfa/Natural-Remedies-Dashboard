@@ -11,19 +11,165 @@ import {
   Image,
   Select,
   VStack,
+  HStack,
   useToast,
   Icon,
   Spinner,
+  Checkbox,
+  CheckboxGroup,
+  Stack,
 } from '@chakra-ui/react';
 import { ArrowBackIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import { FaUpload, FaImage } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
 import Card from 'components/card/Card';
-import { useGetAdQuery, useUpdateAdMutation } from 'api/adsSlice';
+import { useGetAdQuery, useUpdateAdMutation, useGetAdTypesQuery } from 'api/adsSlice';
 import { useUploadImageMutation } from 'api/fileUploadSlice';
 import { useGetVideosQuery } from 'api/videosSlice';
 import { useGetRemediesQuery } from 'api/remediesSlice';
 import { useGetCoursesQuery } from 'api/coursesSlice';
+import { useGetArticlesQuery } from 'api/articlesSlice';
+
+// Custom SearchableSelect Component
+const SearchableSelect = ({ 
+  label, 
+  placeholder, 
+  options, 
+  value, 
+  onChange, 
+  isLoading, 
+  textColor, 
+  inputBg, 
+  inputBorder
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const containerRef = React.useRef(null);
+
+  // Client-side filtering
+  const filteredOptions = options?.filter(option => 
+    option.title?.toLowerCase().includes(searchValue.toLowerCase())
+  ) || [];
+
+  const selectedOption = options?.find(option => String(option.id) === String(value));
+
+  const handleSelectOption = (optionId) => {
+    onChange(optionId);
+    setIsOpen(false);
+    setSearchValue('');
+  };
+
+  const handleToggleDropdown = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setSearchValue('');
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchValue(e.target.value);
+  };
+
+  // Handle clicks outside to close dropdown
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setSearchValue('');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <Box position="relative" ref={containerRef}>
+      <FormLabel color={textColor} fontSize="xs" fontWeight="600" mb={1}>
+        {label}
+      </FormLabel>
+      
+      {/* Trigger Button */}
+      <Button
+        onClick={handleToggleDropdown}
+        bg={inputBg}
+        color={textColor}
+        border="1px solid"
+        borderColor={inputBorder}
+        borderRadius="md"
+        width="100%"
+        justifyContent="space-between"
+        rightIcon={<ChevronDownIcon />}
+        isLoading={isLoading}
+        _hover={{ bg: inputBg }}
+        _active={{ bg: inputBg }}
+      >
+        {selectedOption ? selectedOption.title : placeholder}
+      </Button>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <Box
+          position="absolute"
+          top="100%"
+          left={0}
+          right={0}
+          bg={inputBg}
+          border="1px solid"
+          borderColor={inputBorder}
+          borderRadius="md"
+          boxShadow="lg"
+          zIndex={1000}
+          mt={1}
+        >
+          {/* Search Input */}
+          <Box p={2} borderBottom="1px solid" borderColor={inputBorder}>
+            <Input
+              placeholder={`Search ${label.toLowerCase()}...`}
+              value={searchValue}
+              onChange={handleSearchChange}
+              bg="white"
+              color="black"
+              borderColor={inputBorder}
+              size="sm"
+              autoFocus
+            />
+          </Box>
+
+          {/* Options List */}
+          <Box maxH="200px" overflowY="auto">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <Box
+                  key={option.id}
+                  p={3}
+                  cursor="pointer"
+                  _hover={{ bg: "blue.50" }}
+                  onClick={() => handleSelectOption(option.id)}
+                  borderBottom="1px solid"
+                  borderColor={inputBorder}
+                  _last={{ borderBottom: "none" }}
+                >
+                  <Text fontSize="sm" color={textColor}>
+                    {option.title}
+                  </Text>
+                </Box>
+              ))
+            ) : (
+              <Box p={3} textAlign="center">
+                <Text fontSize="sm" color="gray.500">
+                  No {label.toLowerCase()} found
+                </Text>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 const EditAd = () => {
   const navigate = useNavigate();
@@ -36,24 +182,33 @@ const EditAd = () => {
   // API hooks
   const { data: adResponse, isLoading: isLoadingAd, isError: isErrorLoadingAd , refetch } = useGetAdQuery(id);
   const [updateAd, { isLoading: isUpdating }] = useUpdateAdMutation();
-  const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
+  const [uploadImage] = useUploadImageMutation();
   
-  // Data fetching hooks
-  const { data: videosData, isLoading: isLoadingVideos } = useGetVideosQuery({ per_page: 1000 });
-  const { data: remediesData, isLoading: isLoadingRemedies } = useGetRemediesQuery({ per_page: 1000 });
-  const { data: coursesData, isLoading: isLoadingCourses } = useGetCoursesQuery({ per_page: 1000 });
-
+  // State declarations
   const [formData, setFormData] = useState({
     title: '',
     url: '',
+    description: '',
     status: 'active',
     image: '',
-    type: 'home',
-    element_id: null,
+    visibility_target: 'all',
+    target_plans: [],
+    ad_types: [],
+    ad_type_elements: [],
   });
 
+  const [adTypeSelections, setAdTypeSelections] = useState([
+    { id: 1, adType: '', element: '' }
+  ]);
+
+  // Data fetching hooks (no search parameters)
+  const { data: adTypesData } = useGetAdTypesQuery();
+  const { data: videosData, isLoading: isLoadingVideos } = useGetVideosQuery({ per_page: 1000 });
+  const { data: remediesData, isLoading: isLoadingRemedies } = useGetRemediesQuery({ per_page: 1000 });
+  const { data: coursesData, isLoading: isLoadingCourses } = useGetCoursesQuery({ per_page: 1000 });
+  const { data: articlesData, isLoading: isLoadingArticles } = useGetArticlesQuery({ per_page: 1000 });
+
   const [imagePreview, setImagePreview] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -63,11 +218,16 @@ const EditAd = () => {
     { value: 'inactive', label: 'Inactive' },
   ];
 
-  const typeOptions = [
-    { value: 'home', label: 'Home' },
-    { value: 'video', label: 'Video' },
-    { value: 'remedy', label: 'Remedy' },
-    { value: 'course', label: 'Course' },
+  const visibilityTargetOptions = [
+    { value: 'all', label: 'All Users' },
+    { value: 'guest', label: 'Guest Users Only' },
+    { value: 'user', label: 'Registered Users Only' },
+  ];
+
+  const targetPlanOptions = [
+    { value: 'rookie', label: 'Rookie' },
+    { value: 'skilled', label: 'Skilled' },
+    { value: 'master', label: 'Master' },
   ];
 
   // Load ad data when fetched (only once)
@@ -78,11 +238,27 @@ const EditAd = () => {
       setFormData({
         title: adData.title || '',
         url: adData.url || '',
+        description: adData.description || '',
         status: adData.status || 'active',
         image: adData.image || '',
-        type: adData.type || 'home',
-        element_id: adData.element_id ? String(adData.element_id) : null,
+        visibility_target: adData.visibility_target || 'all',
+        target_plans: adData.target_plans || [],
+        ad_types: adData.ad_types || [],
+        ad_type_elements: adData.ad_type_elements || [],
       });
+      
+      // Initialize adTypeSelections based on existing data
+      if (adData.ad_types && adData.ad_types.length > 0) {
+        const selections = adData.ad_types.map((adTypeId, index) => ({
+          id: index + 1,
+          adType: String(adTypeId),
+          element: adData.ad_type_elements && adData.ad_type_elements[index] ? String(adData.ad_type_elements[index]) : ''
+        }));
+        setAdTypeSelections(selections);
+      } else {
+        setAdTypeSelections([{ id: 1, adType: '', element: '' }]);
+      }
+      
       setImagePreview(adData.image || null);
       setIsDataLoaded(true);
     }
@@ -102,13 +278,65 @@ const EditAd = () => {
       const newData = {
         ...prev,
         [name]: value,
-        // Reset element_id when type changes to home
-        ...(name === 'type' && value === 'home' && { element_id: null }),
+        // Reset ad_type_elements when ad_types changes
+        ...(name === 'ad_types' && { ad_type_elements: [] }),
       };
       console.log('Updated formData:', newData);
       return newData;
     });
   };
+
+  const handleArrayChange = (field, value) => {
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value,
+        // Reset ad_type_elements when ad_types changes
+        ...(field === 'ad_types' && { ad_type_elements: [] }),
+      };
+      console.log('Updated formData:', newData);
+      return newData;
+    });
+  };
+
+
+  // Dynamic ad types functions
+  const addAdType = () => {
+    const newId = Math.max(...adTypeSelections.map(item => item.id)) + 1;
+    setAdTypeSelections([...adTypeSelections, { id: newId, adType: '', element: '' }]);
+  };
+
+  const removeAdType = (id) => {
+    if (adTypeSelections.length > 1) {
+      setAdTypeSelections(adTypeSelections.filter(item => item.id !== id));
+    }
+  };
+
+  const updateAdTypeSelection = (id, field, value) => {
+    const updated = adTypeSelections.map(item => 
+      item.id === id 
+        ? { ...item, [field]: value, ...(field === 'adType' && { element: '' }) }
+        : item
+    );
+    setAdTypeSelections(updated);
+    
+    // Update form data
+    const adTypes = updated.map(item => item.adType).filter(Boolean).map(Number);
+    const adTypeElements = updated
+      .filter(item => item.adType && item.element)
+      .map(item => parseInt(item.element));
+    
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        ad_types: adTypes,
+        ad_type_elements: adTypeElements,
+      };
+      console.log('Updated formData:', newData);
+      return newData;
+    });
+  };
+
 
   
   useEffect(() => {
@@ -172,7 +400,6 @@ const EditAd = () => {
     try {
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
-      setSelectedFile(file);
       setIsUploadingImage(true);
       
       // Add a small delay to ensure state is set before upload starts
@@ -207,7 +434,6 @@ const EditAd = () => {
     } catch (error) {
       console.error('Failed to upload image:', error);
       setImagePreview(null);
-      setSelectedFile(null);
       toast({
         title: 'Error',
         description: error.data?.message || 'Failed to upload image',
@@ -222,7 +448,6 @@ const EditAd = () => {
 
   const clearImage = () => {
     setImagePreview(null);
-    setSelectedFile(null);
     setFormData(prev => ({
       ...prev,
       image: ''
@@ -250,10 +475,10 @@ const EditAd = () => {
       });
       return false;
     }
-    if (formData.type !== 'home' && !formData.element_id) {
+    if (formData.ad_types.length === 0) {
       toast({
         title: 'Error',
-        description: `Please select a ${formData.type}`,
+        description: 'Please select at least one ad type',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -276,8 +501,12 @@ const EditAd = () => {
         title: formData.title,
         image: formData.image,
         url: formData.url || null,
-        type: formData.type,
-        ...(formData.type !== 'home' && formData.element_id && { element_id: parseInt(formData.element_id) }),
+        description: formData.description || null,
+        status: formData.status,
+        visibility_target: formData.visibility_target,
+        target_plans: formData.target_plans,
+        ad_types: formData.ad_types,
+        ad_type_elements: formData.ad_type_elements,
       };
 
       await updateAd({ id, ad }).unwrap();
@@ -496,6 +725,23 @@ const EditAd = () => {
                 />
               </FormControl>
 
+              {/* Description Field */}
+              <FormControl>
+                <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                  Description (Optional)
+                </FormLabel>
+                <Input
+                  type="text"
+                  name="description"
+                  placeholder="Enter ad description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  bg={inputBg}
+                  color={textColor}
+                  borderColor={inputBorder}
+                />
+              </FormControl>
+
               {/* URL Field */}
               <FormControl>
                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
@@ -513,21 +759,21 @@ const EditAd = () => {
                 />
               </FormControl>
 
-              {/* Type Field */}
+              {/* Visibility Target Field */}
               <FormControl isRequired>
                 <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                  Ad Type
+                  Visibility Target
                 </FormLabel>
                 <Select
-                  name="type"
-                  value={formData.type}
+                  name="visibility_target"
+                  value={formData.visibility_target}
                   onChange={handleInputChange}
                   bg={inputBg}
                   color={textColor}
                   borderColor={inputBorder}
                   icon={<ChevronDownIcon />}
                 >
-                  {typeOptions.map(option => (
+                  {visibilityTargetOptions.map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -535,63 +781,6 @@ const EditAd = () => {
                 </Select>
               </FormControl>
 
-                             {/* Element Selection - Only show for non-home types */}
-               {formData.type !== 'home' && (
-                 <FormControl isRequired>
-                   <FormLabel color={textColor} fontSize="sm" fontWeight="700">
-                     Select {formData.type.charAt(0).toUpperCase() + formData.type.slice(1)}
-                   </FormLabel>
-                   <Select
-                     name="element_id"
-                     value={formData.element_id || ''}
-                     onChange={handleInputChange}
-                     bg={inputBg}
-                     color={textColor}
-                     borderColor={inputBorder}
-                     icon={<ChevronDownIcon />}
-                     isLoading={
-                       (formData.type === 'video' && isLoadingVideos) ||
-                       (formData.type === 'remedy' && isLoadingRemedies) ||
-                       (formData.type === 'course' && isLoadingCourses)
-                     }
-                   >
-                     <option value="">Select a {formData.type}</option>
-                     
-                                           {/* Video Options */}
-                      {formData.type === 'video' && videosData?.data
-                        ?.filter((video, index, self) => 
-                          index === self.findIndex(v => v.id === video.id)
-                        )
-                        ?.map(video => (
-                          <option key={video.id} value={video.id}>
-                            {video.title}
-                          </option>
-                        ))}
-                      
-                      {/* Remedy Options */}
-                      {formData.type === 'remedy' && remediesData?.data
-                        ?.filter((remedy, index, self) => 
-                          index === self.findIndex(r => r.id === remedy.id)
-                        )
-                        ?.map(remedy => (
-                          <option key={remedy.id} value={remedy.id}>
-                            {remedy.title}
-                          </option>
-                        ))}
-                      
-                      {/* Course Options */}
-                      {formData.type === 'course' && coursesData?.data
-                        ?.filter((course, index, self) => 
-                          index === self.findIndex(c => c.id === course.id)
-                        )
-                        ?.map(course => (
-                          <option key={course.id} value={course.id}>
-                            {course.title}
-                          </option>
-                        ))}
-                   </Select>
-                 </FormControl>
-               )}
 
               {/* Status Field */}
               <FormControl isRequired>
@@ -614,6 +803,123 @@ const EditAd = () => {
                   ))}
                 </Select>
               </FormControl>
+
+              {/* Target Plans Field */}
+              <FormControl>
+                <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                  Target Plans (Optional)
+                </FormLabel>
+                <CheckboxGroup
+                  value={formData.target_plans}
+                  onChange={(values) => handleArrayChange('target_plans', values)}
+                >
+                  <Stack spacing={4} direction="row" wrap="wrap">
+                    {targetPlanOptions.map(option => (
+                      <Checkbox
+                        key={option.value}
+                        value={option.value}
+                        colorScheme="blue"
+                        color={textColor}
+                      >
+                        {option.label}
+                      </Checkbox>
+                    ))}
+                  </Stack>
+                </CheckboxGroup>
+              </FormControl>
+
+              {/* Dynamic Ad Types Section */}
+              <FormControl isRequired>
+                <FormLabel color={textColor} fontSize="sm" fontWeight="700">
+                  Ad Types *
+                </FormLabel>
+                <VStack spacing={4} align="stretch">
+                  {adTypeSelections.map((selection, index) => (
+                    <Box key={selection.id} p={4} border="1px solid" borderColor={inputBorder} borderRadius="md">
+                      <Flex justify="space-between" align="center" mb={3}>
+                        <Text color={textColor} fontSize="sm" fontWeight="600">
+                          Ad Type {index + 1}
+                        </Text>
+                        {adTypeSelections.length > 1 && (
+                          <Button
+                            size="sm"
+                            colorScheme="red"
+                            variant="outline"
+                            onClick={() => removeAdType(selection.id)}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </Flex>
+                      
+                      <HStack spacing={3} align="stretch">
+                        {/* Ad Type Selection */}
+                        <Box flex="1">
+                          <FormLabel color={textColor} fontSize="xs" fontWeight="600" mb={1}>
+                            Ad Type
+                          </FormLabel>
+                          <Select
+                            value={selection.adType}
+                            onChange={(e) => updateAdTypeSelection(selection.id, 'adType', e.target.value)}
+                            bg={inputBg}
+                            color={textColor}
+                            borderColor={inputBorder}
+                            icon={<ChevronDownIcon />}
+                          >
+                            <option value="">Select Ad Type</option>
+                            {adTypesData?.data?.map(adType => (
+                              <option key={adType.id} value={adType.id}>
+                                {adType.name}
+                              </option>
+                            ))}
+                          </Select>
+                        </Box>
+
+                        {/* Element Selection - Only show for specific types */}
+                        {selection.adType && ['remedy', 'video', 'course', 'article'].includes(
+                          adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name
+                        ) && (
+                          <Box flex="1">
+                            <SearchableSelect
+                              label={`Select ${adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name}`}
+                              placeholder={`Select a ${adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name}`}
+                              options={
+                                adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name === 'video' ? videosData?.data :
+                                adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name === 'remedy' ? remediesData?.data :
+                                adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name === 'course' ? coursesData?.data :
+                                adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name === 'article' ? articlesData?.data : []
+                              }
+                              value={selection.element}
+                              onChange={(value) => updateAdTypeSelection(selection.id, 'element', value)}
+                              isLoading={
+                                (adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name === 'video' && isLoadingVideos) ||
+                                (adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name === 'remedy' && isLoadingRemedies) ||
+                                (adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name === 'course' && isLoadingCourses) ||
+                                (adTypesData?.data?.find(type => type.id === parseInt(selection.adType))?.name === 'article' && isLoadingArticles)
+                              }
+                              textColor={textColor}
+                              inputBg={inputBg}
+                              inputBorder={inputBorder}
+                            />
+                          </Box>
+                        )}
+                      </HStack>
+                    </Box>
+                  ))}
+                  
+                  {/* Add Type Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    colorScheme="blue"
+                    onClick={addAdType}
+                    leftIcon={<Text>+</Text>}
+                  >
+                    Add Type
+                  </Button>
+                </VStack>
+              </FormControl>
+
 
               {/* Submit Button */}
               <Button

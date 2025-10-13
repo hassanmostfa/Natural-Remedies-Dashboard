@@ -151,8 +151,8 @@ const Ads = () => {
         </Text>
       ),
     }),
-    columnHelper.accessor('type', {
-      id: 'type',
+    columnHelper.accessor('visibility_target', {
+      id: 'visibility_target',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -160,36 +160,86 @@ const Ads = () => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Type
+          Visibility Target
         </Text>
       ),
       cell: (info) => {
-        const type = info.getValue();
-        const getTypeColor = (type) => {
-          switch (type) {
-            case 'home':
+        const visibilityTarget = info.getValue();
+        const getVisibilityColor = (target) => {
+          switch (target) {
+            case 'all':
               return 'blue';
-            case 'video':
-              return 'green';
-            case 'remedy':
+            case 'guest':
               return 'orange';
-            case 'course':
-              return 'purple';
+            case 'user':
+              return 'green';
             default:
               return 'gray';
           }
         };
+        const getVisibilityLabel = (target) => {
+          switch (target) {
+            case 'all':
+              return 'All Users';
+            case 'guest':
+              return 'Guest Only';
+            case 'user':
+              return 'Users Only';
+            default:
+              return target;
+          }
+        };
         return (
           <Badge 
-            colorScheme={getTypeColor(type)}
+            colorScheme={getVisibilityColor(visibilityTarget)}
             px="2"
             py="1"
             borderRadius="full"
             fontSize="xs"
             textTransform="capitalize"
           >
-            {type}
+            {getVisibilityLabel(visibilityTarget)}
           </Badge>
+        );
+      },
+    }),
+    columnHelper.accessor('target_plans', {
+      id: 'target_plans',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Target Plans
+        </Text>
+      ),
+      cell: (info) => {
+        const targetPlans = info.getValue() || [];
+        if (targetPlans.length === 0) {
+          return (
+            <Text color="gray.500" fontSize="xs">
+              No plans
+            </Text>
+          );
+        }
+        return (
+          <VStack align="start" spacing={1}>
+            {targetPlans.map((plan, index) => (
+              <Badge 
+                key={index}
+                colorScheme="purple"
+                px="2"
+                py="1"
+                borderRadius="full"
+                fontSize="xs"
+                textTransform="capitalize"
+              >
+                {plan}
+              </Badge>
+            ))}
+          </VStack>
         );
       },
     }),

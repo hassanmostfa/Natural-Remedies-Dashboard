@@ -137,6 +137,14 @@ export const adsApiService = createApi({
         method: "PATCH",
       }),
     }),
+
+    // Get ad types
+    getAdTypes: builder.query({
+      query: () => "/ads-types",
+      transformResponse: (response) => {
+        return response;
+      },
+    }),
   }),
 });
 
@@ -147,6 +155,7 @@ export const {
   useUpdateAdMutation,
   useDeleteAdMutation,
   useToggleAdStatusMutation,
+  useGetAdTypesQuery,
 } = adsApiService;
 
 export { refreshToken, isTokenExpired };
