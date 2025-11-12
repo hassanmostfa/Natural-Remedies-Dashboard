@@ -131,7 +131,6 @@ const AddArticle = () => {
   const statusOptions = [
     { value: 'active', label: 'Active' },
     { value: 'inactive', label: 'Inactive' },
-    { value: 'draft', label: 'Draft' },
   ];
 
   const planOptions = [

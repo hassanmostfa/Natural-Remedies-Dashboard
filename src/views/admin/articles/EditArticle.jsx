@@ -420,7 +420,6 @@ const EditArticle = () => {
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="draft">Draft</option>
             </Select>
           </FormControl>
 

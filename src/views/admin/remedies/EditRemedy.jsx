@@ -1515,7 +1515,7 @@ const ListSection = React.memo(({
                      </Button>
                    )}
 
-                   {activeStep < steps.length - 1 ? (
+
                      <Button
                        type="button"
                    variant="darkBrand"
@@ -1533,7 +1533,7 @@ const ListSection = React.memo(({
                  >
                        Next
                  </Button>
-                                        ) : (
+
                  <Button
                    type="button"
                          variant="darkBrand"
@@ -1553,7 +1553,7 @@ const ListSection = React.memo(({
                  >
                          Update Remedy
                  </Button>
-                     )}
+
                  </HStack>
                </Flex>
              </VStack>

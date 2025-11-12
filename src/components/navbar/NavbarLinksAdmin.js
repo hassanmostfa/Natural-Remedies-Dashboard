@@ -45,11 +45,14 @@ export default function HeaderLinks(props) {
     '14px 17px 40px 4px rgba(112, 144, 176, 0.06)',
   );
   const borderButton = useColorModeValue('secondaryGray.500', 'whiteAlpha.200');
+  const admin_data = localStorage.getItem('admin_data') || '{}';
+  const name = JSON.parse(admin_data).name || 'Admin';
 
    // Handle Logout
    const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.reload();
+    window.location.href = '/admin/auth/sign-in';
    }
   return (
     <Flex
@@ -62,7 +65,7 @@ export default function HeaderLinks(props) {
       borderRadius="30px"
       boxShadow={shadow}
     >
-      <SearchBar
+      {/* <SearchBar
         mb={() => {
           if (secondary) {
             return { base: '10px', md: 'unset' };
@@ -71,7 +74,7 @@ export default function HeaderLinks(props) {
         }}
         me="10px"
         borderRadius="30px"
-      />
+      /> */}
       <Flex
         bg={ethBg}
         display={secondary ? 'flex' : 'none'}
@@ -108,7 +111,7 @@ export default function HeaderLinks(props) {
       </Flex>
       <SidebarResponsive routes={routes} />
       <Menu>
-        <MenuButton p="0px">
+        {/* <MenuButton p="0px">
           <Icon
             mt="6px"
             as={MdNotificationsNone}
@@ -117,7 +120,7 @@ export default function HeaderLinks(props) {
             h="18px"
             me="10px"
           />
-        </MenuButton>
+        </MenuButton> */}
         <MenuList
           boxShadow={shadow}
           p="20px"
@@ -129,7 +132,7 @@ export default function HeaderLinks(props) {
           minW={{ base: 'unset', md: '400px', xl: '450px' }}
           maxW={{ base: '360px', md: 'unset' }}
         >
-          <Flex w="100%" mb="20px">
+          {/* <Flex w="100%" mb="20px">
             <Text fontSize="md" fontWeight="600" color={textColor}>
               Notifications
             </Text>
@@ -142,8 +145,8 @@ export default function HeaderLinks(props) {
             >
               Mark all read
             </Text>
-          </Flex>
-          <Flex flexDirection="column">
+          </Flex> */}
+          {/* <Flex flexDirection="column">
             <MenuItem
               _hover={{ bg: 'none' }}
               _focus={{ bg: 'none' }}
@@ -162,7 +165,7 @@ export default function HeaderLinks(props) {
             >
               <ItemContent info="Horizon Design System Free" />
             </MenuItem>
-          </Flex>
+          </Flex> */}
         </MenuList>
       </Menu>
 
@@ -191,7 +194,7 @@ export default function HeaderLinks(props) {
           <Avatar
             _hover={{ cursor: 'pointer' }}
             color="white"
-            name="Adela Parkson"
+            name={name}
             bg="#11047A"
             size="sm"
             w="40px"
@@ -218,7 +221,7 @@ export default function HeaderLinks(props) {
               fontWeight="700"
               color={textColor}
             >
-              👋&nbsp; Hey, Admin
+              👋&nbsp; Hey, {name}
             </Text>
           </Flex>
           <Flex flexDirection="column" p="10px">

@@ -28,7 +28,7 @@ import {
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
-import { FaCheck, FaTimes, FaStar, FaUser, FaEye, FaTrash } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaStar, FaUser, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { 
@@ -99,6 +99,126 @@ const Reviews = () => {
     refetch();
   }, [statusFilter, typeFilter, currentPage, perPage, refetch]);
 
+  const handleApproveReview = async (id) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Approve Review?',
+        text: "This review will be visible on the mobile app.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, approve it!'
+      });
+
+      if (result.isConfirmed) {
+        await updateReview({ 
+          id, 
+          submissionData: { status: 'accepted' } 
+        }).unwrap();
+
+        toast({
+          title: 'Review Approved',
+          description: 'The review is now visible on the mobile app.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+
+        // Refetch the data to get updated status
+        refetch();
+      }
+    } catch (error) {
+      console.error('Failed to approve review:', error);
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to approve review.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleRejectReview = async (id) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Reject Review?',
+        text: "This review will not be visible on the mobile app.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, reject it!'
+      });
+
+      if (result.isConfirmed) {
+        await updateReview({ 
+          id, 
+          submissionData: { status: 'rejected' } 
+        }).unwrap();
+
+        toast({
+          title: 'Review Rejected',
+          description: 'The review will not appear on the mobile app.',
+          status: 'info',
+          duration: 3000,
+          isClosable: true,
+        });
+
+        // Refetch the data to get updated status
+        refetch();
+      }
+    } catch (error) {
+      console.error('Failed to reject review:', error);
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to reject review.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleDeleteReview = async (id) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Delete Review?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!'
+      });
+
+      if (result.isConfirmed) {
+        await deleteReview(id).unwrap();
+
+        toast({
+          title: 'Review Deleted',
+          description: 'The review has been permanently deleted.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+
+        // Refetch the data to get updated list
+        refetch();
+      }
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+      toast({
+        title: 'Error',
+        description: error.data?.message || 'Failed to delete review.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   const columns = [
     columnHelper.accessor('user.image', {
       id: 'user',
@@ -168,9 +288,9 @@ const Reviews = () => {
           <Text color={textColor} fontWeight="bold" fontSize="sm">
             {info.getValue()}
           </Text>
-          <Text color="gray.500" fontSize="xs" noOfLines={2}>
+          {/* <Text color="gray.500" fontSize="xs" noOfLines={2}>
             {info.row.original.comment}
-          </Text>
+          </Text> */}
           <HStack spacing={2}>
             <Badge colorScheme="blue" size="sm">
               {info.row.original.itemType}
@@ -255,10 +375,28 @@ const Reviews = () => {
                 </Button>
               </>
             ) : (
-              <Text color="gray.400" fontSize="sm">
+              <Text color="gray.400" fontSize="sm" minW="80px">
                 —
               </Text>
             )}
+
+            {/* Delete Button - Always visible but with different styling based on status */}
+            <Button
+              size="sm"
+              bg={"red.50"}
+              color={"red.600"}
+              borderColor={"red.200"}
+              variant="outline"
+              onClick={() => handleDeleteReview(review.id)}
+              leftIcon={<Icon as={FaTrash} />}
+              isLoading={isDeleting}
+              _hover={{ 
+                bg:  "red.100", 
+                borderColor: "red.300" 
+              }}
+            >
+              Delete
+            </Button>
           </HStack>
         );
       },
@@ -275,130 +413,6 @@ const Reviews = () => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
-
-  const handleApproveReview = async (id) => {
-    try {
-      const result = await Swal.fire({
-        title: 'Approve Review?',
-        text: "This review will be visible on the mobile app.",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, approve it!'
-      });
-
-      if (result.isConfirmed) {
-        await updateReview({ 
-          id, 
-          submissionData: { status: 'accepted' } 
-        }).unwrap();
-
-        toast({
-          title: 'Review Approved',
-          description: 'The review is now visible on the mobile app.',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-
-        // Refetch the data to get updated status
-        refetch();
-      }
-    } catch (error) {
-      console.error('Failed to approve review:', error);
-      toast({
-        title: 'Error',
-        description: error.data?.message || 'Failed to approve review.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
-
-  const handleRejectReview = async (id) => {
-    try {
-      const result = await Swal.fire({
-        title: 'Reject Review?',
-        text: "This review will not be visible on the mobile app.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, reject it!'
-      });
-
-      if (result.isConfirmed) {
-        await updateReview({ 
-          id, 
-          submissionData: { status: 'rejected' } 
-        }).unwrap();
-
-        toast({
-          title: 'Review Rejected',
-          description: 'The review will not appear on the mobile app.',
-          status: 'info',
-          duration: 3000,
-          isClosable: true,
-        });
-
-        // Refetch the data to get updated status
-        refetch();
-      }
-    } catch (error) {
-      console.error('Failed to reject review:', error);
-      toast({
-        title: 'Error',
-        description: error.data?.message || 'Failed to reject review.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
-
-  const handleViewReview = (id) => {
-    navigate(`/admin/review/details/${id}`);
-  };
-
-  const handleDeleteReview = async (id) => {
-    try {
-      const result = await Swal.fire({
-        title: 'Delete Review?',
-        text: "This action cannot be undone!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, delete it!'
-      });
-
-      if (result.isConfirmed) {
-        await deleteReview(id).unwrap();
-
-        toast({
-          title: 'Review Deleted',
-          description: 'The review has been permanently deleted.',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-
-        // Refetch the data to get updated list
-        refetch();
-      }
-    } catch (error) {
-      console.error('Failed to delete review:', error);
-      toast({
-        title: 'Error',
-        description: error.data?.message || 'Failed to delete review.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
 
   // Loading state
   if (isLoading) {
