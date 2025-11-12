@@ -28,7 +28,6 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
-  Grid,
 } from '@chakra-ui/react';
 import {
   createColumnHelper,
@@ -40,7 +39,7 @@ import {
 import * as React from 'react';
 import Card from 'components/card/Card';
 import { EditIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
-import { FaEye, FaTrash, FaLeaf, FaList } from 'react-icons/fa';
+import {FaTrash, FaLeaf, FaList } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { useGetArticlesQuery, useDeleteArticleMutation } from 'api/articlesSlice';

@@ -5,7 +5,6 @@ import {
   Text,
   VStack,
   Icon,
-  Spinner,
   Progress,
 } from '@chakra-ui/react';
 import { FaUpload, FaFileAlt } from 'react-icons/fa';

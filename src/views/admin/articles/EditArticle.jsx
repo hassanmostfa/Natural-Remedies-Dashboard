@@ -23,16 +23,10 @@ import {
   StepStatus,
   StepTitle,
   StepSeparator,
-  useSteps,
   Grid,
-  GridItem,
   Image,
   Icon,
   Spinner,
-  Avatar,
-  Checkbox,
-  CheckboxGroup,
-  Badge,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -113,7 +107,6 @@ const EditArticle = () => {
   // Color mode values
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const hoverBgColor = useColorModeValue('gray.50', 'gray.700');
   const textColor = useColorModeValue('secondaryGray.900', 'white');
 
   // Load article data when component mounts

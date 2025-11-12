@@ -10,12 +10,8 @@ import {
   useColorModeValue,
   Image,
   Select,
-  IconButton,
-  Textarea,
   VStack,
-  HStack,
   useToast,
-  Avatar,
   Icon,
   Spinner,
 } from '@chakra-ui/react';

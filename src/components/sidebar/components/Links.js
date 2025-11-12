@@ -8,8 +8,6 @@ import {
   HStack,
   Text,
   useColorModeValue,
-  Collapse,
-  Icon,
 } from "@chakra-ui/react";
 import DropdownMenu from "./DropdownMenu ";
 

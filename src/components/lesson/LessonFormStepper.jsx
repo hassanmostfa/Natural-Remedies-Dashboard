@@ -27,7 +27,6 @@ import {
   Progress,
 } from '@chakra-ui/react';
 import { FaPlay, FaVideo, FaFileAlt, FaImage, FaLeaf, FaList, FaUpload } from 'react-icons/fa';
-import ImageUploadContainer from 'components/upload/ImageUploadContainer';
 import ContentBlockForm from 'components/lesson/ContentBlockForm';
 
 const LessonFormStepper = ({

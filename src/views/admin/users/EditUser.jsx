@@ -10,21 +10,16 @@ import {
   useColorModeValue,
   Image,
   Select,
-  IconButton,
-  Textarea,
   VStack,
-  HStack,
   useToast,
-  Avatar,
   Icon,
   Spinner,
   Alert,
   AlertIcon,
 } from '@chakra-ui/react';
-import { AddIcon, ChevronDownIcon, ArrowBackIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon, ArrowBackIcon } from '@chakra-ui/icons';
 import { FaUser, FaUpload } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
-import Swal from 'sweetalert2';
 import Card from 'components/card/Card';
 import { useGetUserQuery, useUpdateUserMutation } from 'api/usersSlice';
 import { useUploadImageMutation } from 'api/fileUploadSlice';
@@ -34,10 +29,8 @@ const EditUser = () => {
   const { id } = useParams();
   const toast = useToast();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
-  const cardBg = useColorModeValue('white', 'navy.700');
   const inputBg = useColorModeValue('gray.100', 'gray.700');
   const inputBorder = useColorModeValue('gray.300', 'gray.600');
-  const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
   // API hooks
   const { data: userData, isLoading: isLoadingUser, isError: isErrorUser, error: userError , refetch } = useGetUserQuery(id);

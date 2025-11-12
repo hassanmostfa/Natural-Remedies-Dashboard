@@ -2,7 +2,6 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 const baseUrl = "https://api.naturalremediesapp.com/api";
 
-const createRequest = (url) => ({ url });
 
 const isTokenExpired = (tokenExpiry) => {
   if (!tokenExpiry) return true;

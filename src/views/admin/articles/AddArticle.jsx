@@ -28,9 +28,6 @@ import {
   Image,
   Icon,
   Spinner,
-  Avatar,
-  Checkbox,
-  CheckboxGroup,
 } from '@chakra-ui/react';
 import * as React from 'react';
 import Card from 'components/card/Card';
@@ -50,7 +47,6 @@ const AddArticle = () => {
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
   const inputBg = useColorModeValue('white', 'gray.700');
-  const cardBg = useColorModeValue('white', 'gray.800');
 
   // API mutations
   const [createArticle, { isLoading: isCreating }] = useCreateArticleMutation();

@@ -17,7 +17,7 @@ import {
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
-import { FaPlay, FaVideo, FaFileAlt, FaImage, FaLeaf, FaList, FaUpload } from 'react-icons/fa';
+import {  FaVideo, FaFileAlt, FaImage, FaLeaf, FaList } from 'react-icons/fa';
 import ImageUploadContainer from 'components/upload/ImageUploadContainer';
 import PdfUploadContainer from 'components/upload/PdfUploadContainer';
 

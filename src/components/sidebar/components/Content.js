@@ -1,5 +1,5 @@
 // chakra imports
-import { Box, Flex, Stack, Collapse } from "@chakra-ui/react";
+import { Box, Flex, Stack } from "@chakra-ui/react";
 // Custom components
 import Brand from "components/sidebar/components/Brand";
 import Links from "components/sidebar/components/Links";
