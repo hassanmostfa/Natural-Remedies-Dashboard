@@ -81,7 +81,6 @@ const EditDisease = () => {
   const statusOptions = [
     { value: 'active', label: 'Active' },
     { value: 'inactive', label: 'Inactive' },
-    { value: 'draft', label: 'Draft' },
   ];
 
   // Load disease data when it's fetched

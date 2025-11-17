@@ -59,11 +59,25 @@ const Reviews = () => {
     per_page: perPage
   }, { refetchOnMountOrArgChange: true });
 
+  console.log("data is : ", reviewsResponse);
+  
   const [updateReview, { isLoading: isUpdating }] = useUpdateReviewMutation();
   const [deleteReview, { isLoading: isDeleting }] = useDeleteReviewMutation();
 
   // Extract data and pagination from response
   const reviewsData = reviewsResponse?.data || [];
+
+  // Function to get item name based on available data
+  const getItemName = (review) => {
+    // If element exists and has a title, use it
+    if (review.element && review.element.title) {
+      return review.element.title;
+    }
+    
+    // Otherwise, fall back to the format: "Type #element_id"
+    const typeName = review.type ? review.type.charAt(0).toUpperCase() + review.type.slice(1) : 'Unknown';
+    return `${typeName} #${review.element_id}`;
+  };
 
   // Transform API data to match component structure
   const reviews = React.useMemo(() => {
@@ -80,9 +94,7 @@ const Reviews = () => {
       title: review.message ? (review.message.substring(0, 50) + (review.message.length > 50 ? '...' : '')) : 'No title',
       comment: review.message || 'No comment',
       itemType: review.type || 'unknown',
-      itemName: review.type && review.element_id ? 
-        `${review.type.charAt(0).toUpperCase() + review.type.slice(1)} #${review.element_id}` : 
-        'Unknown Item',
+      itemName: getItemName(review),
       status: review.status === 'accepted' ? 'approved' : review.status === 'rejected' ? 'rejected' : 'pending',
       createdAt: review.created_at || new Date().toISOString(),
       helpfulCount: review.likes_count || 0,
@@ -288,9 +300,6 @@ const Reviews = () => {
           <Text color={textColor} fontWeight="bold" fontSize="sm">
             {info.getValue()}
           </Text>
-          {/* <Text color="gray.500" fontSize="xs" noOfLines={2}>
-            {info.row.original.comment}
-          </Text> */}
           <HStack spacing={2}>
             <Badge colorScheme="blue" size="sm">
               {info.row.original.itemType}

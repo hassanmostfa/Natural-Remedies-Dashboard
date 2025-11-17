@@ -75,7 +75,6 @@ const LessonFormStepper = ({
 }) => {
   const statusOptions = [
     { value: 'active', label: 'Active' },
-    { value: 'draft', label: 'Draft' },
     { value: 'inactive', label: 'Inactive' },
   ];
 
