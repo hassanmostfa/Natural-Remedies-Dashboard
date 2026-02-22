@@ -338,6 +338,31 @@ const Reviews = () => {
         </Badge>
       ),
     }),
+    columnHelper.accessor('createdAt', {
+      id: 'createdAt',
+      header: () => (
+        <Text
+          justifyContent="space-between"
+          align="center"
+          fontSize={{ sm: '10px', lg: '12px' }}
+          color="gray.400"
+        >
+          Date
+        </Text>
+      ),
+      cell: (info) => (
+        <Text color={textColor} fontSize="sm">
+          {new Date(info.getValue()).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          })}
+        </Text>
+      ),
+    }),
     columnHelper.accessor('id', {
       id: 'actions',
       header: () => (
